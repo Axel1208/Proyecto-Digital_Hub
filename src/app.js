@@ -7,7 +7,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // rutas
 app.use("/portatil", require("./routers/portatil.routers"));
-app.use("/reportes", require("./routers/reportes.routers"))
+app.use("/ficha", require("./routers/ficha.routers"));
 
 const PORT = 3000;
 app.listen(PORT, () => {

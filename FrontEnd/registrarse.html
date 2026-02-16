@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse | DigitalHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="registro.css">
+</head>
+<body>
+    <!-- NAVBAR FIJO -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="FrontEnd/img/logo.png" alt="" class="logo-img">
+                <span>DigitalHub</span>
+            </div>
+            <div class="nav-links">
+                <a href="Index.html#inicio">Inicio</a>
+                <a href="Index.html#quienes-somos">Quiénes somos</a>
+                <a href="Index.html#servicios">Servicios</a>
+                <a href="Index.html#soporte">Soporte</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- FORMULARIO DE REGISTRO -->
+    <div class="register-wrapper">
+        <div class="register-container">
+            <div class="register-header">
+                <div class="logo-circle">
+                    <img src="img/logo.png" alt="DigitalHub">
+                </div>
+                <h1>Registrarse</h1>
+                <p>Crea tu cuenta en DigitalHub</p>
+            </div>
+
+            <form class="register-form">
+                <div class="input-group">
+                    <input type="email" placeholder="Correo electrónico" required />
+                </div>
+
+                <div class="input-group">
+                    <input type="text" placeholder="Usuario" required />
+                </div>
+
+                <div class="input-group">
+                    <input type="password" placeholder="Contraseña" required />
+                </div>
+
+                <div class="input-group">
+                    <input type="password" placeholder="Confirmar contraseña" required />
+                </div>
+
+                <div class="input-group">
+                    <select required>
+                        <option value="" disabled selected>Selecciona tu rol</option>
+                        <option value="administrador">Administrador</option>
+                        <option value="instructor">Instructor</option>
+                        <option value="encargado">Encargado</option>
+                    </select>
+                </div>
+
+                <button class="btn-submit" type="submit">Registrarse</button>
+            </form>
+
+            <div class="register-footer">
+                <p>¿Ya tienes una cuenta? <a href="login/iniciar_sesion.html">Inicia sesión</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p>© 2026 DigitalHub. Todos los derechos reservados.</p>
+            <div class="footer-links">
+                <a href="">Términos y condiciones</a>
+                <span>·</span>
+                <a href="">Política de privacidad</a>
+                <span>·</span>
+                <a href="">Contáctenos</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

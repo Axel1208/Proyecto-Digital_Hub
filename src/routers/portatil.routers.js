@@ -1,142 +1,154 @@
 const express = require("express");
 const router = express.Router();
+
 const pool = require("../db/database");
+const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 
+// ============================================
+// CREAR PORTÁTIL
+// ============================================
+router.post(
+  "/",
+  validarCamposObligatorios([
+    "id_portatil",
+    "marca",
+    "tipo",
+    "modelo",
+    "estado",
+    "num_serie",
+    "ubicacion",
+    "descripcion"
+  ]),
+  async (req, res) => {
+    try {
+      const { id_portatil, marca, tipo, modelo, estado, num_serie, ubicacion, descripcion } = req.body;
 
+      // Verificar si ya existe un portátil con el mismo ID
+      const [existe] = await pool.query(
+        "SELECT id_portatil FROM portatil WHERE id_portatil = ?",
+        [id_portatil]
+      );
+
+      if (existe.length > 0) {
+        return res.status(400).json({ mensaje: "Ya existe un portátil con ese ID" });
+      }
+
+      await pool.query(
+        `INSERT INTO portatil 
+        (id_portatil, marca, tipo, modelo, estado, num_serie, ubicacion, descripcion) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id_portatil, marca, tipo, modelo, estado, num_serie, ubicacion, descripcion]
+      );
+
+      res.status(201).json({
+        mensaje: "Portátil creado correctamente"
+      });
+    } catch (error) {
+      console.error("❌ Error al crear portátil:", error);
+      res.status(500).json({
+        mensaje: "Error al crear el portátil",
+        error: error.message
+      });
+    }
+  }
+);
+
+// ============================================
+// ACTUALIZAR PORTÁTIL
+// ============================================
+router.put(
+  "/:id",
+  validarCamposObligatorios([
+    "marca",
+    "tipo",
+    "modelo",
+    "estado",
+    "num_serie",
+    "ubicacion",
+    "descripcion"
+  ]),
+  async (req, res) => {
+    try {
+      const { marca, tipo, modelo, estado, num_serie, ubicacion, descripcion } = req.body;
+      const { id } = req.params;
+
+      const [resultado] = await pool.query(
+        `UPDATE portatil 
+         SET marca = ?, tipo = ?, modelo = ?, estado = ?, num_serie = ?, ubicacion = ?, descripcion = ? 
+         WHERE id_portatil = ?`,
+        [marca, tipo, modelo, estado, num_serie, ubicacion, descripcion, id]
+      );
+
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({ mensaje: "Portátil no encontrado" });
+      }
+
+      res.json({
+        mensaje: "Portátil actualizado correctamente"
+      });
+    } catch (error) {
+      console.error("❌ Error al actualizar portátil:", error);
+      res.status(500).json({
+        mensaje: "Error al actualizar el portátil",
+        error: error.message
+      });
+    }
+  }
+);
+
+// ============================================
+// LISTAR TODOS LOS PORTÁTILES
+// ============================================
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM portatil");
-    res.json(rows);
+    const [portatiles] = await pool.query("SELECT * FROM portatil");
+    res.json(portatiles);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener portátiles" });
+    console.error("❌ Error al listar portátiles:", error);
+    res.status(500).json({ mensaje: "Error al listar portátiles", error: error.message });
   }
 });
 
+// ============================================
+// LISTAR PORTÁTIL POR ID
+// ============================================
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const [portatil] = await pool.query("SELECT * FROM portatil WHERE id_portatil = ?", [id]);
 
-    const [rows] = await pool.query(
-      "SELECT * FROM portatil WHERE id_portatil = ?",
-      [id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Portátil no encontrado" });
+    if (portatil.length === 0) {
+      return res.status(404).json({ mensaje: "Portátil no encontrado" });
     }
 
-    res.json(rows[0]);
+    res.json(portatil[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener portátil" });
+    console.error("❌ Error al obtener portátil:", error);
+    res.status(500).json({ mensaje: "Error al obtener portátil", error: error.message });
   }
 });
 
-
-router.post("/", async (req, res) => {
-  try {
-    const body = req.body || {}; 
-    const {
-      marca,
-      tipo,
-      modelo,
-      estado,
-      num_serie,
-      ubicacion,
-      descripcion
-    } = body;
-
-   
-    if (!marca || !tipo || !modelo || !estado || !num_serie) {
-      return res.status(400).json({ message: "Faltan campos obligatorios" });
-    }
-
-    await pool.query(
-      `INSERT INTO portatil
-      (marca, tipo, modelo, estado, num_serie, ubicacion, descripcion)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        marca,
-        tipo,
-        modelo,
-        estado,
-        num_serie,
-        ubicacion ?? null,
-        descripcion ?? null
-      ]
-    );
-
-    res.status(201).json({ message: "Portátil creado correctamente" });
-  } catch (error) {
-    console.error("ERROR MYSQL >>>", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const body = req.body || {}; 
-    const {
-      marca,
-      tipo,
-      modelo,
-      estado,
-      num_serie,
-      ubicacion,
-      descripcion
-    } = body;
-
-    
-    if (!marca || !tipo || !modelo || !estado || !num_serie) {
-      return res.status(400).json({ message: "Faltan campos obligatorios" });
-    }
-
-    const [result] = await pool.query(
-      `UPDATE portatil SET
-        marca = ?,
-        tipo = ?,
-        modelo = ?,
-        estado = ?,
-        num_serie = ?,
-        ubicacion = ?,
-        descripcion = ?
-       WHERE id_portatil = ?`,
-      [marca, tipo, modelo, estado, num_serie, ubicacion ?? null, descripcion ?? null, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Portátil no encontrado" });
-    }
-
-    res.json({ message: "Portátil actualizado correctamente" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al actualizar portátil" });
-  }
-});
-
-
+// ============================================
+// ELIMINAR PORTÁTIL
+// ============================================
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [result] = await pool.query(
-      "DELETE FROM portatil WHERE id_portatil = ?",
-      [id]
-    );
+    const [resultado] = await pool.query("DELETE FROM portatil WHERE id_portatil = ?", [id]);
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Portátil no encontrado" });
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ mensaje: "Portátil no encontrado" });
     }
 
-    res.json({ message: "Portátil eliminado correctamente" });
+    res.json({ mensaje: "Portátil eliminado correctamente" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al eliminar portátil" });
+    console.error("❌ Error al eliminar portátil:", error);
+    res.status(500).json({ mensaje: "Error al eliminar portátil", error: error.message });
   }
 });
 
+// ============================================
+// EXPORTAR RUTAS
+// ============================================
 module.exports = router;

@@ -51,10 +51,10 @@ router.post("/", async (req, res) => {
       values
     );
 
-    res.status(201).json({ message: "Ficha creada correctamente" });
+    res.status(201).json({ message: "La ficha ha sido creada correctamente" });
   } catch (error) {
     console.error("Error en POST /ficha:", error);
-    res.status(500).json({ message: "Error al crear ficha", error: error.message });
+    res.status(500).json({ message: "Error al crear ficha, revisé nuevamente", error: error.message });
   }
 });
 

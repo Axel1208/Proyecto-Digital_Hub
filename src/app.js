@@ -9,6 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/portatil", require("./routers/portatil.routers"));
 app.use("/reportes", require("./routers/reportes.routers"));
 app.use("/ambiente", require("./routers/ambiente.routers"));
+app.use("/ficha", require("./routers/ficha.routers"));
 
 
 const PORT = 3000;

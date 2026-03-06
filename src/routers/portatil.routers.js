@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db/database");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
+const validarSerialNoRepetido = require("../middlewares/validarSerialUnico");
 
 /**
  * GET - Obtener todos los portátiles
@@ -56,6 +57,10 @@ router.post(
     "ubicacion",
     "descripcion"
   ]),
+  validarSerialNoRepetido,
+  async (req, res) => {
+    try {
+      let {
   async (req, res) => {
     try {
       const {
@@ -68,6 +73,27 @@ router.post(
         ubicacion,
         descripcion
       } = req.body;
+
+      console.log("Intentando crear portátil con serial:", num_serie);
+
+      // limpiar espacios
+      num_serie = num_serie.trim();
+
+      // validar longitud del serial
+      if (num_serie.length < 5) {
+        return res.status(400).json({
+          message: "El número de serie es inválido"
+        });
+      }
+
+      // validar estados permitidos
+      const estadosValidos = ["Disponible", "Asignado", "Mantenimiento"];
+
+      if (!estadosValidos.includes(estado)) {
+        return res.status(400).json({
+          message: "Estado del portátil no válido"
+        });
+      }
 
       // Validar si ya existe el portátil
       const [existe] = await pool.query(
@@ -124,6 +150,12 @@ router.put(
     "ubicacion",
     "descripcion"
   ]),
+  validarSerialNoRepetido, // agregado para evitar serial duplicado en actualización
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      let {
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -136,6 +168,26 @@ router.put(
         ubicacion,
         descripcion
       } = req.body;
+
+      console.log("Actualizando portátil con serial:", num_serie);
+
+      // limpiar espacios
+      num_serie = num_serie.trim();
+
+      // validar longitud
+      if (num_serie.length < 5) {
+        return res.status(400).json({
+          message: "El número de serie es inválido"
+        });
+      }
+
+      const estadosValidos = ["Disponible", "Asignado", "Mantenimiento"];
+
+      if (!estadosValidos.includes(estado)) {
+        return res.status(400).json({
+          message: "Estado del portátil no válido"
+        });
+      }
 
       const [result] = await pool.query(
         `UPDATE portatil SET

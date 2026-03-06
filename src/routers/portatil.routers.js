@@ -61,6 +61,9 @@ router.post(
   async (req, res) => {
     try {
       let {
+  async (req, res) => {
+    try {
+      const {
         id_portatil,
         marca,
         tipo,
@@ -153,6 +156,10 @@ router.put(
       const { id } = req.params;
 
       let {
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const {
         marca,
         tipo,
         modelo,

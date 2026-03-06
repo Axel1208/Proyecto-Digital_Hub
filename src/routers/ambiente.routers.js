@@ -1,19 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db/database");
+const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 
-// Obtener todos los ambientes
+/**
+ * GET - Obtener todos los ambientes
+ * (Solo lectura, no RF31)
+ */
 router.get("/", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM ambiente");
     res.json(rows);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener ambientes", error: error.message });
+    console.error("Error al obtener ambientes:", error);
+    res.status(500).json({ message: "Error al obtener ambientes" });
   }
 });
 
-// Obtener un ambiente por ID
+/**
+ * GET - Obtener ambiente por ID
+ * (Solo lectura)
+ */
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -29,77 +36,87 @@ router.get("/:id", async (req, res) => {
 
     res.json(rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener ambiente", error: error.message });
+    console.error("Error al obtener ambiente:", error);
+    res.status(500).json({ message: "Error al obtener ambiente" });
   }
 });
 
-// Crear un nuevo ambiente
-router.post("/", async (req, res) => {
-  try {
-    const body = req.body || {}; 
-    const {
-      nombre,
-      direccion
-    } = body;
+/**
+ * POST - Crear ambiente
+ * RF31 aplicado
+ */
+router.post(
+  "/",
+  validarCamposObligatorios([
+    "nombre",
+    "direccion"
+  ]),
+  async (req, res) => {
+    try {
+      const { nombre, direccion } = req.body;
 
-    // Validar campos obligatorios
-    if (!nombre || !direccion) {
-      return res.status(400).json({ message: "Faltan campos obligatorios" });
+      await pool.query(
+        `INSERT INTO ambiente (nombre, direccion)
+         VALUES (?, ?)`,
+        [nombre, direccion]
+      );
+
+      res.status(201).json({
+        message: "Ambiente creado correctamente"
+      });
+    } catch (error) {
+      console.error("Error al crear ambiente:", error);
+      res.status(500).json({
+        message: "Error al crear ambiente"
+      });
     }
-
-    await pool.query(
-      `INSERT INTO ambiente
-      (nombre, direccion)
-      VALUES (?, ?)`,
-      [
-        nombre,
-        direccion
-      ]
-    );
-
-    res.status(201).json({ message: "Ambiente creado correctamente" });
-  } catch (error) {
-    console.error("ERROR MYSQL >>>", error);
-    res.status(500).json({ message: "Error al crear ambiente", error: error.message });
   }
-});
+);
 
-// Actualizar un ambiente
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const body = req.body || {}; 
-    const {
-      nombre,
-      direccion
-    } = body;
+/**
+ * PUT - Actualizar ambiente
+ * RF31 aplicado
+ */
+router.put(
+  "/:id",
+  validarCamposObligatorios([
+    "nombre",
+    "direccion"
+  ]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nombre, direccion } = req.body;
 
-    // Validar campos obligatorios
-    if (!nombre || !direccion) {
-      return res.status(400).json({ message: "Faltan campos obligatorios" });
+      const [result] = await pool.query(
+        `UPDATE ambiente SET
+          nombre = ?,
+          direccion = ?
+         WHERE id_ambiente = ?`,
+        [nombre, direccion, id]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          message: "Ambiente no encontrado"
+        });
+      }
+
+      res.json({
+        message: "Ambiente actualizado correctamente"
+      });
+    } catch (error) {
+      console.error("Error al actualizar ambiente:", error);
+      res.status(500).json({
+        message: "Error al actualizar ambiente"
+      });
     }
-
-    const [result] = await pool.query(
-      `UPDATE ambiente SET
-        nombre = ?,
-        direccion = ?
-       WHERE id_ambiente = ?`,
-      [nombre, direccion, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Ambiente no encontrado" });
-    }
-
-    res.json({ message: "Ambiente actualizado correctamente" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al actualizar ambiente", error: error.message });
   }
-});
+);
 
-// Eliminar un ambiente
+/**
+ * DELETE - Eliminar ambiente
+ */
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -113,10 +130,14 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Ambiente no encontrado" });
     }
 
-    res.json({ message: "Ambiente eliminado correctamente" });
+    res.json({
+      message: "Ambiente eliminado correctamente"
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al eliminar ambiente", error: error.message });
+    console.error("Error al eliminar ambiente:", error);
+    res.status(500).json({
+      message: "Error al eliminar ambiente"
+    });
   }
 });
 

@@ -66,7 +66,7 @@ router.post("/usuarios",
             }
 
             if (!rolesValidos.includes(rol)) {
-                return res.status(400).json({ mensaje: "Rol inválido" });
+                return res.status(401).json({ mensaje: "Rol inválido" });
             }
 
             // 🔒 BLOQUEO DE ESCALAMIENTO
@@ -132,7 +132,7 @@ router.put("/usuarios/:id",
             }
 
             if (!rolesValidos.includes(rol)) {
-                return res.status(400).json({ mensaje: "Rol inválido" });
+                return res.status(401).json({ mensaje: "Rol inválido" });
             }
 
             // 🟢 NUEVO: Verificar si el usuario existe antes de editar

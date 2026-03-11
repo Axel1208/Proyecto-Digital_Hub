@@ -1,261 +1,209 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db/database");
+
+// Middlewares
+const verificarToken = require("../middlewares/verificarToken");
+const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
-const validarSerialNoRepetido = require("../middlewares/validarSerialUnico");
+const validarSerialUnico = require("../middlewares/validarSerialUnico");
 
-/**
- * GET - Obtener todos los portátiles
- * (Solo lectura)
- */
-router.get("/", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM portatil");
-    res.status(200).json(rows);
-  } catch (error) {
-    console.error("Error al obtener portátiles:", error);
-    res.status(500).json({ message: "Error al obtener portátiles" });
-  }
-});
 
-/**
- * GET - Obtener portátil por ID
- */
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
+/*
+=========================================
+1. CREAR PORTÁTIL
+=========================================
+Solo ADMIN o INSTRUCTOR
+*/
 
-    const [rows] = await pool.query(
-      "SELECT * FROM portatil WHERE id_portatil = ?",
-      [id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Portátil no encontrado" });
-    }
-
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error("Error al obtener portátil:", error);
-    res.status(500).json({ message: "Error al obtener portátil" });
-  }
-});
-
-/**
- * POST - Crear portátil
- * RF31 aplicado
- */
 router.post(
   "/",
-  validarCamposObligatorios([
-    "id_portatil",
-    "marca",
-    "tipo",
-    "modelo",
-    "estado",
-    "num_serie",
-    "ubicacion",
-    "descripcion"
-  ]),
-  validarSerialNoRepetido,
+  verificarToken,
+  verificarRol("admin", "instructor"),
+  validarCamposObligatorios(["num_serie", "marca", "modelo", "estado"]),
+  validarSerialUnico,
   async (req, res) => {
     try {
-      let {
-  async (req, res) => {
-    try {
-      const {
-        id_portatil,
-        marca,
-        tipo,
-        modelo,
-        estado,
-        num_serie,
-        ubicacion,
-        descripcion
-      } = req.body;
+      const { num_serie, marca, modelo, estado } = req.body;
 
-      console.log("Intentando crear portátil con serial:", num_serie);
-
-      // limpiar espacios
-      num_serie = num_serie.trim();
-
-      // validar longitud del serial
-      if (num_serie.length < 5) {
-        return res.status(400).json({
-          message: "El número de serie es inválido"
-        });
-      }
-
-      // validar estados permitidos
-      const estadosValidos = ["Disponible", "Asignado", "Mantenimiento"];
-
-      if (!estadosValidos.includes(estado)) {
-        return res.status(400).json({
-          message: "Estado del portátil no válido"
-        });
-      }
-
-      // Validar si ya existe el portátil
-      const [existe] = await pool.query(
-        "SELECT id_portatil FROM portatil WHERE id_portatil = ?",
-        [id_portatil]
-      );
-
-      if (existe.length > 0) {
-        return res.status(409).json({
-          message: "El portátil ya se encuentra registrado"
-        });
-      }
-
-      await pool.query(
-        `INSERT INTO portatil
-         (id_portatil, marca, tipo, modelo, estado, num_serie, ubicacion, descripcion)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id_portatil,
-          marca,
-          tipo,
-          modelo,
-          estado,
-          num_serie,
-          ubicacion,
-          descripcion
-        ]
+      const [resultado] = await pool.query(
+        `INSERT INTO portatil (num_serie, marca, modelo, estado)
+         VALUES (?, ?, ?, ?)`,
+        [num_serie, marca, modelo, estado]
       );
 
       res.status(201).json({
-        message: "Portátil creado correctamente"
+        mensaje: "Portátil registrado correctamente",
+        id_portatil: resultado.insertId
       });
+
     } catch (error) {
-      console.error("Error al crear portátil:", error);
+      console.error(error);
       res.status(500).json({
-        message: "Error al crear el portátil"
+        mensaje: "Error al registrar el portátil"
       });
     }
   }
 );
 
-/**
- * PUT - Actualizar portátil
- * RF31 aplicado
- */
-router.put(
-  "/:id",
-  validarCamposObligatorios([
-    "marca",
-    "tipo",
-    "modelo",
-    "estado",
-    "num_serie",
-    "ubicacion",
-    "descripcion"
-  ]),
-  validarSerialNoRepetido, // agregado para evitar serial duplicado en actualización
+
+/*
+=========================================
+2. LISTAR TODOS LOS PORTÁTILES
+=========================================
+*/
+
+router.get(
+  "/",
+  verificarToken,
   async (req, res) => {
     try {
-      const { id } = req.params;
 
-      let {
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const {
-        marca,
-        tipo,
-        modelo,
-        estado,
-        num_serie,
-        ubicacion,
-        descripcion
-      } = req.body;
-
-      console.log("Actualizando portátil con serial:", num_serie);
-
-      // limpiar espacios
-      num_serie = num_serie.trim();
-
-      // validar longitud
-      if (num_serie.length < 5) {
-        return res.status(400).json({
-          message: "El número de serie es inválido"
-        });
-      }
-
-      const estadosValidos = ["Disponible", "Asignado", "Mantenimiento"];
-
-      if (!estadosValidos.includes(estado)) {
-        return res.status(400).json({
-          message: "Estado del portátil no válido"
-        });
-      }
-
-      const [result] = await pool.query(
-        `UPDATE portatil SET
-          marca = ?,
-          tipo = ?,
-          modelo = ?,
-          estado = ?,
-          num_serie = ?,
-          ubicacion = ?,
-          descripcion = ?
-         WHERE id_portatil = ?`,
-        [
-          marca,
-          tipo,
-          modelo,
-          estado,
-          num_serie,
-          ubicacion,
-          descripcion,
-          id
-        ]
+      const [rows] = await pool.query(
+        "SELECT * FROM portatil"
       );
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({
-          message: "Portátil no encontrado"
-        });
-      }
+      res.json(rows);
 
-      res.status(200).json({
-        message: "Portátil actualizado correctamente"
-      });
     } catch (error) {
-      console.error("Error al actualizar portátil:", error);
       res.status(500).json({
-        message: "Error al actualizar el portátil"
+        mensaje: "Error al obtener los portátiles"
       });
     }
   }
 );
 
-/**
- * DELETE - Eliminar portátil
- */
-router.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const [result] = await pool.query(
-      "DELETE FROM portatil WHERE id_portatil = ?",
-      [id]
-    );
+/*
+=========================================
+3. OBTENER PORTÁTIL POR ID
+=========================================
+*/
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        message: "Portátil no encontrado"
+router.get(
+  "/:id",
+  verificarToken,
+  async (req, res) => {
+
+    try {
+
+      const { id } = req.params;
+
+      const [rows] = await pool.query(
+        "SELECT * FROM portatil WHERE id_portatil = ?",
+        [id]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          mensaje: "Portátil no encontrado"
+        });
+      }
+
+      res.json(rows[0]);
+
+    } catch (error) {
+
+      res.status(500).json({
+        mensaje: "Error al obtener el portátil"
       });
+
     }
 
-    res.status(200).json({
-      message: "Portátil eliminado correctamente"
-    });
-  } catch (error) {
-    console.error("Error al eliminar portátil:", error);
-    res.status(500).json({
-      message: "Error al eliminar portátil"
-    });
   }
-});
+);
+
+
+/*
+=========================================
+4. ACTUALIZAR PORTÁTIL
+=========================================
+Solo ADMIN o INSTRUCTOR
+*/
+
+router.put(
+  "/:id",
+  verificarToken,
+  verificarRol("admin", "instructor"),
+  validarCamposObligatorios(["marca", "modelo", "estado"]),
+  async (req, res) => {
+
+    try {
+
+      const { id } = req.params;
+      const { marca, modelo, estado } = req.body;
+
+      const [resultado] = await pool.query(
+        `UPDATE portatil
+         SET marca = ?, modelo = ?, estado = ?
+         WHERE id_portatil = ?`,
+        [marca, modelo, estado, id]
+      );
+
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({
+          mensaje: "Portátil no encontrado"
+        });
+      }
+
+      res.json({
+        mensaje: "Portátil actualizado correctamente"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        mensaje: "Error al actualizar el portátil"
+      });
+
+    }
+
+  }
+);
+
+
+/*
+=========================================
+5. ELIMINAR PORTÁTIL
+=========================================
+Solo ADMIN
+*/
+
+router.delete(
+  "/:id",
+  verificarToken,
+  verificarRol("admin"),
+  async (req, res) => {
+
+    try {
+
+      const { id } = req.params;
+
+      const [resultado] = await pool.query(
+        "DELETE FROM portatil WHERE id_portatil = ?",
+        [id]
+      );
+
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({
+          mensaje: "Portátil no encontrado"
+        });
+      }
+
+      res.json({
+        mensaje: "Portátil eliminado correctamente"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        mensaje: "Error al eliminar el portátil"
+      });
+
+    }
+
+  }
+);
+
 
 module.exports = router;

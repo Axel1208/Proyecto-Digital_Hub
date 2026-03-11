@@ -10,8 +10,9 @@ const validarSerialNoRepetido = async (req, res, next) => {
   }
 
   try {
+    // 🔧 CORRECCIÓN: Cambiar "portatiles" a "portatil"
     const [resultado] = await pool.query(
-      "SELECT id_portatil FROM portatiles WHERE num_serie = ?",
+      "SELECT id_portatil FROM portatil WHERE num_serie = ?",
       [num_serie]
     );
 
@@ -30,4 +31,5 @@ const validarSerialNoRepetido = async (req, res, next) => {
   }
 };
 
-module.exports = { validarSerialNoRepetido };
+// ✅ SOLUCIÓN: Exportar directamente la función
+module.exports = validarSerialNoRepetido;

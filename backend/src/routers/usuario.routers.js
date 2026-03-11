@@ -3,81 +3,134 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../db/database");
+const {
+    validarRol,
+    validarEstadoUsuario,
+    validarCorreo
+} = require("../utils/validadoresDominio");
 
 const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 
-// Roles oficiales del sistema
 const rolesValidos = ["administrador", "instructor", "aprendiz"];
 
-// =============================
+router.get("/test", (req,res)=>{
+  res.json({mensaje:"funciona"});
+});
+// ==============================
 // LOGIN
-// =============================
+// POST /api/usuarios/login
+// ==============================
 router.post("/login", async (req, res) => {
+
     try {
+
         const { correo, password } = req.body;
 
         if (!correo || !password) {
-            return res.status(400).json({ mensaje: "Correo y contraseña son obligatorios" });
+            return res.status(400).json({
+                mensaje: "Correo y contraseña son obligatorios"
+            });
         }
 
         const [usuarios] = await db.query(
-            "SELECT * FROM usuario WHERE correo = ? AND estado = 'activo'",
+            "SELECT * FROM usuario WHERE correo = ?",
             [correo]
         );
 
         if (usuarios.length === 0) {
-            return res.status(404).json({ mensaje: "Usuario no encontrado o inactivo" });
+            return res.status(404).json({
+                mensaje: "Usuario no encontrado"
+            });
         }
 
         const usuario = usuarios[0];
-        const passwordValida = await bcrypt.compare(password, usuario.password_hash);
+
+        if (usuario.estado !== "activo") {
+            return res.status(403).json({
+                mensaje: "Usuario inactivo"
+            });
+        }
+
+        const passwordValida = await bcrypt.compare(
+            password,
+            usuario.password_hash
+        );
 
         if (!passwordValida) {
-            return res.status(401).json({ mensaje: "Contraseña incorrecta" });
+            return res.status(401).json({
+                mensaje: "Contraseña incorrecta"
+            });
         }
 
         const token = jwt.sign(
-            { id: usuario.id_usuario, rol: usuario.rol },
+            {
+                id: usuario.id_usuario,
+                rol: usuario.rol
+            },
             process.env.JWT_SECRET,
             { expiresIn: "2h" }
         );
 
-        res.json({ mensaje: "Login exitoso", token });
+        res.json({
+            mensaje: "Login exitoso",
+            token
+        });
 
     } catch (error) {
-        console.error("❌ Error en login:", error.message); // 🟢 NUEVO
-        res.status(500).json({ error: "Error interno en el servidor durante el login" });
+
+        console.error(error);
+
+        res.status(500).json({
+            mensaje: "Error interno del servidor"
+        });
+
     }
+
 });
 
-// =============================
-// CREAR USUARIO (admin e instructor)
-// =============================
-router.post("/usuarios",
+
+// ==============================
+// CREAR USUARIO
+// POST /api/usuarios
+// ==============================
+router.post(
+    "/",
     verificarToken,
     verificarRol("administrador", "instructor"),
     async (req, res) => {
+
         try {
+
             const { nombre, correo, password, rol } = req.body;
 
             if (!nombre || !correo || !password || !rol) {
-                return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
+                return res.status(400).json({
+                    mensaje: "Todos los campos son obligatorios"
+                });
             }
 
-            if (!rolesValidos.includes(rol)) {
-                return res.status(400).json({ mensaje: "Rol inválido" });
+           if (!validarRol(rol)) {
+                return res.status(400).json({
+                    mensaje: "Rol inválido"
+                });
             }
 
-            // 🔒 BLOQUEO DE ESCALAMIENTO
-            if (req.usuario.rol === "instructor" && rol === "administrador") {
-                return res.status(403).json({ mensaje: "No tienes permiso para crear administradores" });
+            if (!validarCorreo(correo)) {
+                return res.status(400).json({
+                mensaje: "Correo inválido"
+                });
             }
 
-            const [existeCorreo] = await db.query("SELECT * FROM usuario WHERE correo = ?", [correo]);
+            const [existe] = await db.query(
+                "SELECT id_usuario FROM usuario WHERE correo = ?",
+                [correo]
+            );
 
-            if (existeCorreo.length > 0) {
-                return res.status(400).json({ mensaje: "Correo ya registrado" });
+            if (existe.length > 0) {
+                return res.status(400).json({
+                    mensaje: "El correo ya existe"
+                });
             }
 
             const password_hash = await bcrypt.hash(password, 10);
@@ -87,116 +140,202 @@ router.post("/usuarios",
                 [nombre, correo, password_hash, rol]
             );
 
-            res.status(201).json({ mensaje: "Usuario creado correctamente" });
+            res.status(201).json({
+                mensaje: "Usuario creado correctamente"
+            });
 
         } catch (error) {
-            console.error("❌ Error al crear usuario:", error.message); // 🟢 NUEVO
-            res.status(500).json({ error: "Error al crear usuario" });
+
+            console.error(error);
+
+            res.status(500).json({
+                mensaje: "Error al crear usuario"
+            });
+
         }
+
     }
 );
 
-// =============================
-// LISTAR USUARIOS (admin e instructor)
-// =============================
-router.get("/usuarios",
+
+// ==============================
+// LISTAR USUARIOS
+// GET /api/usuarios
+// ==============================
+router.get(
+    "/",
     verificarToken,
     verificarRol("administrador", "instructor"),
     async (req, res) => {
+
         try {
+
             const [usuarios] = await db.query(
                 "SELECT id_usuario, nombre, correo, rol, estado FROM usuario"
             );
+
             res.json(usuarios);
 
         } catch (error) {
-            console.error("❌ Error al listar usuarios:", error.message); // 🟢 NUEVO
-            res.status(500).json({ error: "Error al listar usuarios" });
+
+            console.error(error);
+
+            res.status(500).json({
+                mensaje: "Error al listar usuarios"
+            });
+
         }
+
     }
 );
 
-// =============================
-// EDITAR USUARIO (solo admin)
-// =============================
-router.put("/usuarios/:id",
-    verificarToken,
-    verificarRol("administrador"),
-    async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { nombre, rol } = req.body;
+// ==============================
+// OBTENER USUARIO POR ID
+// GET /api/:id
+// ==============================
 
-            if (!nombre || !rol) {
-                return res.status(400).json({ mensaje: "Nombre y rol son obligatorios" });
-            }
+router.get(
+  "/:id",
+  verificarToken,
+  verificarRol("administrador", "instructor"),
+  async (req, res) => {
+    try {
 
-            if (!rolesValidos.includes(rol)) {
-                return res.status(400).json({ mensaje: "Rol inválido" });
-            }
+      const { id } = req.params;
 
-            // 🟢 NUEVO: Verificar si el usuario existe antes de editar
-            const [existe] = await db.query("SELECT id_usuario FROM usuario WHERE id_usuario = ?", [id]);
-            
-            if (existe.length === 0) {
-                return res.status(404).json({ mensaje: "El usuario que intentas editar no existe" });
-            }
+      const [usuarios] = await db.query(
+        "SELECT id_usuario, nombre, correo, rol, estado FROM usuario WHERE id_usuario = ?",
+        [id]
+      );
 
-            await db.query(
-                "UPDATE usuario SET nombre = ?, rol = ? WHERE id_usuario = ?",
-                [nombre, rol, id]
-            );
+      if (usuarios.length === 0) {
+        return res.status(404).json({
+          mensaje: "Usuario no encontrado"
+        });
+      }
 
-            res.json({ mensaje: "Usuario actualizado correctamente" });
+      res.json(usuarios[0]);
 
-        } catch (error) {
-            console.error("❌ Error al actualizar usuario:", error.message); // 🟢 NUEVO
-            res.status(500).json({ error: "Error al actualizar usuario" });
-        }
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        mensaje: "Error al obtener usuario"
+      });
+
     }
+  }
 );
 
-// =============================
-// CAMBIAR ESTADO DE USUARIO (Activar/Desactivar) (solo admin)
-// =============================
-// 🟢 NUEVO: Ahora la ruta incluye "/estado" y usa req.body para saber si activamos o desactivamos
-router.patch("/usuarios/:id/estado",
-    verificarToken,
-    verificarRol("administrador"),
-    async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { estado } = req.body; 
+// ==============================
+// EDITAR USUARIO
+// PUT /api/usuarios/:id
+// ==============================
+router.put(
+  "/:id",
+  verificarToken,
+  verificarRol("administrador"),
+  async (req, res) => {
 
-            // 🟢 NUEVO: Validar que el estado sea el correcto
-            if (!estado || !["activo", "inactivo"].includes(estado)) {
-                return res.status(400).json({ mensaje: "Estado inválido. Debe enviar 'activo' o 'inactivo'" });
-            }
+    try {
 
-            // 🔒 Evitar que admin se desactive a sí mismo
-            if (req.usuario.id == id && estado === "inactivo") {
-                return res.status(400).json({ mensaje: "No puedes desactivarte a ti mismo" });
-            }
+      const { id } = req.params;
+      const { nombre, rol } = req.body;
 
-            // 🟢 NUEVO: Verificar si el usuario existe antes de cambiar su estado
-            const [existe] = await db.query("SELECT id_usuario FROM usuario WHERE id_usuario = ?", [id]);
-            
-            if (existe.length === 0) {
-                return res.status(404).json({ mensaje: "El usuario no existe" });
-            }
+      if (!nombre || !rol) {
+        return res.status(400).json({
+          mensaje: "Nombre y rol son obligatorios"
+        });
+      }
 
-            await db.query(
-                "UPDATE usuario SET estado = ? WHERE id_usuario = ?",
-                [estado, id]
-            );
+      const [resultado] = await db.query(
+        "UPDATE usuario SET nombre = ?, rol = ? WHERE id_usuario = ?",
+        [nombre, rol, id]
+      );
 
-            res.json({ mensaje: `Usuario ${estado} correctamente` });
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({
+          mensaje: "Usuario no encontrado"
+        });
+      }
 
-        } catch (error) {
-            console.error("❌ Error al cambiar estado del usuario:", error.message); // 🟢 NUEVO
-            res.status(500).json({ error: "Error al cambiar estado del usuario" });
-        }
+      if (!validarRol(rol)) {
+        return res.status(400).json({
+            mensaje: "Rol inválido"
+        });
+      }
+
+      res.json({
+        mensaje: "Usuario actualizado correctamente"
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        mensaje: "Error al actualizar usuario"
+      });
+
     }
+
+  }
 );
 
+
+// ==============================
+// CAMBIAR ESTADO
+// PATCH /api/usuarios/:id/estado
+// ==============================
+router.patch(
+  "/:id/estado",
+  verificarToken,
+  verificarRol("administrador"),
+  async (req, res) => {
+
+    try {
+
+      const { id } = req.params;
+      const { estado } = req.body;
+
+      if (!estado) {
+        return res.status(400).json({
+          mensaje: "El estado es obligatorio"
+        });
+      }
+
+      if (!validarEstadoUsuario(estado)) {
+        return res.status(400).json({
+            mensaje: "Estado inválido"
+        });
+      }
+
+      const [resultado] = await db.query(
+        "UPDATE usuario SET estado = ? WHERE id_usuario = ?",
+        [estado, id]
+      );
+
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({
+          mensaje: "Usuario no encontrado"
+        });
+      }
+
+      res.json({
+        mensaje: "Estado actualizado"
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        mensaje: "Error al cambiar estado"
+      });
+
+    }
+
+  }
+);
 module.exports = router;

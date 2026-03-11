@@ -1,25 +1,17 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../db/database");
-const {
-    validarRol,
-    validarEstadoUsuario,
-    validarCorreo
-} = require("../utils/validadoresDominio");
 
-const verificarToken = require("../middlewares/verificarToken");
-const verificarRol = require("../middlewares/verificarRol");
-
-const rolesValidos = ["administrador", "instructor", "aprendiz"];
-
-router.get("/test", (req,res)=>{
-  res.json({mensaje:"funciona"});
+// =========================================
+// RUTA DE PRUEBA
+// =========================================
+router.get("/test", (req, res) => {
+    res.json({ mensaje: "funciona" });
 });
+
 // ==============================
-// LOGIN
-// POST /api/usuarios/login
+// LOGIN (SIN SEGURIDAD)
+// POST /api/usuarioprueba/login
 // ==============================
 router.post("/login", async (req, res) => {
 
@@ -46,35 +38,26 @@ router.post("/login", async (req, res) => {
 
         const usuario = usuarios[0];
 
-        if (usuario.estado !== "activo") {
-            return res.status(403).json({
-                mensaje: "Usuario inactivo"
-            });
-        }
+        // SIN VALIDACIÓN DE ESTADO - puedes entrar aunque esté inactivo
+        // const if (usuario.estado !== "activo") { ... }
 
-        const passwordValida = await bcrypt.compare(
-            password,
-            usuario.password_hash
-        );
-
-        if (!passwordValida) {
+        // Comparación simple SIN bcrypt
+        if (password !== usuario.password_hash) {
             return res.status(401).json({
                 mensaje: "Contraseña incorrecta"
             });
         }
 
-        const token = jwt.sign(
-            {
-                id: usuario.id_usuario,
-                rol: usuario.rol
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: "2h" }
-        );
-
+        // SIN TOKEN JWT - retorna los datos del usuario
         res.json({
             mensaje: "Login exitoso",
-            token
+            usuario: {
+                id: usuario.id_usuario,
+                nombre: usuario.nombre,
+                correo: usuario.correo,
+                rol: usuario.rol,
+                estado: usuario.estado
+            }
         });
 
     } catch (error) {
@@ -91,45 +74,27 @@ router.post("/login", async (req, res) => {
 
 
 // ==============================
-// CREAR USUARIO
-// POST /api/usuarios
+// CREAR USUARIO (SIN SEGURIDAD)
+// POST /api/usuarioprueba
 // ==============================
 router.post(
     "/",
-    verificarToken,
-    verificarRol("administrador", "instructor"),
     async (req, res) => {
 
         try {
 
             const { nombre, correo, password, rol, estado } = req.body;
 
+            // Solo validación de campos obligatorios
             if (!nombre || !correo || !password || !rol || !estado) {
                 return res.status(400).json({
                     mensaje: "Todos los campos son obligatorios"
                 });
             }
 
-            if (!validarRol(rol)) {
-                return res.status(400).json({
-                    mensaje: "Rol inválido"
-                });
-            }
-
-            if (!validarCorreo(correo)) {
-                return res.status(400).json({
-                    mensaje: "Correo inválido"
-                });
-            }
-
-            const estadosValidos = ["activo", "inhabilitado"];
-
-            if (!estadosValidos.includes(estado)) {
-                return res.status(400).json({
-                    mensaje: "Estado inválido"
-                });
-            }
-
+            // SIN validarRol(), SIN validarCorreo(), SIN estadosValidos
+            
+            // Verificar si el correo ya existe
             const [existe] = await db.query(
                 "SELECT id_usuario FROM usuario WHERE correo = ?",
                 [correo]
@@ -141,11 +106,10 @@ router.post(
                 });
             }
 
-            const password_hash = await bcrypt.hash(password, 10);
-
+            // SIN bcrypt.hash() - guardar password plano
             await db.query(
                 "INSERT INTO usuario (nombre, correo, password_hash, rol, estado) VALUES (?, ?, ?, ?, ?)",
-                [nombre, correo, password_hash, rol, estado]
+                [nombre, correo, password, rol, estado]
             );
 
             res.status(201).json({
@@ -167,13 +131,11 @@ router.post(
 
 
 // ==============================
-// LISTAR USUARIOS
-// GET /api/usuarios
+// LISTAR USUARIOS (SIN SEGURIDAD)
+// GET /api/usuarioprueba
 // ==============================
 router.get(
     "/",
-    verificarToken,
-    verificarRol("administrador", "instructor"),
     async (req, res) => {
 
         try {
@@ -198,14 +160,12 @@ router.get(
 );
 
 // ==============================
-// OBTENER USUARIO POR ID
-// GET /api/:id
+// OBTENER USUARIO POR ID (SIN SEGURIDAD)
+// GET /api/usuarioprueba/:id
 // ==============================
 
 router.get(
   "/:id",
-  verificarToken,
-  verificarRol("administrador", "instructor"),
   async (req, res) => {
     try {
 
@@ -237,41 +197,22 @@ router.get(
 );
 
 // ==============================
-// EDITAR USUARIO
-// PUT /api/usuarios/:id
+// EDITAR USUARIO (SIN SEGURIDAD)
+// PUT /api/usuarioprueba/:id
 // ==============================
 router.put(
   "/:id",
-  verificarToken,
-  verificarRol("administrador"),
   async (req, res) => {
     try {
 
       const { id } = req.params;
       const { nombre, rol, correo, estado } = req.body;
 
-      // validar rol
-      if (rol && !validarRol(rol)) {
-        return res.status(400).json({
-          mensaje: "Rol inválido"
-        });
-      }
+      // SIN validarRol()
+      // SIN validarEstadoUsuario()
+      // SIN validarCorreo()
 
-      // validar estado
-      if (estado && !validarEstadoUsuario(estado)) {
-        return res.status(400).json({
-        mensaje: "Estado inválido"
-      });
-      }
-
-      // validar formato del correo
-      if (correo && !validarCorreo(correo)) {
-        return res.status(400).json({
-        mensaje: "Formato de correo inválido"
-      });
-      }
-
-      // validar correo duplicado
+      // Verificar correo duplicado (solo esa validación)
       if (correo) {
 
         const [correoExistente] = await db.query(
@@ -347,13 +288,49 @@ router.put(
 );
 
 // ==============================
-// CAMBIAR ESTADO
-// PATCH /api/usuarios/:id/estado
+// ELIMINAR USUARIO (NUEVO - SIN SEGURIDAD)
+// DELETE /api/usuarioprueba/:id
+// ==============================
+router.delete(
+  "/:id",
+  async (req, res) => {
+    try {
+
+      const { id } = req.params;
+
+      const [resultado] = await db.query(
+        "DELETE FROM usuario WHERE id_usuario = ?",
+        [id]
+      );
+
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({
+          mensaje: "Usuario no encontrado"
+        });
+      }
+
+      res.json({
+        mensaje: "Usuario eliminado correctamente"
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        mensaje: "Error al eliminar usuario"
+      });
+
+    }
+  }
+);
+
+// ==============================
+// CAMBIAR ESTADO (SIN SEGURIDAD)
+// PATCH /api/usuarioprueba/:id/estado
 // ==============================
 router.patch(
   "/:id/estado",
-  verificarToken,
-  verificarRol("administrador"),
   async (req, res) => {
 
     try {
@@ -367,11 +344,7 @@ router.patch(
         });
       }
 
-      if (!validarEstadoUsuario(estado)) {
-        return res.status(400).json({
-            mensaje: "Estado inválido"
-        });
-      }
+      // SIN validarEstadoUsuario()
 
       const [resultado] = await db.query(
         "UPDATE usuario SET estado = ? WHERE id_usuario = ?",
@@ -400,4 +373,5 @@ router.patch(
 
   }
 );
+
 module.exports = router;

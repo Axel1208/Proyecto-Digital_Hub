@@ -13,13 +13,11 @@ const validarSerialUnico = require("../middlewares/validarSerialUnico");
 =========================================
 1. CREAR PORTÁTIL
 =========================================
-Solo ADMIN o INSTRUCTOR
+(Seguridad temporalmente desactivada)
 */
 
 router.post(
   "/",
-  verificarToken,
-  verificarRol("admin", "instructor"),
   validarCamposObligatorios(["num_serie", "marca", "modelo", "estado"]),
   validarSerialUnico,
   async (req, res) => {
@@ -51,11 +49,11 @@ router.post(
 =========================================
 2. LISTAR TODOS LOS PORTÁTILES
 =========================================
+(Seguridad temporalmente desactivada)
 */
 
 router.get(
   "/",
-  verificarToken,
   async (req, res) => {
     try {
 
@@ -78,11 +76,11 @@ router.get(
 =========================================
 3. OBTENER PORTÁTIL POR ID
 =========================================
+(Seguridad temporalmente desactivada)
 */
 
 router.get(
   "/:id",
-  verificarToken,
   async (req, res) => {
 
     try {
@@ -118,14 +116,12 @@ router.get(
 =========================================
 4. ACTUALIZAR PORTÁTIL
 =========================================
-Solo ADMIN o INSTRUCTOR
+(Seguridad temporalmente desactivada)
 */
 
 router.put(
   "/:id",
-  verificarToken,
-  verificarRol("admin", "instructor"),
-  validarCamposObligatorios(["marca", "modelo", "estado"]),
+  validarCamposObligatorios(["marca", "modelo", "estado",]),
   async (req, res) => {
 
     try {
@@ -166,13 +162,11 @@ router.put(
 =========================================
 5. ELIMINAR PORTÁTIL
 =========================================
-Solo ADMIN
+(Seguridad temporalmente desactivada)
 */
 
 router.delete(
   "/:id",
-  verificarToken,
-  verificarRol("admin"),
   async (req, res) => {
 
     try {

@@ -1,0 +1,27 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-purple: #7f5af0;
+  --secondary-purple: #c9a8ff;
+  --accent-purple: #9b6cff;
+  --bg-dark: #0b0b0f;
+  --bg-light: #ffffff;
+  --text-dark: #e9e1ff;
+  --text-muted-dark: #cfc9e6;
+  --text-light: #2d1b3d;
+  --text-muted-light: #4a5568;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Poppins', 'Segoe UI', Inter, system-ui, sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+}

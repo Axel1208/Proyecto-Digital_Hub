@@ -3,6 +3,15 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 
+// CORS para permitir peticiones desde el frontend
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -10,13 +19,12 @@ app.use(express.urlencoded({ extended: true }));
 const usuarioRouter = require("./routers/usuario.routers");
 
 app.use("/api", usuarioRouter);
-
 app.use("/portatil", require("./routers/portatil.routers"));
 app.use("/reportes", require("./routers/reportes.routers"));
 app.use("/ambiente", require("./routers/ambiente.routers"));
 app.use("/ficha", require("./routers/ficha.routers"));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

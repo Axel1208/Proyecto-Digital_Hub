@@ -6,6 +6,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    open: true
+    open: true,
+    proxy: {
+      '/api': 'http://localhost:3001',
+      '/portatil': 'http://localhost:3001',
+      '/reportes': 'http://localhost:3001',
+      '/ambiente': 'http://localhost:3001',
+      '/ficha': 'http://localhost:3001',
+      '/asignacion': 'http://localhost:3001'
+    }
   }
 })

@@ -52,7 +52,7 @@ const Navbar = ({ showAuth = true }) => {
         </div>
         {showAuth && (
           <div className="nav-auth">
-            <a href="/login/iniciar_sesion.html" className="btn-login">Iniciar sesión</a>
+            <Link to="/login" className="btn-login">Iniciar sesión</Link>
             <Link to="/registrarse" className="btn-register">Registrarse</Link>
           </div>
         )}

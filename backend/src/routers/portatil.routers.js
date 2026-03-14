@@ -19,7 +19,7 @@ Solo ADMIN o INSTRUCTOR
 router.post(
   "/",
   verificarToken,
-  verificarRol("admin", "instructor"),
+  verificarRol("administrador", "instructor"),
   validarCamposObligatorios(["num_serie", "marca", "modelo", "estado"]),
   validarSerialUnico,
   async (req, res) => {
@@ -124,7 +124,7 @@ Solo ADMIN o INSTRUCTOR
 router.put(
   "/:id",
   verificarToken,
-  verificarRol("admin", "instructor"),
+  verificarRol("administrador", "instructor"),
   validarCamposObligatorios(["marca", "modelo", "estado"]),
   async (req, res) => {
 
@@ -172,7 +172,7 @@ Solo ADMIN
 router.delete(
   "/:id",
   verificarToken,
-  verificarRol("admin"),
+  verificarRol("administrador"),
   async (req, res) => {
 
     try {

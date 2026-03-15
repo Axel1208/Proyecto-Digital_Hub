@@ -102,15 +102,15 @@ router.post(
 
         try {
 
-            const { nombre, correo, password, rol } = req.body;
+            const { nombre, correo, password, rol, estado } = req.body;
 
-            if (!nombre || !correo || !password || !rol) {
+            if (!nombre || !correo || !password || !rol || !estado) {
                 return res.status(400).json({
                     mensaje: "Todos los campos son obligatorios"
                 });
             }
 
-           if (!validarRol(rol)) {
+            if (!validarRol(rol)) {
                 return res.status(400).json({
                     mensaje: "Rol inválido"
                 });
@@ -118,7 +118,15 @@ router.post(
 
             if (!validarCorreo(correo)) {
                 return res.status(400).json({
-                mensaje: "Correo inválido"
+                    mensaje: "Correo inválido"
+                });
+            }
+
+            const estadosValidos = ["activo", "inhabilitado"];
+
+            if (!estadosValidos.includes(estado)) {
+                return res.status(400).json({
+                    mensaje: "Estado inválido"
                 });
             }
 
@@ -136,8 +144,8 @@ router.post(
             const password_hash = await bcrypt.hash(password, 10);
 
             await db.query(
-                "INSERT INTO usuario (nombre, correo, password_hash, rol) VALUES (?, ?, ?, ?)",
-                [nombre, correo, password_hash, rol]
+                "INSERT INTO usuario (nombre, correo, password_hash, rol, estado) VALUES (?, ?, ?, ?, ?)",
+                [nombre, correo, password_hash, rol, estado]
             );
 
             res.status(201).json({
@@ -237,32 +245,88 @@ router.put(
   verificarToken,
   verificarRol("administrador"),
   async (req, res) => {
-
     try {
 
       const { id } = req.params;
-      const { nombre, rol } = req.body;
+      const { nombre, rol, correo, estado } = req.body;
 
-      if (!nombre || !rol) {
+      // validar rol
+      if (rol && !validarRol(rol)) {
         return res.status(400).json({
-          mensaje: "Nombre y rol son obligatorios"
+          mensaje: "Rol inválido"
         });
       }
 
+      // validar estado
+      if (estado && !validarEstadoUsuario(estado)) {
+        return res.status(400).json({
+        mensaje: "Estado inválido"
+      });
+      }
+
+      // validar formato del correo
+      if (correo && !validarCorreo(correo)) {
+        return res.status(400).json({
+        mensaje: "Formato de correo inválido"
+      });
+      }
+
+      // validar correo duplicado
+      if (correo) {
+
+        const [correoExistente] = await db.query(
+          "SELECT id_usuario FROM usuario WHERE correo = ?",
+          [correo]
+        );
+
+        if (correoExistente.length > 0 && correoExistente[0].id_usuario != id) {
+          return res.status(400).json({
+            mensaje: "El correo ya está en uso"
+          });
+        }
+
+      }
+
+      // construir update dinámico
+      const campos = [];
+      const valores = [];
+
+      if (nombre) {
+        campos.push("nombre = ?");
+        valores.push(nombre);
+      }
+
+      if (rol) {
+        campos.push("rol = ?");
+        valores.push(rol);
+      }
+
+      if (correo) {
+        campos.push("correo = ?");
+        valores.push(correo);
+      }
+
+      if (estado) {
+        campos.push("estado = ?");
+        valores.push(estado);
+      }
+
+      if (campos.length === 0) {
+        return res.status(400).json({
+          mensaje: "No se enviaron campos para actualizar"
+        });
+      }
+
+      valores.push(id);
+
       const [resultado] = await db.query(
-        "UPDATE usuario SET nombre = ?, rol = ? WHERE id_usuario = ?",
-        [nombre, rol, id]
+        `UPDATE usuario SET ${campos.join(", ")} WHERE id_usuario = ?`,
+        valores
       );
 
       if (resultado.affectedRows === 0) {
         return res.status(404).json({
           mensaje: "Usuario no encontrado"
-        });
-      }
-
-      if (!validarRol(rol)) {
-        return res.status(400).json({
-            mensaje: "Rol inválido"
         });
       }
 
@@ -279,10 +343,8 @@ router.put(
       });
 
     }
-
   }
 );
-
 
 // ==============================
 // CAMBIAR ESTADO

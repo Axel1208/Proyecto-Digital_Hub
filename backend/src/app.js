@@ -1,4 +1,4 @@
-// app.js - Puerto 5000
+// app.js - Puerto 3001
 require("dotenv").config();
 
 const express = require("express");
@@ -6,6 +6,15 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 const app = express();
+
+// CORS para permitir peticiones desde el frontend
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
 
 // =========================================
 // MIDDLEWARES
@@ -23,42 +32,17 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// =========================================
-// RUTAS - SEGURIDAD
-// =========================================
+// routers
+const usuarioRouter = require("./routers/usuario.routers");
 
-// Rutas con seguridad (las originales)
-// app.use("/api/usuarios", require("./routers/usuario.routers"));
-// app.use("/api/portatiles", require("./routers/portatil.routers"));
-// app.use("/api/reportes", require("./routers/reportes.routers"));
-// app.use("/api/ambiente", require("./routers/ambiente.routers"));
-// app.use("/api/ficha", require("./routers/ficha.routers"));
+app.use("/api", usuarioRouter);
 
-// =========================================
-// RUTAS - SIN SEGURIDAD (PARA PROBAR FRONTEND)
-// =========================================
+app.use("/portatil", require("./routers/portatil.routers"));
+app.use("/reportes", require("./routers/reportes.routers"));
+app.use("/ambiente", require("./routers/ambiente.routers"));
+app.use("/ficha", require("./routers/ficha.routers"));
 
-//        ↓ prefijo URL                    ↓ archivo de rutas
-app.use("/api/usuarioprueba", require("./routers/usuarioPrueba.routers"));
-
-// =========================================
-// RUTA DE PRUEBA
-// =========================================
-app.get("/api/test", (req, res) => {
-    res.json({ mensaje: "✅ Servidor funcionando" });
-});
-
-// =========================================
-// MANEJO DE ERRORES 404
-// =========================================
-app.use((req, res) => {
-    res.status(404).json({ mensaje: "Ruta no encontrada" });
-});
-
-// =========================================
-// INICIAR SERVIDOR - PUERTO 5000
-// =========================================
-const PORT = process.env.PORT || 5000;  // ← Cambiado a 5000
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);

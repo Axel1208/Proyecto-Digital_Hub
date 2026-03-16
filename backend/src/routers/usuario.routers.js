@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../db/database");
+
 const {
     validarRol,
     validarEstadoUsuario,
@@ -12,15 +13,22 @@ const {
 const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 
-const rolesValidos = ["administrador", "instructor", "aprendiz"];
+const { ESTADOS_USUARIO } = require("../constants/dominio");
+
+// ==============================
+// TEST
+// ==============================
 
 router.get("/test", (req,res)=>{
   res.json({mensaje:"funciona"});
 });
+
+
 // ==============================
 // LOGIN
 // POST /api/usuarios/login
 // ==============================
+
 router.post("/login", async (req, res) => {
 
     try {
@@ -46,7 +54,7 @@ router.post("/login", async (req, res) => {
 
         const usuario = usuarios[0];
 
-        if (usuario.estado !== "activo") {
+        if (usuario.estado !== ESTADOS_USUARIO[0]) {
             return res.status(403).json({
                 mensaje: "Usuario inactivo"
             });
@@ -94,6 +102,7 @@ router.post("/login", async (req, res) => {
 // CREAR USUARIO
 // POST /api/usuarios
 // ==============================
+
 router.post(
     "/",
     verificarToken,
@@ -122,9 +131,7 @@ router.post(
                 });
             }
 
-            const estadosValidos = ["activo", "inhabilitado"];
-
-            if (!estadosValidos.includes(estado)) {
+            if (!ESTADOS_USUARIO.includes(estado)) {
                 return res.status(400).json({
                     mensaje: "Estado inválido"
                 });
@@ -170,6 +177,7 @@ router.post(
 // LISTAR USUARIOS
 // GET /api/usuarios
 // ==============================
+
 router.get(
     "/",
     verificarToken,
@@ -197,9 +205,10 @@ router.get(
     }
 );
 
+
 // ==============================
 // OBTENER USUARIO POR ID
-// GET /api/:id
+// GET /api/usuarios/:id
 // ==============================
 
 router.get(
@@ -207,6 +216,7 @@ router.get(
   verificarToken,
   verificarRol("administrador", "instructor"),
   async (req, res) => {
+
     try {
 
       const { id } = req.params;
@@ -233,45 +243,45 @@ router.get(
       });
 
     }
+
   }
 );
+
 
 // ==============================
 // EDITAR USUARIO
 // PUT /api/usuarios/:id
 // ==============================
+
 router.put(
   "/:id",
   verificarToken,
   verificarRol("administrador"),
   async (req, res) => {
+
     try {
 
       const { id } = req.params;
       const { nombre, rol, correo, estado } = req.body;
 
-      // validar rol
       if (rol && !validarRol(rol)) {
         return res.status(400).json({
           mensaje: "Rol inválido"
         });
       }
 
-      // validar estado
       if (estado && !validarEstadoUsuario(estado)) {
         return res.status(400).json({
-        mensaje: "Estado inválido"
-      });
+          mensaje: "Estado inválido"
+        });
       }
 
-      // validar formato del correo
       if (correo && !validarCorreo(correo)) {
         return res.status(400).json({
-        mensaje: "Formato de correo inválido"
-      });
+          mensaje: "Formato de correo inválido"
+        });
       }
 
-      // validar correo duplicado
       if (correo) {
 
         const [correoExistente] = await db.query(
@@ -287,7 +297,6 @@ router.put(
 
       }
 
-      // construir update dinámico
       const campos = [];
       const valores = [];
 
@@ -343,13 +352,16 @@ router.put(
       });
 
     }
+
   }
 );
+
 
 // ==============================
 // CAMBIAR ESTADO
 // PATCH /api/usuarios/:id/estado
 // ==============================
+
 router.patch(
   "/:id/estado",
   verificarToken,
@@ -369,7 +381,7 @@ router.patch(
 
       if (!validarEstadoUsuario(estado)) {
         return res.status(400).json({
-            mensaje: "Estado inválido"
+          mensaje: "Estado inválido"
         });
       }
 
@@ -400,4 +412,6 @@ router.patch(
 
   }
 );
+
+
 module.exports = router;

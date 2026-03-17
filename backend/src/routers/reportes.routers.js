@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db/database");
+//servicio de exportar excel
+const { exportarReportesExcel } = require("../controllers/reportes.controller");
+
+router.get("/excel", exportarReportesExcel);
 
 /**
  * GET - Obtener todos los reportes

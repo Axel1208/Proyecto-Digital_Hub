@@ -34,9 +34,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // routers
 const usuarioRouter = require("./routers/usuario.routers");
+const reportesRouter = require("./routers/reportes.routers");
 
 app.use("/api", usuarioRouter);
-
+app.use("/api/reportes", reportesRouter);
 app.use("/portatil", require("./routers/portatil.routers"));
 app.use("/reportes", require("./routers/reportes.routers"));
 app.use("/ambiente", require("./routers/ambiente.routers"));

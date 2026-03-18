@@ -43,6 +43,7 @@ app.use("/portatil", require("./routers/portatil.routers"));
 app.use("/reportes", require("./routers/reportes.routers"));
 app.use("/ambiente", require("./routers/ambiente.routers"));
 app.use("/ficha", require("./routers/ficha.routers"));
+app.use("/asignacion", require("./routers/asignacion.routers"));
 
 const PORT = process.env.PORT || 3001;
 

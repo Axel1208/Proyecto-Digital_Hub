@@ -8,28 +8,25 @@ const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 const validarSerialUnico = require("../middlewares/validarSerialUnico");
 
-
 /*
 =========================================
 1. CREAR PORTÁTIL
 =========================================
-Solo ADMIN o INSTRUCTOR
+(Seguridad temporalmente desactivada)
 */
 
 router.post(
   "/",
-  verificarToken,
-  verificarRol("administrador", "instructor"),
-  validarCamposObligatorios(["num_serie", "marca", "modelo", "estado"]),
+  validarCamposObligatorios(["num_serie", "marca", "modelo", "estado", "ubicacion", "descripcion"]),
   validarSerialUnico,
   async (req, res) => {
     try {
-      const { num_serie, marca, modelo, estado } = req.body;
+      const { num_serie, marca, modelo, estado, ubicacion, descripcion } = req.body;
 
       const [resultado] = await pool.query(
-        `INSERT INTO portatil (num_serie, marca, modelo, estado)
-         VALUES (?, ?, ?, ?)`,
-        [num_serie, marca, modelo, estado]
+        `INSERT INTO portatil (num_serie, marca, modelo, estado, ubicacion, descripcion)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [num_serie, marca, modelo, estado, ubicacion, descripcion]
       );
 
       res.status(201).json({
@@ -46,16 +43,15 @@ router.post(
   }
 );
 
-
 /*
 =========================================
 2. LISTAR TODOS LOS PORTÁTILES
 =========================================
+(Seguridad temporalmente desactivada)
 */
 
 router.get(
   "/",
-  verificarToken,
   async (req, res) => {
     try {
 
@@ -73,16 +69,15 @@ router.get(
   }
 );
 
-
 /*
 =========================================
 3. OBTENER PORTÁTIL POR ID
 =========================================
+(Seguridad temporalmente desactivada)
 */
 
 router.get(
   "/:id",
-  verificarToken,
   async (req, res) => {
 
     try {
@@ -113,31 +108,28 @@ router.get(
   }
 );
 
-
 /*
 =========================================
 4. ACTUALIZAR PORTÁTIL
 =========================================
-Solo ADMIN o INSTRUCTOR
+(Seguridad temporalmente desactivada)
 */
 
 router.put(
   "/:id",
-  verificarToken,
-  verificarRol("administrador", "instructor"),
-  validarCamposObligatorios(["marca", "modelo", "estado"]),
+  validarCamposObligatorios(["marca", "modelo", "estado", "ubicacion", "descripcion"]),
   async (req, res) => {
 
     try {
 
       const { id } = req.params;
-      const { marca, modelo, estado } = req.body;
+      const { marca, modelo, estado, ubicacion, descripcion } = req.body;
 
       const [resultado] = await pool.query(
         `UPDATE portatil
-         SET marca = ?, modelo = ?, estado = ?
+         SET marca = ?, modelo = ?, estado = ?, ubicacion = ?, descripcion = ?
          WHERE id_portatil = ?`,
-        [marca, modelo, estado, id]
+        [marca, modelo, estado, ubicacion, descripcion, id]
       );
 
       if (resultado.affectedRows === 0) {
@@ -161,18 +153,15 @@ router.put(
   }
 );
 
-
 /*
 =========================================
 5. ELIMINAR PORTÁTIL
 =========================================
-Solo ADMIN
+(Seguridad temporalmente desactivada)
 */
 
 router.delete(
   "/:id",
-  verificarToken,
-  verificarRol("administrador"),
   async (req, res) => {
 
     try {
@@ -204,6 +193,5 @@ router.delete(
 
   }
 );
-
 
 module.exports = router;

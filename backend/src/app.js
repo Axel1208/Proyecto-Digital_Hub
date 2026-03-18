@@ -36,6 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 const usuarioRouter = require("./routers/usuario.routers");
 const reportesRouter = require("./routers/reportes.routers");
 
+app.use("/uploads", express.static("uploads"));
 app.use("/api", usuarioRouter);
 app.use("/api/reportes", reportesRouter);
 app.use("/portatil", require("./routers/portatil.routers"));

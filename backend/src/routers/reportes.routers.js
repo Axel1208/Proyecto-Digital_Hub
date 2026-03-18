@@ -1,14 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db/database");
-//servicio de exportar excel
+
+// 📊 Controlador de Excel
 const { exportarReportesExcel } = require("../controllers/reportes.controller");
 
+// 📸 Middleware para subida de archivos
+const upload = require("../uploads/upload");
+
+// =============================
+// 📥 EXPORTAR EXCEL
+// =============================
 router.get("/excel", exportarReportesExcel);
 
-/**
- * GET - Obtener todos los reportes
- */
+// =============================
+// 📄 GET - Obtener todos los reportes
+// =============================
 router.get("/", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM reportes");
@@ -19,9 +26,9 @@ router.get("/", async (req, res) => {
   }
 });
 
-/**
- * GET - Obtener reporte por ID
- */
+// =============================
+// 🔍 GET - Obtener reporte por ID
+// =============================
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -42,21 +49,24 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-/**
- * POST - Crear reporte
- */
-router.post("/", async (req, res) => {
+// =============================
+// ➕ POST - Crear reporte (con imagen)
+// =============================
+router.post("/", upload.single("archivo"), async (req, res) => {
   try {
     const {
       estado_reporte,
       fecha_reporte,
-      archivo,
       descripcion
-    } = req.body || {};
+    } = req.body;
 
-    if (!estado_reporte || !fecha_reporte || !archivo || !descripcion) {
+    // Validación básica
+    if (!estado_reporte || !fecha_reporte || !descripcion) {
       return res.status(400).json({ message: "Faltan campos obligatorios" });
     }
+
+    // 📸 Ruta de la imagen
+    const archivo = req.file ? req.file.path : null;
 
     await pool.query(
       `INSERT INTO reportes 
@@ -66,27 +76,34 @@ router.post("/", async (req, res) => {
     );
 
     res.status(201).json({ message: "Reporte creado correctamente" });
+
   } catch (error) {
-    console.error("MYSQL ERROR >>>", error);
+    console.error("ERROR POST >>>", error);
     res.status(500).json({ message: "Error al crear reporte" });
   }
 });
 
-/**
- * PUT - Actualizar reporte
- */
-router.put("/:id", async (req, res) => {
+// =============================
+// ✏️ PUT - Actualizar reporte (con o sin imagen)
+// =============================
+router.put("/:id", upload.single("archivo"), async (req, res) => {
   try {
     const { id } = req.params;
     const {
       estado_reporte,
       fecha_reporte,
-      archivo,
       descripcion
-    } = req.body || {};
+    } = req.body;
 
-    if (!estado_reporte || !fecha_reporte || !archivo || !descripcion) {
+    if (!estado_reporte || !fecha_reporte || !descripcion) {
       return res.status(400).json({ message: "Faltan campos obligatorios" });
+    }
+
+    // Mantener imagen anterior si no se envía nueva
+    let archivo = req.body.archivo;
+
+    if (req.file) {
+      archivo = req.file.path;
     }
 
     const [result] = await pool.query(
@@ -104,15 +121,16 @@ router.put("/:id", async (req, res) => {
     }
 
     res.json({ message: "Reporte actualizado correctamente" });
+
   } catch (error) {
-    console.error(error);
+    console.error("ERROR PUT >>>", error);
     res.status(500).json({ message: "Error al actualizar reporte" });
   }
 });
 
-/**
- * DELETE - Eliminar reporte
- */
+// =============================
+// ❌ DELETE - Eliminar reporte
+// =============================
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -127,9 +145,10 @@ router.delete("/:id", async (req, res) => {
     }
 
     res.json({ message: "Reporte eliminado correctamente" });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "error al eliminar reporte" });
+    console.error("ERROR DELETE >>>", error);
+    res.status(500).json({ message: "Error al eliminar reporte" });
   }
 });
 

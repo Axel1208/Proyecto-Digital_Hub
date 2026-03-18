@@ -1,4 +1,5 @@
 const ExcelJS = require("exceljs");
+const fs = require("fs");
 
 const generarExcelReportes = async (data) => {
     const workbook = new ExcelJS.Workbook();
@@ -23,12 +24,11 @@ const generarExcelReportes = async (data) => {
     fecha.alignment = { horizontal: "center" };
 
     // =============================
-    // 🧾 ENCABEZADOS (MANUAL)
+    // 🧾 ENCABEZADOS
     // =============================
-    const headers = ["ID", "Estado", "Fecha", "Archivo", "Descripción"];
+    const headers = ["ID", "Estado", "Fecha", "Evidencia", "Descripción"];
     const headerRow = worksheet.addRow(headers);
 
-    // Estilo encabezados
     headerRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = {
@@ -46,79 +46,86 @@ const generarExcelReportes = async (data) => {
     });
 
     // =============================
-    // 📊 FILAS
+    // 📊 FILAS + IMÁGENES
     // =============================
     data.forEach((item, index) => {
 
-    // 🔥 LIMPIEZA TOTAL DE DATOS
+        const id = item.id_reporte ?? "";
+        const estado = item.estado_reporte ? String(item.estado_reporte) : "";
+        const descripcion = item.descripcion ? String(item.descripcion) : "";
 
-    const id = item.id_reporte ?? "";
+        // 📅 VALIDAR FECHA
+        let fechaValida = "";
+        if (
+            item.fecha_reporte &&
+            item.fecha_reporte !== "0000-00-00 00:00:00" &&
+            !isNaN(new Date(item.fecha_reporte))
+        ) {
+            fechaValida = new Date(item.fecha_reporte);
+        }
 
-    const estado = item.estado_reporte 
-        ? String(item.estado_reporte)
-        : "";
+        // 📊 CREAR FILA (SIN archivo)
+        const row = worksheet.addRow([
+            id,
+            estado,
+            fechaValida,
+            "", // 🔥 AQUÍ VA LA IMAGEN
+            descripcion
+        ]);
 
-    const archivo = item.archivo 
-        ? String(item.archivo)
-        : "";
+        // 🎨 ESTILO FILA
+        const color = index % 2 === 0 ? "F2F2F2" : "FFFFFF";
 
-    const descripcion = item.descripcion 
-        ? String(item.descripcion)
-        : "";
+        row.eachCell((cell) => {
+            cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: color }
+            };
+            cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" }
+            };
+            cell.alignment = { vertical: "middle" };
+        });
 
-    // 🔥 VALIDAR FECHA (CRÍTICO)
-    let fechaValida = "";
+        // =============================
+        // 🖼️ INSERTAR IMAGEN
+        // =============================
+        if (item.archivo && fs.existsSync(item.archivo)) {
+            try {
+                const extension = item.archivo.split(".").pop();
 
-    if (
-        item.fecha_reporte &&
-        item.fecha_reporte !== "0000-00-00 00:00:00" &&
-        !isNaN(new Date(item.fecha_reporte))
-    ) {
-        fechaValida = new Date(item.fecha_reporte);
-    }
+                const imageId = workbook.addImage({
+                    filename: item.archivo,
+                    extension: extension
+                });
 
-    // 📊 AGREGAR FILA SEGURA
-    const row = worksheet.addRow([
-        id,
-        estado,
-        fechaValida,
-        archivo,
-        descripcion
-    ]);
+                worksheet.addImage(imageId, {
+                    tl: { col: 3, row: row.number - 1 }, // columna D
+                    ext: { width: 100, height: 100 }
+                });
 
-    // 🎨 ESTILO
-    const color = index % 2 === 0 ? "F2F2F2" : "FFFFFF";
+                row.height = 80;
 
-    row.eachCell((cell) => {
-        cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: color }
-        };
-        cell.border = {
-            top: { style: "thin" },
-            left: { style: "thin" },
-            bottom: { style: "thin" },
-            right: { style: "thin" }
-        };
-        cell.alignment = { vertical: "middle" };
+            } catch (error) {
+                console.log("Error cargando imagen:", error.message);
+            }
+        }
     });
-});
+
     // =============================
-    // 📏 ANCHO COLUMNAS
+    // 📏 COLUMNAS
     // =============================
     worksheet.columns = [
         { width: 10 },
         { width: 20 },
         { width: 25 },
-        { width: 30 },
+        { width: 25 },
         { width: 45 }
     ];
-
-    // =============================
-    // 📅 FORMATO FECHA
-    // =============================
-    // worksheet.getColumn(3).numFmt = "yyyy-mm-dd hh:mm";
 
     // =============================
     // ❄️ FIJAR ENCABEZADO

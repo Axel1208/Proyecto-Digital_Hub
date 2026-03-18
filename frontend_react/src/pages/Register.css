@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 120px 20px 60px;
+  padding: 140px 20px 60px;
   animation: fadeIn 0.8s ease-out;
 }
 
@@ -84,10 +84,10 @@
 .input-group input,
 .input-group select {
   width: 100%;
-  padding: 14px 16px;
+  padding: 14px 20px;
   background: rgba(11, 11, 15, 0.6);
   border: 1px solid rgba(127, 90, 240, 0.2);
-  border-radius: 10px;
+  border-radius: 50px;
   color: var(--text-dark);
   font-size: 14px;
   font-family: 'Poppins', sans-serif;
@@ -122,21 +122,22 @@
 .btn-submit {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+  background: linear-gradient(135deg, #6b46e0, #5a3bc0);
   border: none;
-  border-radius: 10px;
+  border-radius: 50px;
   color: white;
   font-size: 16px;
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(127, 90, 240, 0.3);
+  box-shadow: 0 4px 16px rgba(107, 70, 224, 0.25);
 }
 
 .btn-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(127, 90, 240, 0.5);
+  box-shadow: 0 8px 24px rgba(107, 70, 224, 0.4);
+  background: linear-gradient(135deg, #7f5af0, #6b46e0);
 }
 
 .btn-submit:active {

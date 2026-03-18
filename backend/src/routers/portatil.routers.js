@@ -8,7 +8,6 @@ const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 const validarSerialUnico = require("../middlewares/validarSerialUnico");
 
-
 /*
 =========================================
 1. CREAR PORTÁTIL
@@ -18,16 +17,16 @@ const validarSerialUnico = require("../middlewares/validarSerialUnico");
 
 router.post(
   "/",
-  validarCamposObligatorios(["num_serie", "marca", "modelo", "estado"]),
+  validarCamposObligatorios(["num_serie", "marca", "modelo", "estado", "ubicacion", "descripcion"]),
   validarSerialUnico,
   async (req, res) => {
     try {
-      const { num_serie, marca, modelo, estado } = req.body;
+      const { num_serie, marca, modelo, estado, ubicacion, descripcion } = req.body;
 
       const [resultado] = await pool.query(
-        `INSERT INTO portatil (num_serie, marca, modelo, estado)
-         VALUES (?, ?, ?, ?)`,
-        [num_serie, marca, modelo, estado]
+        `INSERT INTO portatil (num_serie, marca, modelo, estado, ubicacion, descripcion)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [num_serie, marca, modelo, estado, ubicacion, descripcion]
       );
 
       res.status(201).json({
@@ -43,7 +42,6 @@ router.post(
     }
   }
 );
-
 
 /*
 =========================================
@@ -70,7 +68,6 @@ router.get(
     }
   }
 );
-
 
 /*
 =========================================
@@ -111,7 +108,6 @@ router.get(
   }
 );
 
-
 /*
 =========================================
 4. ACTUALIZAR PORTÁTIL
@@ -121,19 +117,19 @@ router.get(
 
 router.put(
   "/:id",
-  validarCamposObligatorios(["marca", "modelo", "estado",]),
+  validarCamposObligatorios(["marca", "modelo", "estado", "ubicacion", "descripcion"]),
   async (req, res) => {
 
     try {
 
       const { id } = req.params;
-      const { marca, modelo, estado } = req.body;
+      const { marca, modelo, estado, ubicacion, descripcion } = req.body;
 
       const [resultado] = await pool.query(
         `UPDATE portatil
-         SET marca = ?, modelo = ?, estado = ?
+         SET marca = ?, modelo = ?, estado = ?, ubicacion = ?, descripcion = ?
          WHERE id_portatil = ?`,
-        [marca, modelo, estado, id]
+        [marca, modelo, estado, ubicacion, descripcion, id]
       );
 
       if (resultado.affectedRows === 0) {
@@ -156,7 +152,6 @@ router.put(
 
   }
 );
-
 
 /*
 =========================================
@@ -198,6 +193,5 @@ router.delete(
 
   }
 );
-
 
 module.exports = router;

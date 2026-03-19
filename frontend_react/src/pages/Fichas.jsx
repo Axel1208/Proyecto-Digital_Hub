@@ -28,7 +28,7 @@ const Fichas = () => {
   const cargarFichas = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/ficha', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/fichas', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       setFichas(await res.json());
     } catch { setError('Error al cargar las fichas'); }
@@ -38,7 +38,7 @@ const Fichas = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/ficha', {
+      const res = await fetch('/api/fichas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -55,7 +55,7 @@ const Fichas = () => {
   const handleEditar = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/ficha/${seleccionada.id_ficha}`, {
+      const res = await fetch(`/api/fichas/${seleccionada.id_ficha}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData)
@@ -71,7 +71,7 @@ const Fichas = () => {
   const handleEliminar = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar esta ficha?')) return;
     try {
-      const res = await fetch(`/ficha/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/fichas/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) cargarFichas();
     } catch { setError('Error al eliminar'); }
   };

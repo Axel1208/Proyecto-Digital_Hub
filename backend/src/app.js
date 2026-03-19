@@ -1,41 +1,36 @@
-// app.js - Puerto 3001
-require("dotenv").config();
-
 const express = require("express");
-const morgan = require("morgan");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 
-// CORS para permitir peticiones desde el frontend
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-  next();
-});
-
-// =========================================
-// MIDDLEWARES
-// =========================================
-
-// CORS - Permite comunicación frontend (React) ↔ backend
-app.use(cors({
-    origin: "http://localhost:5173",   // Puerto de React con Vite
-    // O si usas Create React App: "http://localhost:3000"
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-app.use(morgan("dev"));
+// ===============================
+// MIDDLEWARES GLOBALES
+// ===============================
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// routers
+// ===============================
+// ROUTERS
+// ===============================
 const usuarioRouter = require("./routers/usuario.routers");
+const portatilRouter = require("./routers/portatil.routers");
 const reportesRouter = require("./routers/reportes.routers");
+const ambienteRouter = require("./routers/ambiente.routers");
+const fichaRouter = require("./routers/ficha.routers");
 
+// ===============================
+// RUTAS PRINCIPALES (API)
+// ===============================
+app.use("/api/usuarios", usuarioRouter);
+app.use("/api/portatiles", portatilRouter);
+app.use("/api/reportes", reportesRouter);
+app.use("/api/ambientes", ambienteRouter);
+app.use("/api/fichas", fichaRouter);
+
+// ===============================
+// ARCHIVOS ESTÁTICOS
+// ===============================
 app.use("/uploads", express.static("uploads"));
 app.use("/api", usuarioRouter);
 app.use("/api/reportes", reportesRouter);
@@ -45,6 +40,25 @@ app.use("/ambiente", require("./routers/ambiente.routers"));
 app.use("/ficha", require("./routers/ficha.routers"));
 app.use("/asignacion", require("./routers/asignacion.routers"));
 
+// ===============================
+// RUTA DE PRUEBA
+// ===============================
+app.get("/", (req, res) => {
+    res.send("API DigitalHub funcionando 🚀");
+});
+
+// ===============================
+// MANEJO DE ERRORES BÁSICO
+// ===============================
+app.use((req, res) => {
+    res.status(404).json({
+        mensaje: "Ruta no encontrada"
+    });
+});
+
+// ===============================
+// SERVIDOR
+// ===============================
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {

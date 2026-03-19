@@ -1,48 +1,57 @@
-// app.js
-require("dotenv").config();
-
 const express = require("express");
-const morgan = require("morgan");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 
-// ============================
-// MIDDLEWARES
-// ============================
-
-app.use(cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-app.use(morgan("dev"));
+// ===============================
+// MIDDLEWARES GLOBALES
+// ===============================
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// ============================
+// ===============================
 // ROUTERS
-// ============================
-
+// ===============================
 const usuarioRouter = require("./routers/usuario.routers");
 const portatilRouter = require("./routers/portatil.routers");
 const reportesRouter = require("./routers/reportes.routers");
+const ambienteRouter = require("./routers/ambiente.routers");
+const fichaRouter = require("./routers/ficha.routers");
 
-// 👇 RUTAS BIEN DEFINIDAS
+// ===============================
+// RUTAS PRINCIPALES (API)
+// ===============================
 app.use("/api/usuarios", usuarioRouter);
-app.use("/api/portatiles", portatilRouter); // 👈 mejor en plural
+app.use("/api/portatiles", portatilRouter);
 app.use("/api/reportes", reportesRouter);
+app.use("/api/ambientes", ambienteRouter);
+app.use("/api/fichas", fichaRouter);
 
-// Otros módulos
-app.use("/api/ambientes", require("./routers/ambiente.routers"));
-app.use("/api/fichas", require("./routers/ficha.routers"));
-
-// Archivos estáticos
+// ===============================
+// ARCHIVOS ESTÁTICOS
+// ===============================
 app.use("/uploads", express.static("uploads"));
 
-// ============================
+// ===============================
+// RUTA DE PRUEBA
+// ===============================
+app.get("/", (req, res) => {
+    res.send("API DigitalHub funcionando 🚀");
+});
 
+// ===============================
+// MANEJO DE ERRORES BÁSICO
+// ===============================
+app.use((req, res) => {
+    res.status(404).json({
+        mensaje: "Ruta no encontrada"
+    });
+});
+
+// ===============================
+// SERVIDOR
+// ===============================
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {

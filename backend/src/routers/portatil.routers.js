@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db/database");
 
-// Middlewares
 const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");

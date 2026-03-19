@@ -31,7 +31,7 @@ const Comentarios = () => {
   const cargarReportes = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/reportes', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/reportes', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       setReportes(await res.json());
     } catch { setError('Error al cargar los reportes'); }
@@ -41,7 +41,7 @@ const Comentarios = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/reportes', {
+      const res = await fetch('/reportes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -58,7 +58,7 @@ const Comentarios = () => {
   const handleEditar = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/reportes/${seleccionado.id_reporte}`, {
+      const res = await fetch(`/reportes/${seleccionado.id_reporte}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData)
@@ -74,7 +74,7 @@ const Comentarios = () => {
   const handleEliminar = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este reporte?')) return;
     try {
-      const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) cargarReportes();
     } catch { setError('Error al eliminar'); }
   };

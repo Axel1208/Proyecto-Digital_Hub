@@ -26,7 +26,7 @@ const EquipmentManagement = () => {
   const cargarPortatiles = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/portatiles', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       setPortatiles(await res.json());
     } catch { setError('Error al cargar los portátiles'); }
@@ -36,7 +36,7 @@ const EquipmentManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/portatiles', {
+      const res = await fetch('/portatil', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -53,7 +53,7 @@ const EquipmentManagement = () => {
   const handleEditar = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/portatiles/${seleccionado.id_portatil}`, {
+      const res = await fetch(`/portatil/${seleccionado.id_portatil}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData)
@@ -69,7 +69,7 @@ const EquipmentManagement = () => {
   const handleEliminar = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este portátil?')) return;
     try {
-      const res = await fetch(`/api/portatiles/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/portatil/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) cargarPortatiles();
     } catch { setError('Error al eliminar'); }
   };

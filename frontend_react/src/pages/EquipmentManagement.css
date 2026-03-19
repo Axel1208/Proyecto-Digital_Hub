@@ -274,7 +274,8 @@
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   background: rgba(11, 11, 15, 0.6);
   border: 1px solid rgba(127, 90, 240, 0.2);
@@ -288,7 +289,8 @@
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   border-color: var(--primary-purple);
   box-shadow: 0 0 0 3px rgba(127, 90, 240, 0.1);
 }
@@ -300,6 +302,12 @@
   background-repeat: no-repeat;
   background-position: right 16px center;
   padding-right: 40px;
+}
+
+.form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+  min-height: 80px;
 }
 
 .modal-actions {

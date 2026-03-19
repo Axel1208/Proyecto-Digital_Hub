@@ -13,8 +13,8 @@ const EquipmentManagement = () => {
   const [showVerModal, setShowVerModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [seleccionado, setSeleccionado] = useState(null);
-  const [formData, setFormData] = useState({ num_serie: '', marca: '', modelo: '', estado: 'disponible' });
-  const [editData, setEditData] = useState({ marca: '', modelo: '', estado: 'disponible' });
+  const [formData, setFormData] = useState({ num_serie: '', marca: '', tipo: '', modelo: '', estado: 'disponible', ubicacion: '', descripcion: '' });
+  const [editData, setEditData] = useState({ marca: '', tipo: '', modelo: '', estado: 'disponible', ubicacion: '', descripcion: '' });
   const [filtros, setFiltros] = useState({ buscar: '', estado: '', marca: '' });
   const token = localStorage.getItem('token');
 
@@ -26,7 +26,7 @@ const EquipmentManagement = () => {
   const cargarPortatiles = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/portatiles', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       setPortatiles(await res.json());
     } catch { setError('Error al cargar los portátiles'); }
@@ -36,7 +36,7 @@ const EquipmentManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/portatil', {
+      const res = await fetch('/api/portatiles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -44,7 +44,7 @@ const EquipmentManagement = () => {
       const data = await res.json();
       if (!res.ok) { setError(data.mensaje || data.error || 'Error al registrar'); return; }
       setShowModal(false);
-      setFormData({ num_serie: '', marca: '', modelo: '', estado: 'disponible' });
+      setFormData({ num_serie: '', marca: '', tipo: '', modelo: '', estado: 'disponible', ubicacion: '', descripcion: '' });
       setError('');
       cargarPortatiles();
     } catch { setError('Error al conectar con el servidor'); }
@@ -53,7 +53,7 @@ const EquipmentManagement = () => {
   const handleEditar = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/portatil/${seleccionado.id_portatil}`, {
+      const res = await fetch(`/api/portatiles/${seleccionado.id_portatil}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData)
@@ -69,7 +69,7 @@ const EquipmentManagement = () => {
   const handleEliminar = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este portátil?')) return;
     try {
-      const res = await fetch(`/portatil/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/portatiles/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) cargarPortatiles();
     } catch { setError('Error al eliminar'); }
   };
@@ -77,7 +77,7 @@ const EquipmentManagement = () => {
   const abrirVer = (p) => { setSeleccionado(p); setShowVerModal(true); };
   const abrirEditar = (p) => {
     setSeleccionado(p);
-    setEditData({ marca: p.marca, modelo: p.modelo, estado: p.estado });
+    setEditData({ marca: p.marca, tipo: p.tipo || '', modelo: p.modelo, estado: p.estado, ubicacion: p.ubicacion || '', descripcion: p.descripcion || '' });
     setShowEditModal(true);
   };
 
@@ -186,6 +186,9 @@ const EquipmentManagement = () => {
                 <div className="form-group"><label>Marca</label>
                   <input type="text" name="marca" value={formData.marca} onChange={(e) => setFormData({...formData, marca: e.target.value})} required />
                 </div>
+                <div className="form-group"><label>Tipo</label>
+                  <input type="text" name="tipo" value={formData.tipo} onChange={(e) => setFormData({...formData, tipo: e.target.value})} required />
+                </div>
                 <div className="form-group"><label>Modelo</label>
                   <input type="text" name="modelo" value={formData.modelo} onChange={(e) => setFormData({...formData, modelo: e.target.value})} required />
                 </div>
@@ -196,6 +199,12 @@ const EquipmentManagement = () => {
                     <option value="dañado">Dañado</option>
                     <option value="en reparacion">En reparación</option>
                   </select>
+                </div>
+                <div className="form-group"><label>Ubicación</label>
+                  <input type="text" name="ubicacion" value={formData.ubicacion} onChange={(e) => setFormData({...formData, ubicacion: e.target.value})} />
+                </div>
+                <div className="form-group"><label>Descripción</label>
+                  <textarea name="descripcion" value={formData.descripcion} onChange={(e) => setFormData({...formData, descripcion: e.target.value})} rows={3} />
                 </div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
@@ -212,13 +221,16 @@ const EquipmentManagement = () => {
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal-title">Detalle del portátil</h2>
               <div className="detalle-grid">
+                <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_portatil}</span></div>
                 <div className="detalle-item"><span className="detalle-label">N° Serie</span><span className="detalle-valor">{seleccionado.num_serie}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Marca</span><span className="detalle-valor">{seleccionado.marca}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Tipo</span><span className="detalle-valor">{seleccionado.tipo || '—'}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Modelo</span><span className="detalle-valor">{seleccionado.modelo}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Estado</span>
                   <span className="detalle-valor" style={{color: estadoColor(seleccionado.estado), fontWeight:600}}>{seleccionado.estado}</span>
                 </div>
-                <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_portatil}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Ubicación</span><span className="detalle-valor">{seleccionado.ubicacion || '—'}</span></div>
+                <div className="detalle-item" style={{gridColumn:'1/-1'}}><span className="detalle-label">Descripción</span><span className="detalle-valor">{seleccionado.descripcion || '—'}</span></div>
               </div>
               <div className="modal-actions">
                 <button className="btn-save" onClick={() => setShowVerModal(false)}>Cerrar</button>
@@ -237,6 +249,9 @@ const EquipmentManagement = () => {
                 <div className="form-group"><label>Marca</label>
                   <input type="text" value={editData.marca} onChange={(e) => setEditData({...editData, marca: e.target.value})} required />
                 </div>
+                <div className="form-group"><label>Tipo</label>
+                  <input type="text" value={editData.tipo} onChange={(e) => setEditData({...editData, tipo: e.target.value})} required />
+                </div>
                 <div className="form-group"><label>Modelo</label>
                   <input type="text" value={editData.modelo} onChange={(e) => setEditData({...editData, modelo: e.target.value})} required />
                 </div>
@@ -247,6 +262,12 @@ const EquipmentManagement = () => {
                     <option value="dañado">Dañado</option>
                     <option value="en reparacion">En reparación</option>
                   </select>
+                </div>
+                <div className="form-group"><label>Ubicación</label>
+                  <input type="text" value={editData.ubicacion} onChange={(e) => setEditData({...editData, ubicacion: e.target.value})} />
+                </div>
+                <div className="form-group"><label>Descripción</label>
+                  <textarea value={editData.descripcion} onChange={(e) => setEditData({...editData, descripcion: e.target.value})} rows={3} />
                 </div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowEditModal(false)}>Cancelar</button>

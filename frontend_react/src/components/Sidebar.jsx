@@ -1,19 +1,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { IconDashboard, IconHistory, IconFolder, IconMessage, IconTrash, IconSettings, IconBell, IconMonitor } from './Icons';
+import { IconDashboard, IconHistory, IconFolder, IconMessage, IconTrash, IconSettings, IconBell } from './Icons';
 import './Sidebar.css';
 
 const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/inicio', icon: <IconDashboard size={18} />, label: 'Inicio' },
-    { path: '/equipos', icon: <IconMonitor size={18} />, label: 'Equipos' },
+    { path: '/panel', icon: <IconDashboard size={18} />, label: 'Panel' },
+    { path: '/historial', icon: <IconHistory size={18} />, label: 'Historial' },
     { path: '/fichas', icon: <IconFolder size={18} />, label: 'Fichas' },
     { path: '/comentarios', icon: <IconMessage size={18} />, label: 'Comentarios' },
-    { path: '/historial', icon: <IconHistory size={18} />, label: 'Historial' },
-    { path: '/papelera', icon: <IconTrash size={18} />, label: 'Papelera' },
+    { path: '/papelero', icon: <IconTrash size={18} />, label: 'Papelero' },
     { path: '/ajustes', icon: <IconSettings size={18} />, label: 'Ajustes' },
+    { path: '/notificaciones', icon: <IconBell size={18} />, label: 'Notificaciones' }
   ];
 
   return (

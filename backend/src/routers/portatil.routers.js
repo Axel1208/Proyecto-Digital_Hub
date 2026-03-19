@@ -19,16 +19,16 @@ router.post(
   "/",
   verificarToken,
   verificarRol("administrador", "instructor"),
-  validarCamposObligatorios(["num_serie", "marca", "modelo", "estado"]),
+  validarCamposObligatorios(["num_serie", "marca", "tipo", "modelo", "estado"]),
   validarSerialUnico,
   async (req, res) => {
     try {
-      const { num_serie, marca, modelo, estado } = req.body;
+      const { num_serie, marca, tipo, modelo, estado, ubicacion, descripcion } = req.body;
 
       const [resultado] = await pool.query(
-        `INSERT INTO portatil (num_serie, marca, modelo, estado)
-         VALUES (?, ?, ?, ?)`,
-        [num_serie, marca, modelo, estado]
+        `INSERT INTO portatil (num_serie, marca, tipo, modelo, estado, ubicacion, descripcion)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [num_serie, marca, tipo, modelo, estado, ubicacion || null, descripcion || null]
       );
 
       res.status(201).json({
@@ -124,19 +124,19 @@ router.put(
   "/:id",
   verificarToken,
   verificarRol("administrador", "instructor"),
-  validarCamposObligatorios(["marca", "modelo", "estado"]),
+  validarCamposObligatorios(["marca", "tipo", "modelo", "estado"]),
   async (req, res) => {
 
     try {
 
       const { id } = req.params;
-      const { marca, modelo, estado } = req.body;
+      const { marca, tipo, modelo, estado, ubicacion, descripcion } = req.body;
 
       const [resultado] = await pool.query(
         `UPDATE portatil
-         SET marca = ?, modelo = ?, estado = ?
+         SET marca = ?, tipo = ?, modelo = ?, estado = ?, ubicacion = ?, descripcion = ?
          WHERE id_portatil = ?`,
-        [marca, modelo, estado, id]
+        [marca, tipo, modelo, estado, ubicacion || null, descripcion || null, id]
       );
 
       if (resultado.affectedRows === 0) {

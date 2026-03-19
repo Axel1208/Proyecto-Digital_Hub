@@ -11,13 +11,14 @@ app.use(cors());
 app.use(express.json());
 
 // ===============================
-// ROUTERS
+// IMPORTACIÓN DE ROUTERS
 // ===============================
 const usuarioRouter = require("./routers/usuario.routers");
 const portatilRouter = require("./routers/portatil.routers");
 const reportesRouter = require("./routers/reportes.routers");
 const ambienteRouter = require("./routers/ambiente.routers");
 const fichaRouter = require("./routers/ficha.routers");
+const asignacionRouter = require("./routers/asignacion.routers");
 
 // ===============================
 // RUTAS PRINCIPALES (API)
@@ -27,33 +28,27 @@ app.use("/api/portatiles", portatilRouter);
 app.use("/api/reportes", reportesRouter);
 app.use("/api/ambientes", ambienteRouter);
 app.use("/api/fichas", fichaRouter);
+app.use("/api/asignaciones", asignacionRouter);
 
 // ===============================
 // ARCHIVOS ESTÁTICOS
 // ===============================
 app.use("/uploads", express.static("uploads"));
-app.use("/api", usuarioRouter);
-app.use("/api/reportes", reportesRouter);
-app.use("/portatil", require("./routers/portatil.routers"));
-app.use("/reportes", require("./routers/reportes.routers"));
-app.use("/ambiente", require("./routers/ambiente.routers"));
-app.use("/ficha", require("./routers/ficha.routers"));
-app.use("/asignacion", require("./routers/asignacion.routers"));
 
 // ===============================
 // RUTA DE PRUEBA
 // ===============================
 app.get("/", (req, res) => {
-    res.send("API DigitalHub funcionando 🚀");
+  res.send("API DigitalHub funcionando 🚀");
 });
 
 // ===============================
-// MANEJO DE ERRORES BÁSICO
+// MANEJO DE ERRORES (404)
 // ===============================
 app.use((req, res) => {
-    res.status(404).json({
-        mensaje: "Ruta no encontrada"
-    });
+  res.status(404).json({
+    mensaje: "Ruta no encontrada"
+  });
 });
 
 // ===============================
@@ -62,5 +57,5 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });

@@ -18,7 +18,7 @@ const { ESTADOS_USUARIO, ROLES } = require("../constants/dominio");
 // 🔧 NORMALIZAR TEXTO
 // ==============================
 const normalizarTexto = (texto) => {
-  return texto.trim().toLowerCase();
+  return typeof texto === "string" ? texto.trim().toLowerCase() : "";
 };
 
 // ==============================
@@ -26,6 +26,13 @@ const normalizarTexto = (texto) => {
 // ==============================
 const validarEstado = (estado) => {
   return ESTADOS_USUARIO.includes(estado);
+};
+
+// ==============================
+// 🔧 VALIDAR NOMBRE
+// ==============================
+const validarNombre = (nombre) => {
+  return typeof nombre === "string" && nombre.trim().length >= 3;
 };
 
 // ==============================
@@ -42,9 +49,9 @@ router.post("/register", async (req, res) => {
   try {
     let { nombre, correo, password } = req.body;
 
-    if (!nombre || !correo || !password) {
+    if (!validarNombre(nombre) || !correo || !password) {
       return res.status(400).json({
-        mensaje: "Todos los campos son obligatorios"
+        mensaje: "Datos inválidos"
       });
     }
 
@@ -87,8 +94,7 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     console.error("🔥 ERROR REGISTER:", error);
     res.status(500).json({
-      mensaje: "Error en el registro",
-      error: error.message
+      mensaje: "Error en el registro"
     });
   }
 });
@@ -121,9 +127,10 @@ router.post("/login", async (req, res) => {
 
     const usuario = usuarios[0];
 
-    if (usuario.estado !== "activo") {
+    // 🔥 SIN HARDCODE
+    if (usuario.estado !== ESTADOS_USUARIO[0]) {
       return res.status(403).json({
-        mensaje: "Usuario inactivo"
+        mensaje: "Usuario inhabilitado"
       });
     }
 
@@ -156,8 +163,7 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     console.error("🔥 ERROR LOGIN:", error);
     res.status(500).json({
-      mensaje: "Error interno",
-      error: error.message
+      mensaje: "Error interno"
     });
   }
 });
@@ -180,8 +186,7 @@ router.get(
     } catch (error) {
       console.error("🔥 ERROR LIST:", error);
       res.status(500).json({
-        mensaje: "Error al listar usuarios",
-        error: error.message
+        mensaje: "Error al listar usuarios"
       });
     }
   }
@@ -198,9 +203,9 @@ router.post(
     try {
       let { nombre, correo, password, rol, estado } = req.body;
 
-      if (!nombre || !correo || !password || !rol) {
+      if (!validarNombre(nombre) || !correo || !password || !rol) {
         return res.status(400).json({
-          mensaje: "Campos obligatorios incompletos"
+          mensaje: "Datos inválidos"
         });
       }
 
@@ -226,7 +231,12 @@ router.post(
         });
       }
 
-      // 🚫 INSTRUCTOR no puede crear ADMIN
+      if (password.length < 6) {
+        return res.status(400).json({
+          mensaje: "La contraseña debe tener mínimo 6 caracteres"
+        });
+      }
+
       if (req.usuario.rol === ROLES.INSTRUCTOR && rol === ROLES.ADMIN) {
         return res.status(403).json({
           mensaje: "Un instructor no puede crear administradores"
@@ -258,8 +268,7 @@ router.post(
     } catch (error) {
       console.error("🔥 ERROR CREATE:", error);
       res.status(500).json({
-        mensaje: "Error al crear usuario",
-        error: error.message
+        mensaje: "Error al crear usuario"
       });
     }
   }
@@ -275,11 +284,18 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          mensaje: "ID inválido"
+        });
+      }
+
       let { nombre, correo, rol, estado } = req.body;
 
-      if (!nombre || !correo || !rol || !estado) {
+      if (!validarNombre(nombre) || !correo || !rol || !estado) {
         return res.status(400).json({
-          mensaje: "Campos obligatorios incompletos"
+          mensaje: "Datos inválidos"
         });
       }
 
@@ -316,7 +332,6 @@ router.put(
         });
       }
 
-      // 🔥 CORREO REPETIDO
       const [correoExistente] = await db.query(
         "SELECT id_usuario FROM usuario WHERE correo = ? AND id_usuario != ?",
         [correo, id]
@@ -328,7 +343,6 @@ router.put(
         });
       }
 
-      // 🚫 INSTRUCTOR no modifica ADMIN
       if (
         req.usuario.rol === ROLES.INSTRUCTOR &&
         usuarioDB[0].rol === ROLES.ADMIN
@@ -338,7 +352,6 @@ router.put(
         });
       }
 
-      // 🚫 INSTRUCTOR no asigna ADMIN
       if (
         req.usuario.rol === ROLES.INSTRUCTOR &&
         rol === ROLES.ADMIN
@@ -360,8 +373,7 @@ router.put(
     } catch (error) {
       console.error("🔥 ERROR UPDATE:", error);
       res.status(500).json({
-        mensaje: "Error al actualizar",
-        error: error.message
+        mensaje: "Error al actualizar"
       });
     }
   }
@@ -377,6 +389,18 @@ router.delete(
   async (req, res) => {
     try {
       const { id } = req.params;
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          mensaje: "ID inválido"
+        });
+      }
+
+      if (req.usuario.id == id) {
+        return res.status(400).json({
+          mensaje: "No puedes eliminar tu propio usuario"
+        });
+      }
 
       const [usuarioDB] = await db.query(
         "SELECT * FROM usuario WHERE id_usuario = ?",
@@ -410,8 +434,7 @@ router.delete(
     } catch (error) {
       console.error("🔥 ERROR DELETE:", error);
       res.status(500).json({
-        mensaje: "Error al eliminar",
-        error: error.message
+        mensaje: "Error al eliminar"
       });
     }
   }

@@ -35,7 +35,7 @@ const Login = () => {
       }
 
       localStorage.setItem('token', data.token);
-      navigate('/equipos');
+      navigate('/panel');
 
     } catch (err) {
       setError('No se pudo conectar con el servidor');

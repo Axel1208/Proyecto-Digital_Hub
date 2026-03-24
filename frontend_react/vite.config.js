@@ -7,7 +7,12 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
-      '/api': 'http://localhost:3001'
+      '/api': 'http://localhost:3001',
+      '/portatil': 'http://localhost:3001',
+      '/ficha': 'http://localhost:3001',
+      '/reportes': 'http://localhost:3001',
+      '/ambiente': 'http://localhost:3001',
+      '/asignacion': 'http://localhost:3001',
     }
   }
 })

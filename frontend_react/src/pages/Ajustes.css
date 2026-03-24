@@ -1,0 +1,122 @@
+.ajustes-section {
+  background: rgba(18, 18, 28, 0.6);
+  border: 1px solid rgba(127, 90, 240, 0.3);
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.ajustes-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--secondary-purple);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(127, 90, 240, 0.15);
+}
+
+.ajustes-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.ajustes-row:last-child {
+  border-bottom: none;
+}
+
+.ajustes-row-label {
+  font-size: 14px;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.ajustes-row-desc {
+  font-size: 12px;
+  color: var(--text-muted-dark);
+  margin-top: 2px;
+}
+
+.ajustes-select {
+  background: rgba(11, 11, 15, 0.6);
+  border: 1px solid rgba(127, 90, 240, 0.2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text-dark);
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.ajustes-select:focus {
+  border-color: var(--primary-purple);
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(127, 90, 240, 0.2);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: var(--text-muted-dark);
+  border-radius: 50%;
+  transition: transform 0.3s, background 0.3s;
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--primary-purple);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: white;
+}
+
+/* Cerrar sesión */
+.btn-logout {
+  width: 100%;
+  padding: 14px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 10px;
+  color: #f87171;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+
+.btn-logout:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: #f87171;
+}

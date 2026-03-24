@@ -35,7 +35,13 @@ const Login = () => {
       }
 
       localStorage.setItem('token', data.token);
-      navigate('/equipos');
+      // Decodificar el token para obtener rol y nombre
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      localStorage.setItem('rol', payload.rol);
+      localStorage.setItem('nombre', payload.nombre || payload.correo || '');
+      if (payload.rol === 'administrador') navigate('/admin/inicio');
+      else if (payload.rol === 'instructor') navigate('/instructor/inicio');
+      else navigate('/login');
 
     } catch (err) {
       setError('No se pudo conectar con el servidor');

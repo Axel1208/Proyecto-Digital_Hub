@@ -17,6 +17,10 @@ const ESTADOS_USUARIO = [
   "inhabilitado"
 ];
 
+// Constantes seguras para no depender de índices en el resto del código
+const ESTADO_USUARIO_ACTIVO = ESTADOS_USUARIO[0];
+const ESTADO_USUARIO_INHABILITADO = ESTADOS_USUARIO[1];
+
 // ==============================
 // ESTADOS DE PORTÁTIL
 // ==============================
@@ -45,6 +49,8 @@ const ESTADOS_REPORTE = [
 module.exports = {
   ROLES,
   ESTADOS_USUARIO,
+  ESTADO_USUARIO_ACTIVO,
+  ESTADO_USUARIO_INHABILITADO,
   ESTADOS_PORTATIL,
   ESTADOS_REPORTE
 };

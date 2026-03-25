@@ -32,7 +32,6 @@ app.use("/api/fichas", fichaRouter);
 // ARCHIVOS ESTÁTICOS
 // ===============================
 app.use("/uploads", express.static("uploads"));
-app.use("/api", usuarioRouter);
 app.use("/api/reportes", reportesRouter);
 app.use("/portatil", require("./routers/portatil.routers"));
 app.use("/reportes", require("./routers/reportes.routers"));

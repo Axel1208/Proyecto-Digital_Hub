@@ -10,7 +10,6 @@ const Register = () => {
     correo: "",
     password: "",
     confirmPassword: "",
-    rol: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,14 +28,13 @@ const Register = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/usuarios/registro", {
+      const res = await fetch("/api/usuarios/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nombre: formData.nombre,
           correo: formData.correo,
           password: formData.password,
-          rol: formData.rol,
         }),
       });
       const data = await res.json();
@@ -114,17 +112,7 @@ const Register = () => {
               </div>
             </div>
 
-            <div className="input-group">
-              <label>Rol</label>
-              <div className="input-icon-wrap">
-                <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
-                </svg>
-              
-              </div>
-            </div>
+
 
             {error && <p className="login-error">{error}</p>}
 

@@ -1,48 +1,70 @@
-import React from 'react';
+﻿import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { IconDashboard, IconMonitor, IconReport, IconMessage, IconHistory, IconTrash, IconUser, IconSettings } from './Icons';
+import { IconDashboard, IconMonitor, IconReport, IconHistory, IconTrash, IconUser, IconSettings } from './Icons';
 import './Sidebar.css';
 
-const SidebarInstructor = () => {
+const SidebarInstructor = ({ onCollapse }) => {
   const location = useLocation();
   const nombre = localStorage.getItem('nombre') || 'Instructor';
+  const [collapsed, setCollapsed] = useState(false);
 
-  const menuItems = [
-    { path: '/instructor/inicio',      icon: <IconDashboard size={18} />, label: 'Inicio' },
-    { path: '/instructor/equipos',     icon: <IconMonitor size={18} />,   label: 'Equipos' },
-    { path: '/instructor/reportes',    icon: <IconReport size={18} />,    label: 'Reportes' },
-    { path: '/instructor/comentarios', icon: <IconMessage size={18} />,   label: 'Comentarios' },
-    { path: '/instructor/historial',   icon: <IconHistory size={18} />,   label: 'Historial' },
-    { path: '/instructor/papelera',    icon: <IconTrash size={18} />,     label: 'Papelera' },
-  ];
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    document.documentElement.style.setProperty('--sidebar-w', next ? '70px' : '240px');
+    if (onCollapse) onCollapse(next);
+  };
+
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="sidebar-header">
         <img src="/img/logo.png" alt="DigitalHub" className="sidebar-logo" />
-        <span className="sidebar-title">DigitalHub</span>
+        {!collapsed && <span className="sidebar-title">DigitalHub</span>}
+        <button className="sidebar-toggle" onClick={toggle}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+            style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.25s' }}>
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
       </div>
+
       <nav className="sidebar-nav">
-        {menuItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
-          >
-            <span className="sidebar-icon">{item.icon}</span>
-            <span className="sidebar-label">{item.label}</span>
-          </Link>
-        ))}
-      </nav>
-      <div className="sidebar-footer">
-        <div className="sidebar-user-icon"><IconUser size={20} /></div>
-        <span className="sidebar-user-name">{nombre}</span>
-        <Link to="/instructor/ajustes" className="sidebar-settings-btn" title="Ajustes">
-          <IconSettings size={16} />
+        {!collapsed && <div className="sidebar-group-label">Principal</div>}
+        <Link to="/instructor/inicio" className={`sidebar-item ${isActive('/instructor/inicio') ? 'active' : ''}`} title={collapsed ? 'Inicio' : ''}>
+          <span className="sidebar-icon"><IconDashboard size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Inicio</span>}
         </Link>
+        <Link to="/instructor/equipos" className={`sidebar-item ${isActive('/instructor/equipos') ? 'active' : ''}`} title={collapsed ? 'Equipos' : ''}>
+          <span className="sidebar-icon"><IconMonitor size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Equipos</span>}
+        </Link>
+        <Link to="/instructor/reportes" className={`sidebar-item ${isActive('/instructor/reportes') ? 'active' : ''}`} title={collapsed ? 'Reportes' : ''}>
+          <span className="sidebar-icon"><IconReport size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Reportes</span>}
+        </Link>
+
+        {!collapsed && <div className="sidebar-divider" />}
+        {!collapsed && <div className="sidebar-group-label">Gestion</div>}
+        <Link to="/instructor/historial" className={`sidebar-item ${isActive('/instructor/historial') ? 'active' : ''}`} title={collapsed ? 'Historial' : ''}>
+          <span className="sidebar-icon"><IconHistory size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Historial</span>}
+        </Link>
+        <Link to="/instructor/papelera" className={`sidebar-item ${isActive('/instructor/papelera') ? 'active' : ''}`} title={collapsed ? 'Papelera' : ''}>
+          <span className="sidebar-icon"><IconTrash size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Papelera</span>}
+        </Link>
+      </nav>
+
+      <div className="sidebar-footer">
+        <div className="sidebar-user-icon"><IconUser size={15} /></div>
+        {!collapsed && <span className="sidebar-user-name">{nombre}</span>}
+        {!collapsed && <Link to="/instructor/ajustes" className="sidebar-settings-btn"><IconSettings size={14} /></Link>}
       </div>
     </aside>
   );
 };
 
 export default SidebarInstructor;
+

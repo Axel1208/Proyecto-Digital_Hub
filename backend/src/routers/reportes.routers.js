@@ -158,4 +158,61 @@ router.post(
   }
 );
 
+// =============================
+// ✏️ PUT - Actualizar reporte (ADMIN + INSTRUCTOR)
+// =============================
+router.put("/:id", verificarToken, verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isNaN(id)) return res.status(400).json({ message: "El ID debe ser numérico" });
+
+    const [existing] = await pool.query("SELECT * FROM reportes WHERE id_reporte = ?", [id]);
+    if (existing.length === 0) return res.status(404).json({ message: "Reporte no encontrado" });
+
+    const current = existing[0];
+    const { ESTADOS_REPORTE } = require("../constants/dominio");
+
+    let { estado_reporte, fecha_reporte, descripcion } = req.body;
+    estado_reporte = (estado_reporte?.trim()) || current.estado_reporte;
+    descripcion    = (descripcion?.trim())    || current.descripcion;
+    fecha_reporte  = fecha_reporte            || current.fecha_reporte;
+
+    if (!ESTADOS_REPORTE.includes(estado_reporte)) {
+      return res.status(400).json({ message: "Estado de reporte inválido", estados_validos: ESTADOS_REPORTE });
+    }
+
+    if (descripcion.length > 255) {
+      return res.status(400).json({ message: "La descripción es demasiado larga (máx 255 caracteres)" });
+    }
+
+    await pool.query(
+      "UPDATE reportes SET estado_reporte = ?, fecha_reporte = ?, descripcion = ? WHERE id_reporte = ?",
+      [estado_reporte, fecha_reporte, descripcion, id]
+    );
+
+    res.json({ message: "Reporte actualizado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al actualizar el reporte" });
+  }
+});
+
+// =============================
+// 🗑️ DELETE - Eliminar reporte (ADMIN + INSTRUCTOR)
+// =============================
+router.delete("/:id", verificarToken, verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isNaN(id)) return res.status(400).json({ message: "El ID debe ser numérico" });
+
+    const [resultado] = await pool.query("DELETE FROM reportes WHERE id_reporte = ?", [id]);
+    if (resultado.affectedRows === 0) return res.status(404).json({ message: "Reporte no encontrado" });
+
+    res.json({ message: "Reporte eliminado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al eliminar el reporte" });
+  }
+});
+
 module.exports = router;

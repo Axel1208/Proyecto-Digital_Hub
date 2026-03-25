@@ -122,11 +122,7 @@ const Register = () => {
                   <path d="M2 17l10 5 10-5"/>
                   <path d="M2 12l10 5 10-5"/>
                 </svg>
-                <select name="rol" value={formData.rol} onChange={handleChange} required>
-                  <option value="" disabled>Selecciona tu rol</option>
-                  <option value="instructor">Instructor</option>
-                  <option value="administrador">Administrador</option>
-                </select>
+              
               </div>
             </div>
 

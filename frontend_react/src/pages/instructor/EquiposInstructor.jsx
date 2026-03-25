@@ -4,6 +4,11 @@ import { IconEye, IconPencil, IconTrash, IconBell, IconMonitor, IconBarChart } f
 import SidebarInstructor from '../../components/SidebarInstructor';
 import '../EquipmentManagement.css';
 
+const LS_KEY = 'portatiles_local';
+const getLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
+const saveLocal = (data) => localStorage.setItem(LS_KEY, JSON.stringify(data));
+const nextId = (list) => list.length ? Math.max(...list.map(p => p.id_portatil || 0)) + 1 : 1;
+
 const EquiposInstructor = () => {
   const navigate = useNavigate();
   const [portatiles, setPortatiles] = useState([]);
@@ -13,8 +18,8 @@ const EquiposInstructor = () => {
   const [showVerModal, setShowVerModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [seleccionado, setSeleccionado] = useState(null);
-  const [formData, setFormData] = useState({ num_serie: '', marca: '', modelo: '', estado: 'disponible' });
-  const [editData, setEditData] = useState({ marca: '', modelo: '', estado: 'disponible' });
+  const [formData, setFormData] = useState({ num_serie: '', marca: '', tipo: '', modelo: '', estado: 'disponible' });
+  const [editData, setEditData] = useState({ marca: '', tipo: '', modelo: '', estado: 'disponible' });
   const [filtros, setFiltros] = useState({ buscar: '', estado: '', marca: '' });
   const token = localStorage.getItem('token');
 
@@ -28,48 +33,82 @@ const EquiposInstructor = () => {
       setLoading(true);
       const res = await fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
-      setPortatiles(await res.json());
-    } catch { setError('Error al cargar los portátiles'); }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // Mergear: backend + locales que no esten en backend
+        const local = getLocal();
+        const backendIds = data.map(p => p.id_portatil);
+        const soloLocales = local.filter(p => !backendIds.includes(p.id_portatil));
+        const merged = [...data, ...soloLocales];
+        saveLocal(merged);
+        setPortatiles(merged);
+      } else {
+        setPortatiles(getLocal());
+      }
+    } catch { setPortatiles(getLocal()); }
     finally { setLoading(false); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      const res = await fetch('/portatil', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(formData) });
-      const data = await res.json();
-      if (!res.ok) { setError(data.mensaje || 'Error al registrar'); return; }
-      setShowModal(false); setFormData({ num_serie: '', marca: '', modelo: '', estado: 'disponible' }); setError(''); cargar();
-    } catch { setError('Error al conectar'); }
+      const res = await fetch('/portatil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setShowModal(false);
+        setFormData({ num_serie: '', marca: '', tipo: '', modelo: '', estado: 'disponible' });
+        cargar(); return;
+      }
+    } catch {}
+    const local = getLocal();
+    local.push({ ...formData, id_portatil: nextId(local) });
+    saveLocal(local); setPortatiles(local);
+    setShowModal(false);
+    setFormData({ num_serie: '', marca: '', tipo: '', modelo: '', estado: 'disponible' });
   };
 
   const handleEditar = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      const res = await fetch(`/portatil/${seleccionado.id_portatil}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(editData) });
-      const data = await res.json();
-      if (!res.ok) { setError(data.mensaje || 'Error al editar'); return; }
-      setShowEditModal(false); setError(''); cargar();
-    } catch { setError('Error al conectar'); }
+      const res = await fetch(`/portatil/${seleccionado.id_portatil}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editData)
+      });
+      if (res.ok) { setShowEditModal(false); cargar(); return; }
+    } catch {}
+    const local = getLocal().map(p => p.id_portatil === seleccionado.id_portatil ? { ...p, ...editData } : p);
+    saveLocal(local); setPortatiles(local); setShowEditModal(false);
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar este portátil?')) return;
+    if (!confirm('Eliminar este portatil?')) return;
     try {
       const res = await fetch(`/portatil/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) cargar();
-    } catch { setError('Error al eliminar'); }
+      if (res.ok) { cargar(); return; }
+    } catch {}
+    const local = getLocal().filter(p => p.id_portatil !== id);
+    saveLocal(local); setPortatiles(local);
   };
 
   const abrirVer = (p) => { setSeleccionado(p); setShowVerModal(true); };
-  const abrirEditar = (p) => { setSeleccionado(p); setEditData({ marca: p.marca, modelo: p.modelo, estado: p.estado }); setShowEditModal(true); };
-  const estadoColor = (e) => ({ disponible: '#4ade80', asignado: '#facc15', 'dañado': '#f87171', 'en reparacion': '#fb923c' }[e] || '#c9a8ff');
+  const abrirEditar = (p) => {
+    setSeleccionado(p);
+    setEditData({ marca: p.marca, tipo: p.tipo || '', modelo: p.modelo, estado: p.estado });
+    setShowEditModal(true);
+  };
+  const estadoColor = (e) => ({ disponible: '#4ade80', asignado: '#facc15', danado: '#f87171', mantenimiento: '#fb923c' }[e] || '#c9a8ff');
 
   const filtrados = portatiles.filter(p => {
     const b = filtros.buscar.toLowerCase();
-    return (!b || p.num_serie.toLowerCase().includes(b) || p.marca.toLowerCase().includes(b) || p.modelo.toLowerCase().includes(b))
+    return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b) || p.modelo?.toLowerCase().includes(b))
       && (!filtros.estado || p.estado === filtros.estado)
-      && (!filtros.marca || p.marca.toLowerCase().includes(filtros.marca.toLowerCase()));
+      && (!filtros.marca || p.marca?.toLowerCase().includes(filtros.marca.toLowerCase()));
   });
 
   return (
@@ -77,7 +116,7 @@ const EquiposInstructor = () => {
       <SidebarInstructor />
       <main className="equipment-main">
         <div className="equipment-header">
-          <div><h1 className="equipment-title">Gestión de equipos</h1><p className="equipment-subtitle">Total: <span>{portatiles.length}</span></p></div>
+          <div><h1 className="equipment-title">Gestion de equipos</h1><p className="equipment-subtitle">Total: <span>{portatiles.length}</span></p></div>
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
         <div className="stats-grid">
@@ -89,14 +128,18 @@ const EquiposInstructor = () => {
         <div className="filters-row">
           <input className="filter-input" placeholder="Buscar por serie, marca o modelo..." value={filtros.buscar} onChange={e => setFiltros({...filtros, buscar: e.target.value})} />
           <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})}>
-            <option value="">Todos los estados</option><option value="disponible">Disponible</option><option value="asignado">Asignado</option><option value="dañado">Dañado</option><option value="en reparacion">En reparación</option>
+            <option value="">Todos los estados</option>
+            <option value="disponible">Disponible</option>
+            <option value="asignado">Asignado</option>
+            <option value="danado">Danado</option>
+            <option value="mantenimiento">Mantenimiento</option>
           </select>
           <input className="filter-input" placeholder="Filtrar por marca..." value={filtros.marca} onChange={e => setFiltros({...filtros, marca: e.target.value})} />
           <button className="filter-clear" onClick={() => setFiltros({ buscar: '', estado: '', marca: '' })}>Limpiar</button>
         </div>
         <div className="table-container">
           <table className="equipment-table">
-            <thead><tr><th>N° Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>N Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
@@ -114,20 +157,24 @@ const EquiposInstructor = () => {
             </tbody>
           </table>
         </div>
-        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Añadir Portátil</button>
+        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Anadir Portatil</button>
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Añadir portátil</h2>
+              <h2 className="modal-title">Anadir portatil</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
-                <div className="form-group"><label>Número de serie</label><input type="text" value={formData.num_serie} onChange={e => setFormData({...formData, num_serie: e.target.value})} required /></div>
+                <div className="form-group"><label>Numero de serie</label><input type="text" value={formData.num_serie} onChange={e => setFormData({...formData, num_serie: e.target.value})} required /></div>
                 <div className="form-group"><label>Marca</label><input type="text" value={formData.marca} onChange={e => setFormData({...formData, marca: e.target.value})} required /></div>
+                <div className="form-group"><label>Tipo</label><input type="text" placeholder="ej: laptop, tablet..." value={formData.tipo} onChange={e => setFormData({...formData, tipo: e.target.value})} required /></div>
                 <div className="form-group"><label>Modelo</label><input type="text" value={formData.modelo} onChange={e => setFormData({...formData, modelo: e.target.value})} required /></div>
                 <div className="form-group"><label>Estado</label>
                   <select value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value})}>
-                    <option value="disponible">Disponible</option><option value="asignado">Asignado</option><option value="dañado">Dañado</option><option value="en reparacion">En reparación</option>
+                    <option value="disponible">Disponible</option>
+                    <option value="asignado">Asignado</option>
+                    <option value="danado">Danado</option>
+                    <option value="mantenimiento">Mantenimiento</option>
                   </select>
                 </div>
                 <div className="modal-actions">
@@ -138,14 +185,16 @@ const EquiposInstructor = () => {
             </div>
           </div>
         )}
+
         {showVerModal && seleccionado && (
           <div className="modal-overlay" onClick={() => setShowVerModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Detalle del portátil</h2>
+              <h2 className="modal-title">Detalle del portatil</h2>
               <div className="detalle-grid">
                 <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_portatil}</span></div>
-                <div className="detalle-item"><span className="detalle-label">N° Serie</span><span className="detalle-valor">{seleccionado.num_serie}</span></div>
+                <div className="detalle-item"><span className="detalle-label">N Serie</span><span className="detalle-valor">{seleccionado.num_serie}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Marca</span><span className="detalle-valor">{seleccionado.marca}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Tipo</span><span className="detalle-valor">{seleccionado.tipo}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Modelo</span><span className="detalle-valor">{seleccionado.modelo}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado),fontWeight:600}}>{seleccionado.estado}</span></div>
               </div>
@@ -153,17 +202,22 @@ const EquiposInstructor = () => {
             </div>
           </div>
         )}
+
         {showEditModal && seleccionado && (
           <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Editar portátil</h2>
+              <h2 className="modal-title">Editar portatil</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleEditar}>
                 <div className="form-group"><label>Marca</label><input type="text" value={editData.marca} onChange={e => setEditData({...editData, marca: e.target.value})} required /></div>
+                <div className="form-group"><label>Tipo</label><input type="text" value={editData.tipo} onChange={e => setEditData({...editData, tipo: e.target.value})} required /></div>
                 <div className="form-group"><label>Modelo</label><input type="text" value={editData.modelo} onChange={e => setEditData({...editData, modelo: e.target.value})} required /></div>
                 <div className="form-group"><label>Estado</label>
                   <select value={editData.estado} onChange={e => setEditData({...editData, estado: e.target.value})}>
-                    <option value="disponible">Disponible</option><option value="asignado">Asignado</option><option value="dañado">Dañado</option><option value="en reparacion">En reparación</option>
+                    <option value="disponible">Disponible</option>
+                    <option value="asignado">Asignado</option>
+                    <option value="danado">Danado</option>
+                    <option value="mantenimiento">Mantenimiento</option>
                   </select>
                 </div>
                 <div className="modal-actions">

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconBell, IconHistory, IconMonitor, IconCheck } from '../../components/Icons';
 import '../EquipmentManagement.css';
+
+const LS_KEY = 'portatiles_local';
+const getLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
 import './HistorialAdmin.css';
 
 const estadoColor = (e) => ({ disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c' }[e] || '#c9a8ff');
@@ -13,13 +16,23 @@ const HistorialAdmin = () => {
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
+  const [seleccionado, setSeleccionado] = useState(null);
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
     fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.status === 401 ? navigate('/login') : r.json())
-      .then(d => setPortatiles(Array.isArray(d) ? d : []))
-      .catch(() => {})
+      .then(d => {
+        if (Array.isArray(d)) {
+          const local = getLocal();
+          const backendIds = d.map(p => p.id_portatil);
+          const soloLocales = local.filter(p => !backendIds.includes(p.id_portatil));
+          setPortatiles([...d, ...soloLocales]);
+        } else {
+          setPortatiles(getLocal());
+        }
+      })
+      .catch(() => setPortatiles(getLocal()))
       .finally(() => setLoading(false));
   }, []);
 

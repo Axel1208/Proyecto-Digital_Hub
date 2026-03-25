@@ -1,33 +1,16 @@
 const verificarRol = (rolesPermitidos = []) => {
   return (req, res, next) => {
-    try {
-      // 🔴 Validar que exista usuario
-      if (!req.usuario) {
-        return res.status(401).json({ error: "Usuario no autenticado" });
-      }
+    if (!req.usuario) {
+      return res.status(401).json({
+        mensaje: "No autenticado"
+      });
+    }
 
-      // 🔴 Obtener rol y normalizarlo
-      const rolUsuario = req.usuario.rol?.toString().trim().toLowerCase();
-
-      // 🔴 Normalizar roles permitidos
-      const rolesNormalizados = rolesPermitidos.map(r =>
-        r.toString().trim().toLowerCase()
-      );
-
-      // 🔍 Debug (puedes quitarlo luego)
-      console.log("ROL USUARIO:", rolUsuario);
-      console.log("ROLES PERMITIDOS:", rolesNormalizados);
-
-      // 🔴 Validación
-      if (!rolesNormalizados.includes(rolUsuario)) {
-        return res.status(403).json({
-          error: "No tienes permisos",
-          detalle: {
-            rolUsuario,
-            rolesPermitidos: rolesNormalizados
-          }
-        });
-      }
+    if (!rolesPermitidos.includes(req.usuario.rol)) {
+      return res.status(403).json({
+        mensaje: "Acceso denegado"
+      });
+    }
 
       next();
     } catch (error) {

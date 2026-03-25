@@ -2,14 +2,14 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// 📂 Asegurar carpeta uploads
+// 📂 Carpeta uploads
 const uploadPath = path.join(__dirname, "../../uploads");
 
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath);
 }
 
-// ⚙️ Configuración de almacenamiento
+// ⚙️ Configuración almacenamiento
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadPath);
@@ -20,24 +20,28 @@ const storage = multer.diskStorage({
   }
 });
 
-// 🔍 Filtro de archivos (solo imágenes)
+// 🔒 SOLO EXCEL Y CSV
 const fileFilter = (req, file, cb) => {
-  const tiposPermitidos = /jpeg|jpg|png/;
+  const extensionesPermitidas = [".xlsx", ".csv"];
 
-  const ext = tiposPermitidos.test(path.extname(file.originalname).toLowerCase());
-  const mime = tiposPermitidos.test(file.mimetype);
+  const ext = path.extname(file.originalname).toLowerCase();
 
-  if (ext && mime) {
+  const mimeValido =
+    file.mimetype.includes("spreadsheetml") || // excel
+    file.mimetype.includes("csv") || // csv
+    file.mimetype.includes("text"); // algunos csv vienen como text/plain
+
+  if (extensionesPermitidas.includes(ext) && mimeValido) {
     cb(null, true);
   } else {
-    cb(new Error("Solo se permiten imágenes (jpg, jpeg, png)"));
+    cb(new Error("Solo se permiten archivos Excel (.xlsx) o CSV (.csv)"));
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
 module.exports = upload;

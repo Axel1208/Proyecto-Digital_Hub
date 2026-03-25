@@ -2,11 +2,11 @@
 // ROLES DEL SISTEMA
 // ==============================
 
-const ROLES = [
-  "administrador",
-  "instructor",
-  "aprendiz"
-];
+const ROLES = {
+  ADMIN: "administrador",
+  INSTRUCTOR: "instructor",
+  APRENDIZ: "aprendiz"
+};
 
 // ==============================
 // ESTADOS DE USUARIO

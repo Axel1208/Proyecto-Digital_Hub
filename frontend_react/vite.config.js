@@ -1,19 +1,18 @@
-import { defineConfig } from 'vite'
+﻿import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
     open: true,
     proxy: {
-      '/api': 'http://localhost:3001',
-      '/portatil': 'http://localhost:3001',
-      '/reportes': 'http://localhost:3001',
-      '/ambiente': 'http://localhost:3001',
-      '/ficha': 'http://localhost:3001',
-      '/asignacion': 'http://localhost:3001'
+      '/api':       { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/portatil':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/ficha':     { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/reportes':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/ambiente':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/asignacion':{ target: 'http://127.0.0.1:3001', changeOrigin: true },
     }
   }
 })

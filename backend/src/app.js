@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+const path = require("path");
+
+// Cargar variables de entorno desde el backend/.env aun cuando se lance desde otra ruta
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 const app = express();
 

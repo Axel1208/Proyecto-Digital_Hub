@@ -6,7 +6,9 @@ module.exports = function (...rolesPermitidos) {
       });
     }
 
+    // 🔐 Validar rol
     if (!rolesPermitidos.includes(req.usuario.rol)) {
+      console.log(`[verificarRol] rol recibido: "${req.usuario.rol}" | roles permitidos: ${JSON.stringify(rolesPermitidos)}`);
       return res.status(403).json({
         mensaje: "Acceso denegado"
       });

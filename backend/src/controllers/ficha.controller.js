@@ -1,0 +1,226 @@
+const fichaService = require("../services/ficha.service");
+const { ROLES } = require("../constants/dominio");
+
+/**
+ * Controlador de fichas.
+ * Encapsula lógica de negocio y usa fichaService para la persistencia.
+ */
+
+async function obtenerFichas(req, res) {
+  try {
+    const fichas = await fichaService.getAllFichas();
+    res.status(200).json(fichas);
+  } catch (error) {
+    console.error("Error obtenerFichas:", error);
+    res.status(500).json({ mensaje: "Error al obtener fichas" });
+  }
+}
+
+async function obtenerFichaPorId(req, res) {
+  try {
+    const { id } = req.params;
+    const ficha = await fichaService.getFichaById(id);
+
+    if (!ficha) {
+      return res.status(404).json({ mensaje: "Ficha no encontrada" });
+    }
+
+    res.status(200).json(ficha);
+  } catch (error) {
+    console.error("Error obtenerFichaPorId:", error);
+    res.status(500).json({ mensaje: "Error al obtener ficha" });
+  }
+}
+
+async function crearFicha(req, res) {
+  try {
+    // Instructor viene en el token
+    const id_instructor = req.usuario.id;
+    const { nombre, programa_formacion, jornada, cupo_maximo } = req.body;
+
+    // Reglas de negocio extra
+    if (req.usuario.rol !== ROLES.INSTRUCTOR) {
+      return res.status(403).json({ mensaje: "Solo instructor puede crear ficha" });
+    }
+
+    // Verificar duplicado por nombre global (no se puede duplicar en todo el sistema)
+    const fichaExistente = await fichaService.getFichaByNombre(nombre);
+    if (fichaExistente) {
+      return res.status(409).json({ mensaje: "Esta ficha ya está registrada" });
+    }
+
+    await fichaService.createFicha({ nombre, programa_formacion, jornada, id_instructor, cupo_maximo });
+    res.status(201).json({ mensaje: "Ficha creada correctamente" });
+  } catch (error) {
+    console.error("Error crearFicha:", error);
+    res.status(500).json({ mensaje: "Error al crear ficha" });
+  }
+}
+
+async function modificarFicha(req, res) {
+  try {
+    const { id } = req.params;
+    const { nombre, programa_formacion, jornada, cupo_maximo, estado } = req.body;
+
+    if (req.usuario.rol !== ROLES.INSTRUCTOR) {
+      return res.status(403).json({ mensaje: "Solo instructor puede modificar ficha" });
+    }
+
+    const ficha = await fichaService.getFichaById(id);
+    if (!ficha) {
+      return res.status(404).json({ mensaje: "Ficha no encontrada" });
+    }
+
+    // Solo el instructor que creó la ficha puede modificarla
+    if (Number(ficha.id_instructor) !== Number(req.usuario.id)) {
+      return res.status(403).json({ mensaje: "No tienes permiso para modificar esta ficha" });
+    }
+
+    const otraFicha = await fichaService.getFichaByNombre(nombre);
+    if (otraFicha && otraFicha.id !== Number(id)) {
+      return res.status(409).json({ mensaje: "Ya existe otra ficha con el mismo nombre" });
+    }
+
+    const result = await fichaService.updateFicha(id, { nombre, programa_formacion, jornada, cupo_maximo, estado });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensaje: "No se actualizó (ficha no encontrada)" });
+    }
+
+    res.status(200).json({ mensaje: "Ficha actualizada correctamente" });
+  } catch (error) {
+    console.error("Error modificarFicha:", error);
+    res.status(500).json({ mensaje: "Error al modificar ficha" });
+  }
+}
+
+async function eliminarFicha(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (req.usuario.rol !== ROLES.INSTRUCTOR) {
+      return res.status(403).json({ mensaje: "Solo instructor puede eliminar ficha" });
+    }
+
+    const ficha = await fichaService.getFichaById(id);
+    if (!ficha) {
+      return res.status(404).json({ mensaje: "Ficha no encontrada" });
+    }
+
+    // Solo el instructor que creó la ficha puede eliminarla
+    if (Number(ficha.id_instructor) !== Number(req.usuario.id)) {
+      return res.status(403).json({ mensaje: "No tienes permiso para eliminar esta ficha" });
+    }
+
+    const result = await fichaService.deleteFicha(id);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensaje: "Ficha no encontrada" });
+    }
+
+    res.status(200).json({ mensaje: "Ficha eliminada correctamente" });
+  } catch (error) {
+    console.error("Error eliminarFicha:", error);
+    res.status(500).json({ mensaje: "Error al eliminar ficha" });
+  }
+}
+
+async function unirseFicha(req, res) {
+  try {
+    const { id } = req.params; // id
+    const id_aprendiz = req.usuario.id;
+
+    if (req.usuario.rol !== ROLES.APRENDIZ) {
+      return res.status(403).json({ mensaje: "Solo aprendiz puede unirse a ficha" });
+    }
+
+    const ficha = await fichaService.getFichaById(id);
+    if (!ficha) {
+      return res.status(404).json({ mensaje: "Ficha no encontrada" });
+    }
+
+    if (ficha.estado !== "activa") {
+      return res.status(400).json({ mensaje: "Solo fichas activas permiten unirse" });
+    }
+
+    const repetido = await fichaService.hasAprendizJoined(id, id_aprendiz);
+    if (repetido) {
+      return res.status(409).json({ mensaje: "El aprendiz ya está inscrito en esta ficha" });
+    }
+
+    const yaEnOtraFicha = await fichaService.aprendizYaEnAlgunaFicha(id_aprendiz);
+    if (yaEnOtraFicha) {
+      return res.status(409).json({ mensaje: "El aprendiz ya pertenece a una ficha" });
+    }
+
+    const inscritos = await fichaService.countAprendices(id);
+    if (inscritos >= ficha.cupo_maximo) {
+      return res.status(400).json({ mensaje: "Capacidad máxima alcanzada" });
+    }
+
+    await fichaService.addAprendizToFicha(id, id_aprendiz);
+    res.status(201).json({ mensaje: "Aprendiz unido a ficha correctamente" });
+  } catch (error) {
+    console.error("Error unirseFicha:", error);
+    res.status(500).json({ mensaje: "Error al unirse a ficha" });
+  }
+}
+
+async function asignarAprendiz(req, res) {
+  try {
+    const { id } = req.params;
+    const { correo_aprendiz } = req.body;
+
+    if (req.usuario.rol !== ROLES.INSTRUCTOR) {
+      return res.status(403).json({ mensaje: "Solo instructor puede asignar aprendices" });
+    }
+
+    if (!correo_aprendiz) {
+      return res.status(400).json({ mensaje: "correo_aprendiz es obligatorio" });
+    }
+
+    const ficha = await fichaService.getFichaById(id);
+    if (!ficha) {
+      return res.status(404).json({ mensaje: "Ficha no encontrada" });
+    }
+
+    if (ficha.estado !== "activa") {
+      return res.status(400).json({ mensaje: "No se puede asignar a ficha que no está activa" });
+    }
+
+    const aprendiz = await fichaService.getAprendizByCorreo(correo_aprendiz);
+    if (!aprendiz || aprendiz.rol !== ROLES.APRENDIZ || aprendiz.estado !== "activo") {
+      return res.status(400).json({ mensaje: "Aprendiz inválido o no activo" });
+    }
+
+    const repetido = await fichaService.hasAprendizJoined(id, aprendiz.id_usuario);
+    if (repetido) {
+      return res.status(409).json({ mensaje: "El aprendiz ya está inscrito" });
+    }
+
+    const yaEnOtraFicha = await fichaService.aprendizYaEnAlgunaFicha(aprendiz.id_usuario);
+    if (yaEnOtraFicha) {
+      return res.status(409).json({ mensaje: "El aprendiz ya pertenece a una ficha" });
+    }
+
+    const inscritos = await fichaService.countAprendices(id);
+    if (inscritos >= ficha.cupo_maximo) {
+      return res.status(400).json({ mensaje: "Cupo máximo alcanzado" });
+    }
+
+    await fichaService.addAprendizToFicha(id, aprendiz.id_usuario);
+
+    res.status(201).json({ mensaje: "Aprendiz asignado correctamente" });
+  } catch (error) {
+    console.error("Error asignarAprendiz:", error);
+    res.status(500).json({ mensaje: "Error al asignar aprendiz" });
+  }
+}
+
+module.exports = {
+  obtenerFichas,
+  obtenerFichaPorId,
+  crearFicha,
+  modificarFicha,
+  eliminarFicha,
+  unirseFicha,
+  asignarAprendiz
+};

@@ -142,11 +142,11 @@ router.post(
         usuario.password_hash
       );
 
-      if (!passwordValida) {
-        return res.status(401).json({
-          mensaje: "Credenciales inválidas"
-        });
-      }
+    if (!passwordValida) {
+      return res.status(401).json({
+        mensaje: "Credenciales inválidas"
+      });
+    }
 
       const token = jwt.sign(
         {
@@ -163,14 +163,13 @@ router.post(
         token
       });
 
-    } catch (error) {
-      console.error("🔥 ERROR LOGIN:", error);
-      res.status(500).json({
-        mensaje: "Error interno"
-      });
-    }
+  } catch (error) {
+    console.error("🔥 ERROR LOGIN:", error);
+    res.status(500).json({
+      mensaje: "Error interno"
+    });
   }
-);
+});
 
 // ==============================
 // LISTAR USUARIOS

@@ -33,6 +33,16 @@ const ESTADOS_PORTATIL = [
 ];
 
 // ==============================
+// ESTADOS DE FICHA
+// ==============================
+
+const ESTADOS_FICHA = [
+  "activa",
+  "cerrada",
+  "finalizada"
+];
+
+// ==============================
 // ESTADOS DE REPORTES
 // ==============================
 

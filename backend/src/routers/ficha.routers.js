@@ -61,4 +61,65 @@ router.post(
   fichaController.asignarAprendiz
 );
 
+// =============================
+// GET aprendices de una ficha
+// =============================
+router.get("/:id/aprendices", verificarToken, verificarRol(ROLES.INSTRUCTOR, ROLES.ADMIN), async (req, res) => {
+  try {
+    const pool = require("../db/database");
+    const { id } = req.params;
+    const [rows] = await pool.query(
+      `SELECT u.id_usuario, u.nombre, u.correo, u.estado, fa.fecha_union
+       FROM ficha_aprendiz fa
+       JOIN usuario u ON fa.id_aprendiz = u.id_usuario
+       WHERE fa.id_ficha = ?`,
+      [id]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ mensaje: "Error al obtener aprendices" });
+  }
+});
+
+// =============================
+// GET portatiles asignados a una ficha
+// =============================
+router.get("/:id/portatiles", verificarToken, verificarRol(ROLES.INSTRUCTOR, ROLES.ADMIN), async (req, res) => {
+  try {
+    const pool = require("../db/database");
+    const { id } = req.params;
+    const [rows] = await pool.query(
+      `SELECT p.id_portatil, p.num_serie, p.marca, p.tipo, p.modelo, p.estado
+       FROM asignacion a
+       JOIN portatil p ON a.id_portatil = p.id_portatil
+       WHERE a.id_ficha = ?`,
+      [id]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ mensaje: "Error al obtener portatiles" });
+  }
+});
+
+// =============================
+// GET reportes de aprendices de una ficha
+// =============================
+router.get("/:id/reportes", verificarToken, verificarRol(ROLES.INSTRUCTOR, ROLES.ADMIN), async (req, res) => {
+  try {
+    const pool = require("../db/database");
+    const { id } = req.params;
+    const [rows] = await pool.query(
+      `SELECT r.id_reporte, r.descripcion, r.estado_reporte, r.fecha_reporte, u.nombre AS aprendiz
+       FROM reportes r
+       JOIN usuario u ON r.id_usuario = u.id_usuario
+       JOIN ficha_aprendiz fa ON fa.id_aprendiz = u.id_usuario
+       WHERE fa.id_ficha = ?`,
+      [id]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ mensaje: "Error al obtener reportes" });
+  }
+});
+
 module.exports = router;

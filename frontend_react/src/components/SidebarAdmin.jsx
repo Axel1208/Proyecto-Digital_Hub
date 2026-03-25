@@ -40,6 +40,10 @@ const SidebarAdmin = ({ onCollapse }) => {
           <span className="sidebar-icon"><IconMonitor size={17} /></span>
           {!collapsed && <span className="sidebar-label">Equipos</span>}
         </Link>
+        <Link to="/admin/usuarios" className={`sidebar-item ${isActive('/admin/usuarios') ? 'active' : ''}`} title={collapsed ? 'Usuarios' : ''}>
+          <span className="sidebar-icon"><IconUser size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Usuarios</span>}
+        </Link>
 
         {!collapsed && <div className="sidebar-divider" />}
         {!collapsed && <div className="sidebar-group-label">Gestion</div>}

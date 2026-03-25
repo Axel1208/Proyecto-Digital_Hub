@@ -19,6 +19,7 @@ const SidebarAprendiz = ({ onCollapse }) => {
     { path: '/aprendiz/inicio',    icon: <IconDashboard size={18} />, label: 'Inicio' },
     { path: '/aprendiz/equipos',   icon: <IconMonitor size={18} />,   label: 'Equipos' },
     { path: '/aprendiz/reportes',  icon: <IconReport size={18} />,    label: 'Reportes' },
+    { path: '/aprendiz/fichas',    icon: <IconUser size={18} />,      label: 'Fichas' },
     { path: '/aprendiz/historial', icon: <IconHistory size={18} />,   label: 'Historial' },
   ];
 

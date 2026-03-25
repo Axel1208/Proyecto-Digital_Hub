@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconClock, IconCheck } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
@@ -54,7 +54,7 @@ const ReportesInstructor = () => {
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar este reporte?')) return;
+    if (!confirm('Â¿Eliminar este reporte?')) return;
     try {
       const res = await fetch(`/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) cargar();
@@ -63,7 +63,9 @@ const ReportesInstructor = () => {
 
   const abrirVer = (r) => { setSeleccionado(r); setShowVerModal(true); };
   const abrirEditar = (r) => { setSeleccionado(r); setEditData({ descripcion: r.descripcion, estado_reporte: r.estado_reporte, fecha_reporte: r.fecha_reporte?.split('T')[0] || r.fecha_reporte }); setShowEditModal(true); };
-  const estadoColor = (e) => ({ 'pendiente': '#facc15', 'en proceso': '#fb923c', 'resuelto': '#4ade80' }[e] || '#c9a8ff');
+  const estadoColor = (e) => ({ 'pendiente': '#facc15', 'en_revision': '#fb923c', 'resuelto': '#4ade80' }[e] || '#c9a8ff');
+  const estadoBg = (e) => ({ 'pendiente': 'rgba(250,204,21,0.12)', 'en_revision': 'rgba(251,146,60,0.12)', 'resuelto': 'rgba(74,222,128,0.12)' }[e] || 'rgba(201,168,255,0.12)');
+  const estadoBorder = (e) => ({ 'pendiente': 'rgba(250,204,21,0.35)', 'en_revision': 'rgba(251,146,60,0.35)', 'resuelto': 'rgba(74,222,128,0.35)' }[e] || 'rgba(201,168,255,0.35)');
 
   const filtrados = reportes.filter(r => {
     const b = filtros.buscar.toLowerCase();
@@ -93,7 +95,7 @@ const ReportesInstructor = () => {
         </div>
         <div className="table-container">
           <table className="equipment-table">
-            <thead><tr><th>ID</th><th>Descripción</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>ID</th><th>DescripciÃ³n</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
@@ -113,15 +115,15 @@ const ReportesInstructor = () => {
             </tbody>
           </table>
         </div>
-        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Añadir Reporte</button>
+        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>AÃ±adir Reporte</button>
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Añadir reporte</h2>
+              <h2 className="modal-title">AÃ±adir reporte</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
-                <div className="form-group"><label>Descripción</label><input type="text" value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} required /></div>
+                <div className="form-group"><label>DescripciÃ³n</label><input type="text" value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} required /></div>
                 <div className="form-group"><label>Estado</label>
                   <select value={formData.estado_reporte} onChange={e => setFormData({...formData, estado_reporte: e.target.value})}>
                     <option value="pendiente">Pendiente</option><option value="en proceso">En proceso</option><option value="resuelto">Resuelto</option>
@@ -142,7 +144,7 @@ const ReportesInstructor = () => {
               <h2 className="modal-title">Detalle del reporte</h2>
               <div className="detalle-grid">
                 <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_reporte}</span></div>
-                <div className="detalle-item"><span className="detalle-label">Descripción</span><span className="detalle-valor">{seleccionado.descripcion}</span></div>
+                <div className="detalle-item"><span className="detalle-label">DescripciÃ³n</span><span className="detalle-valor">{seleccionado.descripcion}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado_reporte),fontWeight:600}}>{seleccionado.estado_reporte}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{seleccionado.fecha_reporte?.split('T')[0] || seleccionado.fecha_reporte}</span></div>
               </div>
@@ -156,7 +158,7 @@ const ReportesInstructor = () => {
               <h2 className="modal-title">Editar reporte</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleEditar}>
-                <div className="form-group"><label>Descripción</label><input type="text" value={editData.descripcion} onChange={e => setEditData({...editData, descripcion: e.target.value})} required /></div>
+                <div className="form-group"><label>DescripciÃ³n</label><input type="text" value={editData.descripcion} onChange={e => setEditData({...editData, descripcion: e.target.value})} required /></div>
                 <div className="form-group"><label>Estado</label>
                   <select value={editData.estado_reporte} onChange={e => setEditData({...editData, estado_reporte: e.target.value})}>
                     <option value="pendiente">Pendiente</option><option value="en proceso">En proceso</option><option value="resuelto">Resuelto</option>
@@ -177,3 +179,4 @@ const ReportesInstructor = () => {
 };
 
 export default ReportesInstructor;
+

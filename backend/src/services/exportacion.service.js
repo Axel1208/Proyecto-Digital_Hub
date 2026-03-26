@@ -3,12 +3,11 @@ const db = require("../db/database");
 const path = require("path");
 const fs = require("fs");
 
-// Función auxiliar para aplicar estilos consistentes
 const aplicarEstilosExcel = (hoja, filas) => {
     hoja.getRow(1).eachCell((cell) => {
-        cell.font = { bold: true, size: 12 };
+        cell.font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
         cell.alignment = { vertical: "middle", horizontal: "center" };
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDCE6F1" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
         cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
     });
 
@@ -16,16 +15,13 @@ const aplicarEstilosExcel = (hoja, filas) => {
         const fila = hoja.addRow(item);
         fila.eachCell((cell) => {
             cell.alignment = { vertical: "middle", horizontal: "center" };
-            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+            cell.border = { style: "thin" };
         });
         if (index % 2 === 0) {
             fila.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
         }
     });
-
-    hoja.columns.forEach((col) => {
-        col.width = 20;
-    });
+    hoja.columns.forEach(col => col.width = 20);
 };
 
 const exportarExcelGenerico = async (res, query, nombreHoja, columnas) => {
@@ -34,18 +30,18 @@ const exportarExcelGenerico = async (res, query, nombreHoja, columnas) => {
         const workbook = new ExcelJS.Workbook();
         const hoja = workbook.addWorksheet(nombreHoja);
         hoja.columns = columnas;
-
         aplicarEstilosExcel(hoja, rows);
 
-        const filePath = path.join(__dirname, `../../temp/${nombreHoja.toLowerCase()}.xlsx`);
-        if (!fs.existsSync(path.dirname(filePath))) fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        const folderPath = path.join(__dirname, "../../temp");
+        if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath, { recursive: true });
         
+        const filePath = path.join(folderPath, `${nombreHoja.toLowerCase()}.xlsx`);
         await workbook.xlsx.writeFile(filePath);
-        res.download(filePath, `${nombreHoja.toLowerCase()}.xlsx`, (err) => {
+        
+        res.download(filePath, `${nombreHoja.toLowerCase()}.xlsx`, () => {
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         });
     } catch (error) {
-        console.error("Error Exportar:", error);
         res.status(500).json({ error: "Error al exportar Excel" });
     }
 };
@@ -63,8 +59,10 @@ const exportarCSVGenerico = async (res, query, nombreArchivo, columnas, encabeza
             csv += fila + "\n";
         });
 
-        const filePath = path.join(__dirname, `../../temp/${nombreArchivo}.csv`);
-        if (!fs.existsSync(path.dirname(filePath))) fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        const folderPath = path.join(__dirname, "../../temp");
+        if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath, { recursive: true });
+        
+        const filePath = path.join(folderPath, `${nombreArchivo}.csv`);
         fs.writeFileSync(filePath, csv, "utf8");
         res.download(filePath, `${nombreArchivo}.csv`, () => {
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
@@ -74,7 +72,7 @@ const exportarCSVGenerico = async (res, query, nombreArchivo, columnas, encabeza
     }
 };
 
-// EXPORTACIONES PARA PORTATILES
+// Exportadores específicos
 const exportarPortatilesExcel = (req, res) => exportarExcelGenerico(res, "SELECT * FROM portatil", "Portatiles", [
     { header: "ID", key: "id_portatil" }, { header: "Marca", key: "marca" }, { header: "Tipo", key: "tipo" },
     { header: "Modelo", key: "modelo" }, { header: "Estado", key: "estado" }, { header: "Serial", key: "num_serie" },
@@ -86,7 +84,6 @@ const exportarPortatilesCSV = (req, res) => exportarCSVGenerico(res, "SELECT * F
     ["ID", "Marca", "Tipo", "Modelo", "Estado", "Serial", "Ubicación", "Descripción"]
 );
 
-// EXPORTACIONES PARA USUARIOS
 const exportarUsuariosExcel = (req, res) => exportarExcelGenerico(res, "SELECT id_usuario, nombre, correo, rol, estado FROM usuario", "Usuarios", [
     { header: "ID", key: "id_usuario" }, { header: "Nombre", key: "nombre" }, { header: "Correo", key: "correo" },
     { header: "Rol", key: "rol" }, { header: "Estado", key: "estado" }
@@ -97,7 +94,6 @@ const exportarUsuariosCSV = (req, res) => exportarCSVGenerico(res, "SELECT id_us
     ["ID", "Nombre", "Correo", "Rol", "Estado"]
 );
 
-// EXPORTACIONES PARA AMBIENTES
 const exportarAmbientesExcel = (req, res) => exportarExcelGenerico(res, "SELECT * FROM ambiente", "Ambientes", [
     { header: "ID", key: "id_ambiente" }, { header: "Nombre", key: "nombre" }, { header: "Dirección", key: "direccion" }
 ]);

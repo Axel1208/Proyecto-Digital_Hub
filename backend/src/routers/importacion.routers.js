@@ -12,12 +12,14 @@ const manejarImportacion = (func) => async (req, res) => {
         const resultado = await func(req.file.path);
         res.json(resultado);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Si el error es por falta de columnas, enviamos 400 (Bad Request)
+        const statusCode = error.message.includes("Faltan las columnas") ? 400 : 500;
+        res.status(statusCode).json({ error: error.message });
     }
 };
 
-router.post("/portatiles", verificarToken, verificarRol([ROLES.ADMIN,ROLES.INSTRUCTOR] ), upload.single("archivo"), manejarImportacion(importarPortatiles));
-router.post("/usuarios", verificarToken, verificarRol([ROLES.ADMIN,ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarUsuarios));
-router.post("/ambientes", verificarToken, verificarRol([ROLES.ADMIN,ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarAmbientes));
+router.post("/portatiles", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarPortatiles));
+router.post("/usuarios", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarUsuarios));
+router.post("/ambientes", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarAmbientes));
 
 module.exports = router;

@@ -1,0 +1,185 @@
+﻿/* ===== HISTORIAL SUMMARY CARDS ===== */
+.hist-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.hist-summary-card {
+  background: #241545;
+  border: 1px solid rgba(127,90,240,0.45);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.hist-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(127,90,240,0.7), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.hist-summary-card:hover {
+  border-color: rgba(127,90,240,0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(127,90,240,0.2);
+}
+
+.hist-summary-card:hover::before { opacity: 1; }
+
+.hist-summary-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.hist-summary-num {
+  font-size: 30px;
+  font-weight: 800;
+  color: #f0eaff;
+  line-height: 1;
+}
+
+.hist-summary-label {
+  font-size: 11px;
+  color: #b8a8d8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+}
+
+/* ===== SEARCH ROW ===== */
+.hist-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hist-count {
+  font-size: 13px;
+  color: #b8a8d8;
+  white-space: nowrap;
+  background: #241545;
+  border: 1px solid rgba(127,90,240,0.35);
+  border-radius: 50px;
+  padding: 6px 14px;
+}
+
+/* ===== TIMELINE ===== */
+.hist-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 8px;
+}
+
+.hist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+}
+
+.hist-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 20px;
+  z-index: 1;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.hist-line {
+  position: absolute;
+  left: 6px;
+  top: 34px;
+  bottom: -8px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(127,90,240,0.4), rgba(127,90,240,0.1));
+}
+
+.hist-card {
+  flex: 1;
+  background: #241545;
+  border: 1px solid rgba(127,90,240,0.35);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.hist-card:hover {
+  border-color: rgba(127,90,240,0.65);
+  background: #2d1a55;
+  box-shadow: 0 4px 20px rgba(127,90,240,0.15);
+  transform: translateX(4px);
+}
+
+.hist-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.hist-serial {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0eaff;
+}
+
+.hist-badge {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 50px;
+  padding: 3px 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hist-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hist-card-body span {
+  font-size: 13px;
+  color: #b8a8d8;
+}
+
+.hist-id {
+  font-size: 12px;
+  color: #7a6a9a !important;
+}
+
+.hist-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 60px 40px;
+  text-align: center;
+  color: #7a6a9a;
+  font-size: 14px;
+}
+
+@media (max-width: 1024px) { .hist-summary { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .hist-summary { grid-template-columns: 1fr; } }

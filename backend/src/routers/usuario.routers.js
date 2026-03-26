@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../db/database");
+const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 
 const {
   validarRol,
@@ -12,7 +13,11 @@ const {
 const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 
-const { ESTADOS_USUARIO, ROLES } = require("../constants/dominio");
+const {
+  ESTADOS_USUARIO,
+  ESTADO_USUARIO_ACTIVO,
+  ROLES
+} = require("../constants/dominio");
 
 // ==============================
 // 🔧 NORMALIZAR TEXTO
@@ -45,99 +50,97 @@ router.get("/test", (req, res) => {
 // ==============================
 // REGISTRO (PÚBLICO)
 // ==============================
-router.post("/register", async (req, res) => {
-  try {
-    let { nombre, correo, password } = req.body;
+router.post(
+  "/register",
+  validarCamposObligatorios(["nombre", "correo", "password"]),
+  async (req, res) => {
+    try {
+      let { nombre, correo, password } = req.body;
 
-    if (!validarNombre(nombre) || !correo || !password) {
-      return res.status(400).json({
-        mensaje: "Datos inválidos"
+      if (!validarNombre(nombre)) {
+        return res.status(400).json({
+          mensaje: "El nombre debe tener al menos 3 caracteres"
+        });
+      }
+
+      if (!validarCorreo(correo)) {
+        return res.status(400).json({
+          mensaje: "Correo inválido"
+        });
+      }
+
+      if (typeof password !== "string" || password.length < 6) {
+        return res.status(400).json({
+          mensaje: "La contraseña debe tener mínimo 6 caracteres"
+        });
+      }
+
+      const [existe] = await db.query(
+        "SELECT id_usuario FROM usuario WHERE correo = ?",
+        [correo]
+      );
+
+      if (existe.length > 0) {
+        return res.status(400).json({
+          mensaje: "El correo ya está registrado"
+        });
+      }
+
+      const password_hash = await bcrypt.hash(password, 10);
+
+      await db.query(
+        "INSERT INTO usuario (nombre, correo, password_hash, rol, estado) VALUES (?, ?, ?, ?, ?)",
+        [nombre.trim(), correo, password_hash, ROLES.APRENDIZ, ESTADO_USUARIO_ACTIVO]
+      );
+
+      res.status(201).json({
+        mensaje: "Usuario registrado correctamente"
+      });
+
+    } catch (error) {
+      console.error("🔥 ERROR REGISTER:", error);
+      res.status(500).json({
+        mensaje: "Error en el registro"
       });
     }
-
-    correo = normalizarTexto(correo);
-
-    if (!validarCorreo(correo)) {
-      return res.status(400).json({
-        mensaje: "Correo inválido"
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        mensaje: "La contraseña debe tener mínimo 6 caracteres"
-      });
-    }
-
-    const [existe] = await db.query(
-      "SELECT id_usuario FROM usuario WHERE correo = ?",
-      [correo]
-    );
-
-    if (existe.length > 0) {
-      return res.status(400).json({
-        mensaje: "El correo ya está registrado"
-      });
-    }
-
-    const password_hash = await bcrypt.hash(password, 10);
-
-    await db.query(
-      "INSERT INTO usuario (nombre, correo, password_hash, rol, estado) VALUES (?, ?, ?, ?, ?)",
-      [nombre, correo, password_hash, ROLES.APRENDIZ, ESTADOS_USUARIO[0]]
-    );
-
-    res.status(201).json({
-      mensaje: "Usuario registrado correctamente"
-    });
-
-  } catch (error) {
-    console.error("🔥 ERROR REGISTER:", error);
-    res.status(500).json({
-      mensaje: "Error en el registro"
-    });
   }
-});
+);
 
 // ==============================
 // LOGIN
 // ==============================
-router.post("/login", async (req, res) => {
-  try {
-    let { correo, password } = req.body;
+router.post(
+  "/login",
+  validarCamposObligatorios(["correo", "password"]),
+  async (req, res) => {
+    try {
+      let { correo, password } = req.body;
 
-    if (!correo || !password) {
-      return res.status(400).json({
-        mensaje: "Correo y contraseña son obligatorios"
-      });
-    }
+      correo = normalizarTexto(correo);
 
-    correo = normalizarTexto(correo);
+      const [usuarios] = await db.query(
+        "SELECT id_usuario, nombre, correo, password_hash, rol, estado FROM usuario WHERE correo = ?",
+        [correo]
+      );
 
-    const [usuarios] = await db.query(
-      "SELECT * FROM usuario WHERE correo = ?",
-      [correo]
-    );
+      if (usuarios.length === 0) {
+        return res.status(401).json({
+          mensaje: "Credenciales inválidas"
+        });
+      }
 
-    if (usuarios.length === 0) {
-      return res.status(401).json({
-        mensaje: "Credenciales inválidas"
-      });
-    }
+      const usuario = usuarios[0];
 
-    const usuario = usuarios[0];
+      if (usuario.estado !== ESTADO_USUARIO_ACTIVO) {
+        return res.status(403).json({
+          mensaje: "Usuario inhabilitado"
+        });
+      }
 
-    // 🔥 SIN HARDCODE
-    if (usuario.estado !== ESTADOS_USUARIO[0]) {
-      return res.status(403).json({
-        mensaje: "Usuario inhabilitado"
-      });
-    }
-
-    const passwordValida = await bcrypt.compare(
-      password,
-      usuario.password_hash
-    );
+      const passwordValida = await bcrypt.compare(
+        password,
+        usuario.password_hash
+      );
 
     if (!passwordValida) {
       return res.status(401).json({
@@ -145,20 +148,20 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: usuario.id_usuario,
-        rol: usuario.rol,
-        correo: usuario.correo
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
+      const token = jwt.sign(
+        {
+          id: usuario.id_usuario,
+          rol: usuario.rol,
+          correo: usuario.correo
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "2h" }
+      );
 
-    res.json({
-      mensaje: "Login exitoso",
-      token
-    });
+      res.json({
+        mensaje: "Login exitoso",
+        token
+      });
 
   } catch (error) {
     console.error("🔥 ERROR LOGIN:", error);
@@ -199,6 +202,7 @@ router.post(
   "/",
   verificarToken,
   verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  validarCamposObligatorios(["nombre", "correo", "password", "rol"]),
   async (req, res) => {
     try {
       let { nombre, correo, password, rol, estado } = req.body;
@@ -211,7 +215,7 @@ router.post(
 
       correo = normalizarTexto(correo);
       rol = normalizarTexto(rol);
-      estado = estado ? normalizarTexto(estado) : ESTADOS_USUARIO[0];
+      estado = estado ? normalizarTexto(estado) : ESTADO_USUARIO_ACTIVO;
 
       if (!validarCorreo(correo)) {
         return res.status(400).json({
@@ -231,7 +235,7 @@ router.post(
         });
       }
 
-      if (password.length < 6) {
+      if (typeof password !== "string" || password.length < 6) {
         return res.status(400).json({
           mensaje: "La contraseña debe tener mínimo 6 caracteres"
         });
@@ -258,7 +262,7 @@ router.post(
 
       await db.query(
         "INSERT INTO usuario (nombre, correo, password_hash, rol, estado) VALUES (?, ?, ?, ?, ?)",
-        [nombre, correo, password_hash, rol, estado]
+        [nombre.trim(), correo, password_hash, rol, estado]
       );
 
       res.status(201).json({
@@ -281,6 +285,7 @@ router.put(
   "/:id",
   verificarToken,
   verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  validarCamposObligatorios(["nombre", "correo", "rol", "estado"]),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -363,7 +368,7 @@ router.put(
 
       await db.query(
         "UPDATE usuario SET nombre=?, correo=?, rol=?, estado=? WHERE id_usuario=?",
-        [nombre, correo, rol, estado, id]
+        [nombre.trim(), correo, rol, estado, id]
       );
 
       res.json({
@@ -396,7 +401,7 @@ router.delete(
         });
       }
 
-      if (req.usuario.id == id) {
+      if (req.usuario.id === Number(id)) {
         return res.status(400).json({
           mensaje: "No puedes eliminar tu propio usuario"
         });

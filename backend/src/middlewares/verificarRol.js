@@ -1,45 +1,41 @@
+// src/middlewares/verificarRol.js
 const verificarRol = (rolesPermitidos = []) => {
   return (req, res, next) => {
     try {
-      // 🔴 Validar que exista usuario
-      if (!req.usuario) {
-        return res.status(401).json({ error: "Usuario no autenticado" });
+      // 1. Asegurarnos de que rolesPermitidos sea SIEMPRE un array
+      const roles = Array.isArray(rolesPermitidos) ? rolesPermitidos : [rolesPermitidos];
+
+      // 2. Validar que exista el usuario (inyectado por verificarToken)
+      if (!req.usuario || !req.usuario.rol) {
+        return res.status(401).json({ error: "Usuario no autenticado o rol no definido" });
       }
 
+      // 3. Normalizar el rol del usuario (quitar espacios y a minúsculas)
+      const rolUsuario = req.usuario.rol.toString().trim().toLowerCase();
 
-    // 🔐 Validar rol
-    if (!rolesPermitidos.includes(req.usuario.rol)) {
-      console.log(`[verificarRol] rol recibido: "${req.usuario.rol}" | roles permitidos: ${JSON.stringify(rolesPermitidos)}`);
-      return res.status(403).json({
-        mensaje: "Acceso denegado"
-      });
-    }
-
-
-      // 🔴 Normalizar roles permitidos
-      const rolesNormalizados = rolesPermitidos.map(r =>
+      // 4. Normalizar la lista de roles permitidos
+      const rolesNormalizados = roles.map(r => 
         r.toString().trim().toLowerCase()
       );
 
-      // 🔍 Debug (puedes quitarlo luego)
-      console.log("ROL USUARIO:", rolUsuario);
-      console.log("ROLES PERMITIDOS:", rolesNormalizados);
+      // 5. DEBUG (Opcional, para ver qué pasa en la consola)
+      console.log(`[Auth] Usuario: ${rolUsuario} | Permitidos: ${rolesNormalizados}`);
 
-      // 🔴 Validación
+      // 6. Validación final
       if (!rolesNormalizados.includes(rolUsuario)) {
         return res.status(403).json({
-          error: "No tienes permisos",
+          error: "Acceso denegado",
           detalle: {
-            rolUsuario,
-            rolesPermitidos: rolesNormalizados
+            tuRol: rolUsuario,
+            rolesRequeridos: rolesNormalizados
           }
         });
       }
 
       next();
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Error al verificar rol" });
+      console.error("ERROR EN VERIFICAR_ROL:", error);
+      res.status(500).json({ error: "Error interno al verificar permisos" });
     }
   };
 };

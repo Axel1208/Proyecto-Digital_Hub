@@ -48,7 +48,7 @@ router.post(
 
 /*
 =========================================
-2. LISTAR TODOS LOS PORTÁTILES
+2. LISTAR TODOS LOS PORTÁTILES HOLA
 =========================================
 */
 

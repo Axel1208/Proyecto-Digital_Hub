@@ -48,7 +48,7 @@ router.post(
 
 /*
 =========================================
-2. LISTAR TODOS LOS PORTÁTILES
+2. LISTAR TODOS LOS PORTÁTILES HOLA
 =========================================
 */
 
@@ -58,11 +58,32 @@ router.get(
   async (req, res) => {
     try {
 
+      let { page = 1, limit = 10 } = req.query;
+
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      const offset = (page - 1) * limit;
+
+      // 🔹 Obtener portátiles paginados
       const [rows] = await pool.query(
-        "SELECT * FROM portatil"
+        "SELECT * FROM portatil LIMIT ? OFFSET ?",
+        [limit, offset]
       );
 
-      res.json(rows);
+      // 🔹 Obtener total de registros
+      const [totalResult] = await pool.query(
+        "SELECT COUNT(*) as total FROM portatil"
+      );
+
+      const total = totalResult[0].total;
+
+      res.json({
+        total,
+        pagina: page,
+        totalPaginas: Math.ceil(total / limit),
+        data: rows
+      });
 
     } catch (error) {
       res.status(500).json({

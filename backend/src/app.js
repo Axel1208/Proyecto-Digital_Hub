@@ -21,7 +21,8 @@ const portatilRouter = require("./routers/portatil.routers");
 const reportesRouter = require("./routers/reportes.routers");
 const ambienteRouter = require("./routers/ambiente.routers");
 const fichaRouter = require("./routers/ficha.routers");
-
+const importacionRoutes = require("./routers/importacion.routers");
+const exportacionRoutes = require("./routers/exportacion.routers");
 // ===============================
 // RUTAS PRINCIPALES (API)
 // ===============================
@@ -30,6 +31,8 @@ app.use("/api/portatiles", portatilRouter);
 app.use("/api/reportes", reportesRouter);
 app.use("/api/ambientes", ambienteRouter);
 app.use("/api/fichas", fichaRouter);
+app.use("/importar", importacionRoutes);
+app.use("/exportar", exportacionRoutes);
 
 // ===============================
 // ARCHIVOS ESTÁTICOS

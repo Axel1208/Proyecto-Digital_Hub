@@ -11,6 +11,9 @@ import HistorialAdmin from './pages/admin/HistorialAdmin';
 import PapeleraAdmin from './pages/admin/PapeleraAdmin';
 import AjustesAdmin from './pages/admin/AjustesAdmin';
 import UsuariosAdmin from './pages/admin/UsuariosAdmin';
+import ReportesAdmin from './pages/admin/ReportesAdmin';
+import AmbientesAdmin from './pages/admin/AmbientesAdmin';
+import FichasAdmin from './pages/admin/FichasAdmin';
 
 import InicioInstructor from './pages/instructor/InicioInstructor';
 import EquiposInstructor from './pages/instructor/EquiposInstructor';
@@ -42,7 +45,10 @@ function App() {
         <Route path="/admin/historial" element={<HistorialAdmin />} />
         <Route path="/admin/papelera"  element={<PapeleraAdmin />} />
         <Route path="/admin/ajustes"   element={<AjustesAdmin />} />
-        <Route path="/admin/usuarios"  element={<UsuariosAdmin />} />
+        <Route path="/admin/usuarios"   element={<UsuariosAdmin />} />
+        <Route path="/admin/reportes"   element={<ReportesAdmin />} />
+        <Route path="/admin/ambientes"  element={<AmbientesAdmin />} />
+        <Route path="/admin/fichas"     element={<FichasAdmin />} />
 
         <Route path="/instructor/inicio"    element={<InicioInstructor />} />
         <Route path="/instructor/equipos"   element={<EquiposInstructor />} />

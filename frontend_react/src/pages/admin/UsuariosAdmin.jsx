@@ -3,11 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconUser } from '../../components/Icons';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import '../EquipmentManagement.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const UsuariosAdmin = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -71,7 +75,10 @@ const UsuariosAdmin = () => {
   };
 
   const rolColor = (r) => ({ administrador: '#c9a8ff', instructor: '#60a5fa', aprendiz: '#4ade80' }[r] || '#facc15');
+  // reset page on filter change
   const filtrados = usuarios.filter(u => !filtro || u.nombre?.toLowerCase().includes(filtro.toLowerCase()) || u.correo?.toLowerCase().includes(filtro.toLowerCase()));
+
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="equipment-layout">
@@ -82,10 +89,26 @@ const UsuariosAdmin = () => {
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
         <div className="stats-grid">
-          <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{usuarios.length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconUser size={24} /></div><div className="stat-label">Admins</div><div className="stat-value">{usuarios.filter(u => u.rol === 'administrador').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconUser size={24} /></div><div className="stat-label">Instructores</div><div className="stat-value">{usuarios.filter(u => u.rol === 'instructor').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconUser size={24} /></div><div className="stat-label">Aprendices</div><div className="stat-value">{usuarios.filter(u => u.rol === 'aprendiz').length}</div></div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconUser size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value">{usuarios.length}</div><div className="stat-label">Total</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconUser size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#c9a8ff'}}>{usuarios.filter(u => u.rol === 'administrador').length}</div><div className="stat-label">Admins</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconUser size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#60a5fa'}}>{usuarios.filter(u => u.rol === 'instructor').length}</div><div className="stat-label">Instructores</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconUser size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#4ade80'}}>{usuarios.filter(u => u.rol === 'aprendiz').length}</div><div className="stat-label">Aprendices</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconUser size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#f87171'}}>{usuarios.filter(u => u.estado === 'inhabilitado').length}</div><div className="stat-label">Inhabilitados</div></div>
+          </div>
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
@@ -98,7 +121,7 @@ const UsuariosAdmin = () => {
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
-              : filtrados.map(u => (
+              : paginados.map(u => (
                 <tr key={u.id_usuario}>
                   <td>{u.nombre}</td>
                   <td style={{color:'var(--text-muted-dark)',fontSize:'13px'}}>{u.correo}</td>
@@ -175,6 +198,7 @@ const UsuariosAdmin = () => {
             </div>
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

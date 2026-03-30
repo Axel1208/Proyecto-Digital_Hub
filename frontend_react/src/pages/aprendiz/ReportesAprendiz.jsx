@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconClock, IconCheck } from '../../components/Icons';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
 import '../EquipmentManagement.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const LS_REPORTES = 'reportes_local';
 const getLocalR = () => { try { return JSON.parse(localStorage.getItem(LS_REPORTES)) || []; } catch { return []; } };
@@ -20,6 +22,8 @@ const ReportesAprendiz = () => {
   const navigate = useNavigate();
   const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
@@ -121,7 +125,9 @@ const ReportesAprendiz = () => {
 
   const filtrados = reportes.filter(r => {
     const b = filtros.buscar.toLowerCase();
-    return (!b || r.descripcion?.toLowerCase().includes(b) || String(r.id_reporte).includes(b))
+    const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  return (!b || r.descripcion?.toLowerCase().includes(b) || String(r.id_reporte).includes(b))
       && (!filtros.estado || r.estado_reporte === filtros.estado);
   });
 
@@ -138,9 +144,9 @@ const ReportesAprendiz = () => {
         </div>
 
         <div className="stats-grid">
-          <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{reportes.length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconClock size={24} /></div><div className="stat-label">Pendientes</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'pendiente').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconCheck size={24} /></div><div className="stat-label">Resueltos</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'resuelto').length}</div></div>
+          <div className="stat-card"><div className="stat-card-text"><div className="stat-label">Total</div><div className="stat-value">{reportes.length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconClock size={24} /></div><div className="stat-card-text"><div className="stat-label">Pendientes</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'pendiente').length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconCheck size={24} /></div><div className="stat-card-text"><div className="stat-label">Resueltos</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'resuelto').length}</div></div></div>
         </div>
 
         {successMsg && (
@@ -170,7 +176,7 @@ const ReportesAprendiz = () => {
                 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'40px'}}>Cargando...</td></tr>
                 : filtrados.length === 0
                   ? <tr><td colSpan="5" style={{textAlign:'center',padding:'40px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
-                  : filtrados.map(r => (
+                  : paginados.map(r => (
                     <tr key={r.id_reporte}>
                       <td style={{color:'var(--text-muted-dark)',fontSize:'13px'}}>#{r.id_reporte}</td>
                       <td style={{maxWidth:'260px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.descripcion}</td>
@@ -259,6 +265,7 @@ const ReportesAprendiz = () => {
             </div>
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

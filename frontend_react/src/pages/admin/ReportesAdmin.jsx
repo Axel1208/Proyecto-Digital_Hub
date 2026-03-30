@@ -1,0 +1,178 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { IconBell, IconEye, IconPencil, IconTrash, IconClock, IconCheck, IconReport } from '../../components/Icons';
+import SidebarAdmin from '../../components/SidebarAdmin';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
+import '../EquipmentManagement.css';
+import './ReportesAdmin.css';
+
+const estadoColor = (e) => ({ pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
+const estadoBg   = (e) => ({ pendiente:'rgba(250,204,21,0.12)', en_revision:'rgba(251,146,60,0.12)', resuelto:'rgba(74,222,128,0.12)' }[e] || 'rgba(201,168,255,0.12)');
+
+const ReportesAdmin = () => {
+  const navigate = useNavigate();
+  const [reportes, setReportes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [seleccionado, setSeleccionado] = useState(null);
+  const [editData, setEditData] = useState({ estado_reporte: 'pendiente' });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [filtros, setFiltros] = useState({ buscar: '', estado: '' });
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 9;
+  const token = localStorage.getItem('token');
+
+  useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, []);
+
+  const cargar = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/reportes', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { navigate('/login'); return; }
+      setReportes(await res.json());
+    } catch { setError('Error al cargar'); }
+    finally { setLoading(false); }
+  };
+
+  const handleEditar = async (e) => {
+    e.preventDefault(); setError('');
+    try {
+      const res = await fetch(`/reportes/${seleccionado.id_reporte}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editData)
+      });
+      if (res.ok) { setShowEditModal(false); cargar(); return; }
+      const d = await res.json(); setError(d.message || 'Error');
+    } catch { setError('Error al conectar'); }
+  };
+
+  const handleEliminar = async (id) => {
+    if (!confirm('Eliminar este reporte?')) return;
+    try {
+      const res = await fetch(`/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) cargar();
+    } catch { setError('Error'); }
+  };
+
+  const filtrados = reportes.filter(r => {
+    const b = filtros.buscar.toLowerCase();
+    return (!b || r.descripcion?.toLowerCase().includes(b) || String(r.id_reporte).includes(b))
+      && (!filtros.estado || r.estado_reporte === filtros.estado);
+  });
+  const paginados = filtrados.slice((page-1)*PER_PAGE, page*PER_PAGE);
+
+  const pendientes  = reportes.filter(r => r.estado_reporte === 'pendiente').length;
+  const enRevision  = reportes.filter(r => r.estado_reporte === 'en_revision').length;
+  const resueltos   = reportes.filter(r => r.estado_reporte === 'resuelto').length;
+
+  return (
+    <div className="equipment-layout">
+      <SidebarAdmin />
+      <main className="equipment-main">
+        <div className="equipment-header">
+          <div>
+            <h1 className="equipment-title">Reportes</h1>
+            <p className="equipment-subtitle">Total: <span>{reportes.length}</span></p>
+          </div>
+          <button className="notification-btn"><IconBell size={20}/></button>
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon"><IconReport size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value">{reportes.length}</div><div className="stat-label">Total</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconClock size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#facc15'}}>{pendientes}</div><div className="stat-label">Pendientes</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconReport size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#fb923c'}}>{enRevision}</div><div className="stat-label">En revision</div></div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><IconCheck size={20}/></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#4ade80'}}>{resueltos}</div><div className="stat-label">Resueltos</div></div>
+          </div>
+        </div>
+
+        {error && <p className="table-error">{error}</p>}
+
+        <div className="filters-row" style={{gridTemplateColumns:'2fr 1fr auto'}}>
+          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => setFiltros({...filtros, buscar: e.target.value})}/>
+          <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})}>
+            <option value="">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_revision">En revision</option>
+            <option value="resuelto">Resuelto</option>
+          </select>
+          <button className="filter-clear" onClick={() => setFiltros({buscar:'',estado:''})}>Limpiar</button>
+        </div>
+
+        {loading ? <div style={{textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Cargando...</div> : (
+          <div className="ra-grid">
+            {paginados.length === 0
+              ? <div style={{gridColumn:'1/-1',textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Sin resultados</div>
+              : paginados.map(r => (
+                <div key={r.id_reporte} className="ra-card">
+                  <div className="ra-card-top">
+                    <span className="ra-card-id">#{r.id_reporte}</span>
+                    <span className="ra-estado-badge" style={{background:estadoBg(r.estado_reporte),color:estadoColor(r.estado_reporte),border:`1px solid ${estadoColor(r.estado_reporte)}44`}}>{r.estado_reporte}</span>
+                  </div>
+                  <p className="ra-card-desc">{r.descripcion}</p>
+                  <div className="ra-card-fecha">{r.fecha_reporte?.split('T')[0] || r.fecha_reporte}</div>
+                  <div className="ra-card-actions">
+                    <button className="action-btn view" onClick={() => setSeleccionado(r)}><IconEye size={15}/></button>
+                    <button className="action-btn edit" onClick={() => { setSeleccionado(r); setEditData({estado_reporte: r.estado_reporte}); setShowEditModal(true); }}><IconPencil size={15}/></button>
+                    <button className="action-btn delete" onClick={() => handleEliminar(r.id_reporte)}><IconTrash size={15}/></button>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        )}
+
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)}/>
+
+        {seleccionado && !showEditModal && (
+          <div className="modal-overlay" onClick={() => setSeleccionado(null)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2 className="modal-title">Reporte #{seleccionado.id_reporte}</h2>
+              <div className="detalle-grid">
+                <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado_reporte),fontWeight:700}}>{seleccionado.estado_reporte}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{seleccionado.fecha_reporte?.split('T')[0]}</span></div>
+                <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}><span className="detalle-label">Descripcion</span><span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6'}}>{seleccionado.descripcion}</span></div>
+              </div>
+              <div className="modal-actions"><button className="btn-save" onClick={() => setSeleccionado(null)}>Cerrar</button></div>
+            </div>
+          </div>
+        )}
+
+        {showEditModal && seleccionado && (
+          <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2 className="modal-title">Cambiar estado</h2>
+              {error && <p className="table-error">{error}</p>}
+              <form onSubmit={handleEditar}>
+                <div className="form-group"><label>Estado</label>
+                  <select value={editData.estado_reporte} onChange={e => setEditData({...editData, estado_reporte: e.target.value})}>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en_revision">En revision</option>
+                    <option value="resuelto">Resuelto</option>
+                  </select>
+                </div>
+                <div className="modal-actions">
+                  <button type="button" className="btn-cancel" onClick={() => setShowEditModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn-save">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+export default ReportesAdmin;

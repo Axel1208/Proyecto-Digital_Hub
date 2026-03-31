@@ -121,15 +121,13 @@ const EquiposAdmin = () => {
 
   const estadoColor = (e) => ({ disponible: '#4ade80', asignado: '#facc15', danado: '#f87171', mantenimiento: '#fb923c' }[e] || '#c9a8ff');
 
-  // reset page on filter change
   const filtrados = portatiles.filter(p => {
     const b = filtros.buscar.toLowerCase();
-  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
-  return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b) || p.modelo?.toLowerCase().includes(b))
+    return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b) || p.modelo?.toLowerCase().includes(b))
       && (!filtros.estado || p.estado === filtros.estado)
       && (!filtros.marca || p.marca?.toLowerCase().includes(filtros.marca.toLowerCase()));
   });
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="equipment-layout">

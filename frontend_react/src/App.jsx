@@ -29,6 +29,8 @@ import ReportesAprendiz from './pages/aprendiz/ReportesAprendiz';
 import HistorialAprendiz from './pages/aprendiz/HistorialAprendiz';
 import AjustesAprendiz from './pages/aprendiz/AjustesAprendiz';
 import FichasAprendiz from './pages/aprendiz/FichasAprendiz';
+import MiDispositivo from './pages/aprendiz/MiDispositivo';
+import MiFicha from './pages/aprendiz/MiFicha';
 
 import './App.css';
 
@@ -64,7 +66,9 @@ function App() {
         <Route path="/aprendiz/reportes"  element={<ReportesAprendiz />} />
         <Route path="/aprendiz/historial" element={<HistorialAprendiz />} />
         <Route path="/aprendiz/ajustes"   element={<AjustesAprendiz />} />
-        <Route path="/aprendiz/fichas"    element={<FichasAprendiz />} />
+        <Route path="/aprendiz/fichas"       element={<FichasAprendiz />} />
+        <Route path="/aprendiz/dispositivo"  element={<MiDispositivo />} />
+        <Route path="/aprendiz/ficha"        element={<MiFicha />} />
 
         <Route path="/panel"     element={<EquipmentManagement />} />
         <Route path="/equipos"   element={<EquipmentManagement />} />

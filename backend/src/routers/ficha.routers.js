@@ -14,6 +14,24 @@ const { ROLES } = require("../constants/dominio");
 
 // Listar fichas y obtener ficha por id (público autenticado)
 router.get("/", verificarToken, fichaController.obtenerFichas);
+
+// GET /mia - ficha del aprendiz logueado (debe ir antes de /:id)
+router.get("/mia", verificarToken, verificarRol(ROLES.APRENDIZ), async (req, res) => {
+  try {
+    const pool = require("../db/database");
+    const id_aprendiz = req.usuario.id;
+    const [rows] = await pool.query(
+      `SELECT f.* FROM ficha f
+       JOIN ficha_aprendiz fa ON fa.id_ficha = f.id_ficha
+       WHERE fa.id_aprendiz = ?`,
+      [id_aprendiz]
+    );
+    res.json(rows[0] || null);
+  } catch (e) {
+    res.status(500).json({ mensaje: "Error al obtener tu ficha" });
+  }
+});
+
 router.get("/:id", verificarToken, fichaController.obtenerFichaPorId);
 
 // Instructor: crear, modificar, eliminar fichas

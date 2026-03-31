@@ -58,6 +58,17 @@ const FichasInstructor = () => {
     finally { setLoadingDetalle(false); }
   };
 
+  const exportarExcel = () => {
+    fetch('/reportes/excel', { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `reportes_${fichaActiva?.nombre || 'ficha'}.xlsx`; a.click();
+        URL.revokeObjectURL(url);
+      }).catch(() => alert('Error al exportar'));
+  };
+
   const abrirFicha = (f) => {
     setFichaActiva(f); setVista('detalle');
     setTab('aprendices'); setError(''); setSuccessMsg('');
@@ -223,6 +234,14 @@ const FichasInstructor = () => {
           </div>
 
           {/* TABS */}
+          {tab === 'reportes' && reportes.length > 0 && (
+            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'8px'}}>
+              <button onClick={exportarExcel} style={{background:'linear-gradient(135deg,#4ade80,#22c55e)',border:'none',borderRadius:'10px',padding:'8px 14px',color:'#0a0a0f',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar Excel
+              </button>
+            </div>
+          )}
           <div className="fd-tabs-bar">
             <button className={`fd-tab ${tab==='aprendices'?'fd-tab-active':''}`} onClick={()=>setTab('aprendices')}>
               <IconUser size={14}/> Aprendices

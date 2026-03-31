@@ -70,8 +70,8 @@ const HistorialAprendiz = () => {
 
         <div className="equipment-header">
           <div>
-            <h1 className="equipment-title">Historial de Reportes</h1>
-            <p className="equipment-subtitle">Todos tus reportes registrados: <span>{reportes.length}</span></p>
+            <h1 className="equipment-title">Mis Reportes</h1>
+            <p className="equipment-subtitle">Total: <span>{reportes.length}</span></p>
           </div>
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>

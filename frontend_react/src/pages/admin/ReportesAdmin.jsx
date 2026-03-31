@@ -25,6 +25,18 @@ const ReportesAdmin = () => {
 
   useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, []);
 
+  const exportarExcel = () => {
+    const token = localStorage.getItem('token');
+    fetch('/reportes/excel', { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'reportes.xlsx'; a.click();
+        URL.revokeObjectURL(url);
+      }).catch(() => alert('Error al exportar'));
+  };
+
   const cargar = async () => {
     try {
       setLoading(true);
@@ -76,7 +88,13 @@ const ReportesAdmin = () => {
             <h1 className="equipment-title">Reportes</h1>
             <p className="equipment-subtitle">Total: <span>{reportes.length}</span></p>
           </div>
-          <button className="notification-btn"><IconBell size={20}/></button>
+          <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+            <button onClick={exportarExcel} style={{background:'linear-gradient(135deg,#4ade80,#22c55e)',border:'none',borderRadius:'10px',padding:'9px 16px',color:'#0a0a0f',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Excel
+            </button>
+            <button className="notification-btn"><IconBell size={20}/></button>
+          </div>
         </div>
 
         <div className="stats-grid">

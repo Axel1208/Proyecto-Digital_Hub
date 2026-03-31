@@ -36,17 +36,13 @@ const SidebarInstructor = ({ onCollapse }) => {
           <span className="sidebar-icon"><IconDashboard size={17} /></span>
           {!collapsed && <span className="sidebar-label">Inicio</span>}
         </Link>
-        <Link to="/instructor/equipos" className={`sidebar-item ${isActive('/instructor/equipos') ? 'active' : ''}`} title={collapsed ? 'Equipos' : ''}>
-          <span className="sidebar-icon"><IconMonitor size={17} /></span>
-          {!collapsed && <span className="sidebar-label">Equipos</span>}
-        </Link>
-        <Link to="/instructor/reportes" className={`sidebar-item ${isActive('/instructor/reportes') ? 'active' : ''}`} title={collapsed ? 'Reportes' : ''}>
-          <span className="sidebar-icon"><IconReport size={17} /></span>
-          {!collapsed && <span className="sidebar-label">Reportes</span>}
-        </Link>
 
         {!collapsed && <div className="sidebar-divider" />}
         {!collapsed && <div className="sidebar-group-label">Gestion</div>}
+        <Link to="/instructor/fichas" className={`sidebar-item ${isActive('/instructor/fichas') ? 'active' : ''}`} title={collapsed ? 'Fichas' : ''}>
+          <span className="sidebar-icon"><IconUser size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Fichas</span>}
+        </Link>
         <Link to="/instructor/historial" className={`sidebar-item ${isActive('/instructor/historial') ? 'active' : ''}`} title={collapsed ? 'Historial' : ''}>
           <span className="sidebar-icon"><IconHistory size={17} /></span>
           {!collapsed && <span className="sidebar-label">Historial</span>}

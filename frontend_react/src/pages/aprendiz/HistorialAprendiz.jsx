@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { IconEye, IconBell, IconClock, IconCheck, IconReport } from '../../components/Icons';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
 import '../EquipmentManagement.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const LS_REPORTES = 'reportes_local';
 const getLocalR = () => { try { return JSON.parse(localStorage.getItem(LS_REPORTES)) || []; } catch { return []; } };
@@ -22,6 +24,8 @@ const HistorialAprendiz = () => {
   const navigate = useNavigate();
   const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [seleccionado, setSeleccionado] = useState(null);
   const [filtros, setFiltros] = useState({ buscar: '', estado: '', desde: '', hasta: '' });
@@ -53,6 +57,7 @@ const HistorialAprendiz = () => {
       && (!filtros.desde || fecha >= filtros.desde)
       && (!filtros.hasta || fecha <= filtros.hasta);
   });
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const resueltos  = reportes.filter(r => r.estado_reporte === 'resuelto').length;
   const pendientes = reportes.filter(r => r.estado_reporte === 'pendiente').length;
@@ -65,8 +70,8 @@ const HistorialAprendiz = () => {
 
         <div className="equipment-header">
           <div>
-            <h1 className="equipment-title">Historial de Reportes</h1>
-            <p className="equipment-subtitle">Todos tus reportes registrados: <span>{reportes.length}</span></p>
+            <h1 className="equipment-title">Mis Reportes</h1>
+            <p className="equipment-subtitle">Total: <span>{reportes.length}</span></p>
           </div>
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
@@ -116,7 +121,7 @@ const HistorialAprendiz = () => {
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,255,0.25)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span>Sin reportes en el historial</span>
             </div>
-          ) : filtrados.map((r, i) => (
+          ) : paginados.map((r, i) => (
             <div key={r.id_reporte} className="hist-item">
               <div className="hist-dot" style={{background: estadoColor(r.estado_reporte), boxShadow: `0 0 8px ${estadoColor(r.estado_reporte)}`}} />
               <div className="hist-line" style={{opacity: i < filtrados.length - 1 ? 1 : 0}} />
@@ -176,6 +181,7 @@ const HistorialAprendiz = () => {
           </div>
         )}
 
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconMonitor, IconBarChart } from '../../components/Icons';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import '../EquipmentManagement.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const LS_KEY = 'portatiles_local';
 
@@ -16,6 +18,8 @@ const EquiposAdmin = () => {
   const navigate = useNavigate();
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
@@ -123,6 +127,7 @@ const EquiposAdmin = () => {
       && (!filtros.estado || p.estado === filtros.estado)
       && (!filtros.marca || p.marca?.toLowerCase().includes(filtros.marca.toLowerCase()));
   });
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="equipment-layout">
@@ -136,9 +141,9 @@ const EquiposAdmin = () => {
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
         <div className="stats-grid">
-          <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconMonitor size={24} /></div><div className="stat-label">Disponibles</div><div className="stat-value">{portatiles.filter(p => p.estado === 'disponible').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconBarChart size={24} /></div><div className="stat-label">Asignados</div><div className="stat-value">{portatiles.filter(p => p.estado === 'asignado').length}</div></div>
+          <div className="stat-card"><div className="stat-card-text"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconMonitor size={24} /></div><div className="stat-card-text"><div className="stat-label">Disponibles</div><div className="stat-value">{portatiles.filter(p => p.estado === 'disponible').length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconBarChart size={24} /></div><div className="stat-card-text"><div className="stat-label">Asignados</div><div className="stat-value">{portatiles.filter(p => p.estado === 'asignado').length}</div></div></div>
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
@@ -159,7 +164,7 @@ const EquiposAdmin = () => {
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
-              : filtrados.map(p => (
+              : paginados.map(p => (
                 <tr key={p.id_portatil}>
                   <td>{p.num_serie}</td><td>{p.marca}</td><td>{p.modelo}</td>
                   <td><span style={{color:estadoColor(p.estado),fontWeight:600,fontSize:'13px'}}>{p.estado}</span></td>
@@ -244,6 +249,7 @@ const EquiposAdmin = () => {
             </div>
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

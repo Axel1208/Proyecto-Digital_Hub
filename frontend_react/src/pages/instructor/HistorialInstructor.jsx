@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import SidebarInstructor from '../../components/SidebarInstructor';
 import { IconBell, IconHistory, IconMonitor, IconCheck } from '../../components/Icons';
 import '../EquipmentManagement.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const LS_KEY = 'portatiles_local';
 const getLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
@@ -16,6 +18,8 @@ const HistorialInstructor = () => {
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
@@ -43,6 +47,8 @@ const HistorialInstructor = () => {
   const total      = portatiles.length;
   const disponibles = portatiles.filter(p => p.estado === 'disponible').length;
   const asignados   = portatiles.filter(p => p.estado === 'asignado').length;
+
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="equipment-layout">
@@ -85,7 +91,7 @@ const HistorialInstructor = () => {
             <div className="hist-empty">Cargando historial...</div>
           ) : filtrados.length === 0 ? (
             <div className="hist-empty">Sin registros encontrados</div>
-          ) : filtrados.map((p, i) => (
+          ) : paginados.map((p, i) => (
             <div key={p.id_portatil} className="hist-item">
               <div className="hist-dot" style={{background: estadoColor(p.estado), boxShadow: `0 0 8px ${estadoColor(p.estado)}`}} />
               <div className="hist-line" style={{opacity: i < filtrados.length - 1 ? 1 : 0}} />
@@ -104,6 +110,7 @@ const HistorialInstructor = () => {
             </div>
           ))}
         </div>
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

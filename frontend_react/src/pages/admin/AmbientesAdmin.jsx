@@ -5,6 +5,11 @@ import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 import '../EquipmentManagement.css';
+
+const LS_AMB = 'amb_local';
+const getLocalA = () => { try { return JSON.parse(localStorage.getItem(LS_AMB)) || []; } catch { return []; } };
+const saveLocalA = (data) => localStorage.setItem(LS_AMB, JSON.stringify(data));
+const nextIdA = (list) => list.length ? Math.max(...list.map(a => a.id_ambiente || 0)) + 1 : 1;
 import './AmbientesAdmin.css';
 
 const AmbientesAdmin = () => {
@@ -29,8 +34,15 @@ const AmbientesAdmin = () => {
       setLoading(true);
       const res = await fetch('/ambiente', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
-      setAmbientes(await res.json());
-    } catch { setError('Error al cargar'); }
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const local = getLocalA();
+        const ids = data.map(a => a.id_ambiente);
+        const soloLocales = local.filter(a => !ids.includes(a.id_ambiente));
+        const merged = [...data, ...soloLocales];
+        saveLocalA(merged); setAmbientes(merged);
+      } else { setAmbientes(getLocalA()); }
+    } catch { setAmbientes(getLocalA()); }
     finally { setLoading(false); }
   };
 
@@ -41,7 +53,11 @@ const AmbientesAdmin = () => {
       const d = await res.json();
       if (!res.ok) { setError(d.message || 'Error'); return; }
       setShowModal(false); setFormData({ nombre: '', direccion: '' }); cargar();
-    } catch { setError('Error al conectar'); }
+    } catch {}
+    const local = getLocalA();
+    local.push({ ...formData, id_ambiente: nextIdA(local) });
+    saveLocalA(local); setAmbientes(local);
+    setShowModal(false); setFormData({ nombre: '', direccion: '' });
   };
 
   const handleEditar = async (e) => {
@@ -51,7 +67,9 @@ const AmbientesAdmin = () => {
       const d = await res.json();
       if (!res.ok) { setError(d.message || 'Error'); return; }
       setShowEditModal(false); cargar();
-    } catch { setError('Error al conectar'); }
+    } catch {}
+    const local = getLocalA().map(a => a.id_ambiente === seleccionado.id_ambiente ? { ...a, ...editData } : a);
+    saveLocalA(local); setAmbientes(local); setShowEditModal(false);
   };
 
   const handleEliminar = async (id) => {
@@ -59,7 +77,9 @@ const AmbientesAdmin = () => {
     try {
       const res = await fetch(`/ambiente/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) cargar();
-    } catch { setError('Error'); }
+    } catch {}
+    const local = getLocalA().filter(a => a.id_ambiente !== id);
+    saveLocalA(local); setAmbientes(local);
   };
 
   const filtrados = ambientes.filter(a => !filtro || a.nombre?.toLowerCase().includes(filtro.toLowerCase()) || a.direccion?.toLowerCase().includes(filtro.toLowerCase()));

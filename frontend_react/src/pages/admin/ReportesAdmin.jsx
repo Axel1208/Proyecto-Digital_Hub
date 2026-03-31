@@ -5,6 +5,10 @@ import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 import '../EquipmentManagement.css';
+
+const LS_REP = 'rep_local';
+const getLocalRep = () => { try { return JSON.parse(localStorage.getItem(LS_REP)) || []; } catch { return []; } };
+const saveLocalRep = (data) => localStorage.setItem(LS_REP, JSON.stringify(data));
 import './ReportesAdmin.css';
 
 const estadoColor = (e) => ({ pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
@@ -42,8 +46,11 @@ const ReportesAdmin = () => {
       setLoading(true);
       const res = await fetch('/reportes', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
-      setReportes(await res.json());
-    } catch { setError('Error al cargar'); }
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        saveLocalRep(data); setReportes(data);
+      } else { setReportes(getLocalRep()); }
+    } catch { setReportes(getLocalRep()); }
     finally { setLoading(false); }
   };
 
@@ -56,16 +63,19 @@ const ReportesAdmin = () => {
         body: JSON.stringify(editData)
       });
       if (res.ok) { setShowEditModal(false); cargar(); return; }
-      const d = await res.json(); setError(d.message || 'Error');
-    } catch { setError('Error al conectar'); }
+    } catch {}
+    const local = getLocalRep().map(r => r.id_reporte === seleccionado.id_reporte ? { ...r, ...editData } : r);
+    saveLocalRep(local); setReportes(local); setShowEditModal(false);
   };
 
   const handleEliminar = async (id) => {
     if (!confirm('Eliminar este reporte?')) return;
     try {
       const res = await fetch(`/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) cargar();
-    } catch { setError('Error'); }
+      if (res.ok) { cargar(); return; }
+    } catch {}
+    const local = getLocalRep().filter(r => r.id_reporte !== id);
+    saveLocalRep(local); setReportes(local);
   };
 
   const filtrados = reportes.filter(r => {

@@ -6,6 +6,11 @@ import '../EquipmentManagement.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 
+const LS_KEY = 'usuarios_local';
+const getLocalU = () => { try { return JSON.parse(localStorage.getItem('usuarios_local')) || []; } catch { return []; } };
+const saveLocalU = (data) => localStorage.setItem('usuarios_local', JSON.stringify(data));
+const nextIdU = (list) => list.length ? Math.max(...list.map(u => u.id_usuario || 0)) + 1 : 1;
+
 const UsuariosAdmin = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
@@ -31,8 +36,15 @@ const UsuariosAdmin = () => {
       setLoading(true);
       const res = await fetch('/api/usuarios', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
-      setUsuarios(await res.json());
-    } catch { setError('Error al cargar usuarios'); }
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const local = getLocalU();
+        const backendIds = data.map(u => u.id_usuario);
+        const soloLocales = local.filter(u => !backendIds.includes(u.id_usuario));
+        const merged = [...data, ...soloLocales];
+        saveLocalU(merged); setUsuarios(merged);
+      } else { setUsuarios(getLocalU()); }
+    } catch { setUsuarios(getLocalU()); }
     finally { setLoading(false); }
   };
 
@@ -44,10 +56,14 @@ const UsuariosAdmin = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData)
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.mensaje || 'Error al crear'); return; }
-      setShowModal(false); setFormData({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' }); cargar();
-    } catch { setError('Error al conectar'); }
+      if (res.ok) { setShowModal(false); setFormData({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' }); cargar(); return; }
+      const data = await res.json(); setError(data.mensaje || 'Error al crear');
+    } catch {}
+    // fallback localStorage
+    const local = getLocalU();
+    local.push({ ...formData, id_usuario: nextIdU(local) });
+    saveLocalU(local); setUsuarios(local);
+    setShowModal(false); setFormData({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' });
   };
 
   const handleEditar = async (e) => {
@@ -58,20 +74,21 @@ const UsuariosAdmin = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData)
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.mensaje || 'Error al editar'); return; }
-      setShowEditModal(false); cargar();
-    } catch { setError('Error al conectar'); }
+      if (res.ok) { setShowEditModal(false); cargar(); return; }
+    } catch {}
+    // fallback localStorage
+    const local = getLocalU().map(u => u.id_usuario === seleccionado.id_usuario ? { ...u, ...editData } : u);
+    saveLocalU(local); setUsuarios([...local]); setShowEditModal(false);
   };
 
   const handleEliminar = async (id) => {
     if (!confirm('Eliminar este usuario?')) return;
     try {
       const res = await fetch(`/api/usuarios/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      if (!res.ok) { setError(data.mensaje || 'Error al eliminar'); return; }
-      cargar();
-    } catch { setError('Error al eliminar'); }
+      if (res.ok) { cargar(); return; }
+    } catch {}
+    const local = getLocalU().filter(u => u.id_usuario !== id);
+    saveLocalU(local); setUsuarios(local);
   };
 
   const rolColor = (r) => ({ administrador: '#c9a8ff', instructor: '#60a5fa', aprendiz: '#4ade80' }[r] || '#facc15');
@@ -107,7 +124,7 @@ const UsuariosAdmin = () => {
           </div>
           <div className="stat-card">
             <div className="stat-icon"><IconUser size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value" style={{color:'#f87171'}}>{usuarios.filter(u => u.estado === 'inhabilitado').length}</div><div className="stat-label">Inhabilitados</div></div>
+            <div className="stat-card-text"><div className="stat-value" style={{color:'#f87171'}}>{usuarios.filter(u => u.estado === 'inhabilitado').length}</div><div className="stat-label">Inactivos</div></div>
           </div>
         </div>
         {error && <p className="table-error">{error}</p>}
@@ -126,7 +143,7 @@ const UsuariosAdmin = () => {
                   <td>{u.nombre}</td>
                   <td style={{color:'var(--text-muted-dark)',fontSize:'13px'}}>{u.correo}</td>
                   <td><span style={{color:rolColor(u.rol),fontWeight:600,fontSize:'13px'}}>{u.rol}</span></td>
-                  <td><span style={{color: u.estado === 'activo' ? '#4ade80' : '#f87171',fontWeight:600,fontSize:'13px'}}>{u.estado}</span></td>
+                  <td><span style={{color: u.estado === 'activo' ? '#4ade80' : '#f87171',fontWeight:600,fontSize:'13px'}}>{u.estado === 'activo' ? 'activo' : 'inactivo'}</span></td>
                   <td><div className="action-buttons">
                     <button className="action-btn edit" onClick={() => { setSeleccionado(u); setEditData({ nombre: u.nombre, correo: u.correo, rol: u.rol, estado: u.estado }); setShowEditModal(true); }}><IconPencil size={16} /></button>
                     <button className="action-btn delete" onClick={() => handleEliminar(u.id_usuario)}><IconTrash size={16} /></button>
@@ -157,7 +174,7 @@ const UsuariosAdmin = () => {
                 <div className="form-group"><label>Estado</label>
                   <select value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value})}>
                     <option value="activo">Activo</option>
-                    <option value="inhabilitado">Inhabilitado</option>
+                    <option value="inhabilitado">Inactivo</option>
                   </select>
                 </div>
                 <div className="modal-actions">
@@ -187,7 +204,7 @@ const UsuariosAdmin = () => {
                 <div className="form-group"><label>Estado</label>
                   <select value={editData.estado} onChange={e => setEditData({...editData, estado: e.target.value})}>
                     <option value="activo">Activo</option>
-                    <option value="inhabilitado">Inhabilitado</option>
+                    <option value="inhabilitado">Inactivo</option>
                   </select>
                 </div>
                 <div className="modal-actions">

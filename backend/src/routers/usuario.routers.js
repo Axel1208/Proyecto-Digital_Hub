@@ -125,7 +125,7 @@ router.post(
 
       if (usuarios.length === 0) {
         return res.status(401).json({
-          mensaje: "Credenciales inválidas"
+          mensaje: "El correo no está registrado"
         });
       }
 
@@ -142,11 +142,11 @@ router.post(
         usuario.password_hash
       );
 
-    if (!passwordValida) {
-      return res.status(401).json({
-        mensaje: "Credenciales inválidas"
-      });
-    }
+      if (!passwordValida) {
+        return res.status(401).json({
+          mensaje: "Contraseña incorrecta"
+        });
+      }
 
       const token = jwt.sign(
         {

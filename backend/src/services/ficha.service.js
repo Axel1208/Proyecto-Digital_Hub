@@ -75,6 +75,11 @@ async function getAprendizByCorreo(correo) {
   return rows[0] || null;
 }
 
+async function getAprendizById(id) {
+  const [rows] = await pool.query("SELECT id_usuario, nombre, correo FROM usuario WHERE id_usuario = ?", [id]);
+  return rows[0] || null;
+}
+
 async function getFichaByNombre(nombre) {
   const [rows] = await pool.query(
     "SELECT * FROM ficha WHERE nombre = ?",
@@ -94,5 +99,6 @@ module.exports = {
   aprendizYaEnAlgunaFicha,
   addAprendizToFicha,
   getAprendizByCorreo,
+  getAprendizById,
   getFichaByNombre
 };

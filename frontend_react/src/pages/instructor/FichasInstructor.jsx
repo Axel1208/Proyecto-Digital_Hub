@@ -5,6 +5,11 @@ import SidebarInstructor from '../../components/SidebarInstructor';
 import '../EquipmentManagement.css';
 import './FichasInstructor.css';
 
+const LS_FIC = 'fichas_local';
+const getLocalF = () => { try { return JSON.parse(localStorage.getItem(LS_FIC)) || []; } catch { return []; } };
+const saveLocalF = (data) => localStorage.setItem(LS_FIC, JSON.stringify(data));
+const nextIdF = (list) => list.length ? Math.max(...list.map(f => f.id_ficha || 0)) + 1 : 1;
+
 const FichasInstructor = () => {
   const navigate = useNavigate();
   const [fichas, setFichas] = useState([]);
@@ -36,8 +41,15 @@ const FichasInstructor = () => {
       setLoading(true);
       const res = await fetch('/ficha', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
-      setFichas(await res.json());
-    } catch { setError('Error al cargar fichas'); }
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const local = getLocalF();
+        const ids = data.map(f => f.id_ficha);
+        const soloLocales = local.filter(f => !ids.includes(f.id_ficha));
+        const merged = [...data, ...soloLocales];
+        saveLocalF(merged); setFichas(merged);
+      } else { setFichas(getLocalF()); }
+    } catch { setFichas(getLocalF()); }
     finally { setLoading(false); }
   };
 

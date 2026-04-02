@@ -103,8 +103,20 @@ const exportarAmbientesCSV = (req, res) => exportarCSVGenerico(res, "SELECT * FR
     ["ID", "Nombre", "Dirección"]
 );
 
+const exportarFichasExcel = (req, res) => exportarExcelGenerico(res, "SELECT * FROM ficha", "Fichas", [
+    { header: "ID",                 key: "id_ficha" },
+    { header: "Nombre",             key: "nombre" },
+    { header: "Programa Formacion", key: "programa_formacion" },
+    { header: "Jornada",            key: "jornada" },
+    { header: "ID Instructor",      key: "id_instructor" },
+    { header: "Cupo Maximo",        key: "cupo_maximo" },
+    { header: "Estado",             key: "estado" },
+    { header: "Fecha Creacion",     key: "fecha_creacion" }
+]);
+
 module.exports = {
     exportarPortatilesExcel, exportarPortatilesCSV,
-    exportarUsuariosExcel, exportarUsuariosCSV,
-    exportarAmbientesExcel, exportarAmbientesCSV
+    exportarUsuariosExcel,   exportarUsuariosCSV,
+    exportarAmbientesExcel,  exportarAmbientesCSV,
+    exportarFichasExcel
 };

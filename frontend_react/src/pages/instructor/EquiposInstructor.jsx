@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconMonitor, IconBarChart } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
-import '../EquipmentManagement.css';
+import '../../pages/instructor/EquiposInstructor.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 
@@ -31,6 +31,31 @@ const EquiposInstructor = () => {
     if (!token) { navigate('/login'); return; }
     cargar();
   }, []);
+
+  const exportarExcel = async () => {
+  try {
+    const res = await fetch('/portatil/excel', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) { const text = await res.text(); let m = 'Error al exportar'; try { m = JSON.parse(text).mensaje || m; } catch {} alert(m); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'portatiles.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) { alert('Error al exportar: ' + err.message); }
+};
+
+const importarExcel = async (e) => {
+  const archivo = e.target.files[0]; if (!archivo) return;
+  const formData = new FormData(); formData.append('archivo', archivo);
+  try {
+    const res = await fetch('/portatil/importar', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al importar');
+    alert(`${data.insertados} portátiles importados correctamente`);
+    cargar();
+  } catch (err) { alert(err.message); }
+  e.target.value = '';
+};
+
 
   const cargar = async () => {
     try {
@@ -124,7 +149,34 @@ const EquiposInstructor = () => {
       <main className="equipment-main">
         <div className="equipment-header">
           <div><h1 className="equipment-title">Gestion de equipos</h1><p className="equipment-subtitle">Total: <span>{portatiles.length}</span></p></div>
-          <button className="notification-btn"><IconBell size={20} /></button>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button onClick={exportarExcel} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
+            </button>
+
+            <input
+              type="file"
+              accept=".xlsx"
+              style={{ display: 'none' }}
+              id="importar-input"
+              onChange={importarExcel}
+            />
+            <button onClick={() => document.getElementById('importar-input').click()} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Importar
+            </button>
+
+            <button className="notification-btn"><IconBell size={20}/></button>
+          </div>
         </div>
         <div className="stats-grid">
           <div className="stat-card"><div className="stat-card-text"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div></div>

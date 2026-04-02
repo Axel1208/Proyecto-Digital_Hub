@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { IconDashboard, IconMonitor, IconReport, IconHistory, IconTrash, IconUser, IconSettings } from './Icons';
+import { IconDashboard, IconMonitor, IconHistory, IconTrash, IconUser, IconSettings, IconReport } from './Icons';
 import './Sidebar.css';
 
 const SidebarInstructor = ({ onCollapse }) => {
@@ -36,13 +36,25 @@ const SidebarInstructor = ({ onCollapse }) => {
           <span className="sidebar-icon"><IconDashboard size={17} /></span>
           {!collapsed && <span className="sidebar-label">Inicio</span>}
         </Link>
-
-        {!collapsed && <div className="sidebar-divider" />}
-        {!collapsed && <div className="sidebar-group-label">Gestion</div>}
+        <Link to="/instructor/equipos" className={`sidebar-item ${isActive('/instructor/equipos') ? 'active' : ''}`} title={collapsed ? 'Equipos' : ''}>
+          <span className="sidebar-icon"><IconMonitor size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Equipos</span>}
+        </Link>
+        <Link to="/instructor/usuarios" className={`sidebar-item ${isActive('/instructor/usuarios') ? 'active' : ''}`} title={collapsed ? 'Usuarios' : ''}>
+          <span className="sidebar-icon"><IconUser size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Usuarios</span>}
+        </Link>
+        <Link to="/instructor/reportes" className={`sidebar-item ${isActive('/instructor/reportes') ? 'active' : ''}`} title={collapsed ? 'Reportes' : ''}>
+          <span className="sidebar-icon"><IconReport size={17} /></span>
+          {!collapsed && <span className="sidebar-label">Reportes</span>}
+        </Link>
         <Link to="/instructor/fichas" className={`sidebar-item ${isActive('/instructor/fichas') ? 'active' : ''}`} title={collapsed ? 'Fichas' : ''}>
           <span className="sidebar-icon"><IconUser size={17} /></span>
           {!collapsed && <span className="sidebar-label">Fichas</span>}
         </Link>
+
+        {!collapsed && <div className="sidebar-divider" />}
+        {!collapsed && <div className="sidebar-group-label">Gestion</div>}
         <Link to="/instructor/historial" className={`sidebar-item ${isActive('/instructor/historial') ? 'active' : ''}`} title={collapsed ? 'Historial' : ''}>
           <span className="sidebar-icon"><IconHistory size={17} /></span>
           {!collapsed && <span className="sidebar-label">Historial</span>}

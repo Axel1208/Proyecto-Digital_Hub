@@ -4,7 +4,7 @@ import { IconBell, IconPencil, IconTrash, IconEye } from '../../components/Icons
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
-import '../EquipmentManagement.css';
+import '../../pages/admin/AmbientesAdmin.css';
 
 const LS_AMB = 'amb_local';
 const getLocalA = () => { try { return JSON.parse(localStorage.getItem(LS_AMB)) || []; } catch { return []; } };
@@ -28,6 +28,30 @@ const AmbientesAdmin = () => {
   const token = localStorage.getItem('token');
 
   useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, []);
+
+  const exportarExcel = async () => {
+  try {
+    const res = await fetch('/ambiente/excel', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) { const text = await res.text(); let m = 'Error al exportar'; try { m = JSON.parse(text).mensaje || m; } catch {} alert(m); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'ambientes.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) { alert('Error al exportar: ' + err.message); }
+};
+
+const importarExcel = async (e) => {
+  const archivo = e.target.files[0]; if (!archivo) return;
+  const formData = new FormData(); formData.append('archivo', archivo);
+  try {
+    const res = await fetch('/importacion/ambientes', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al importar');
+    alert(data.mensaje || `${data.insertados} ambientes importados`);
+    cargar();
+  } catch (err) { alert(err.message); }
+  e.target.value = '';
+};
 
   const cargar = async () => {
     try {
@@ -96,7 +120,9 @@ const AmbientesAdmin = () => {
             <h1 className="equipment-title">Ambientes</h1>
             <p className="equipment-subtitle">Total: <span>{ambientes.length}</span></p>
           </div>
-          <button className="notification-btn"><IconBell size={20}/></button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button className="notification-btn"><IconBell size={20} /></button>
+          </div>
         </div>
 
         <div className="stats-grid">

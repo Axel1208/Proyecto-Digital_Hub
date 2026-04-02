@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconBell } from '../../components/Icons';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
-import '../EquipmentManagement.css';
+import '../../pages/aprendiz/FichasAprendiz.css';
 
 const FichasAprendiz = () => {
   const navigate = useNavigate();

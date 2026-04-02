@@ -22,6 +22,7 @@ import HistorialInstructor from './pages/instructor/HistorialInstructor';
 import PapeleraInstructor from './pages/instructor/PapeleraInstructor';
 import AjustesInstructor from './pages/instructor/AjustesInstructor';
 import FichasInstructor from './pages/instructor/FichasInstructor';
+import UsuariosInstructor from './pages/instructor/UsuariosInstructor';
 
 import InicioAprendiz from './pages/aprendiz/InicioAprendiz';
 import EquiposAprendiz from './pages/aprendiz/EquiposAprendiz';
@@ -55,6 +56,7 @@ function App() {
         <Route path="/instructor/inicio"    element={<InicioInstructor />} />
         <Route path="/instructor/equipos"   element={<EquiposInstructor />} />
         <Route path="/instructor/reportes"  element={<ReportesInstructor />} />
+        <Route path="/instructor/usuarios"  element={<UsuariosInstructor />} />
         <Route path="/instructor/comentarios" element={<ReportesInstructor />} />
         <Route path="/instructor/historial" element={<HistorialInstructor />} />
         <Route path="/instructor/papelera"  element={<PapeleraInstructor />} />

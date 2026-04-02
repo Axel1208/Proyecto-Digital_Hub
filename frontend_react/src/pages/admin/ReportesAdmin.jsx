@@ -29,17 +29,54 @@ const ReportesAdmin = () => {
 
   useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, []);
 
-  const exportarExcel = () => {
-    const token = localStorage.getItem('token');
-    fetch('/reportes/excel', { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => res.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'reportes.xlsx'; a.click();
-        URL.revokeObjectURL(url);
-      }).catch(() => alert('Error al exportar'));
-  };
+const exportarExcel = async () => {
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch('/reportes/excel', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const text = await res.text(); // leer como texto primero
+      let mensaje = 'Error al exportar';
+      try { mensaje = JSON.parse(text).mensaje || mensaje; } catch {}
+      alert(mensaje);
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'reportes.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    alert('Error al exportar: ' + err.message);
+  }
+};
+
+const importarExcel = async (e) => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+
+  try {
+    const res = await fetch('/importacion/reportes', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al importar');
+    alert(data.mensaje);
+    cargar(); // refresca la tabla
+  } catch (err) {
+    alert(err.message);
+  }
+  e.target.value = '';
+};
 
   const cargar = async () => {
     try {
@@ -98,11 +135,32 @@ const ReportesAdmin = () => {
             <h1 className="equipment-title">Reportes</h1>
             <p className="equipment-subtitle">Total: <span>{reportes.length}</span></p>
           </div>
-          <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-            <button onClick={exportarExcel} style={{background:'linear-gradient(135deg,#4ade80,#22c55e)',border:'none',borderRadius:'10px',padding:'9px 16px',color:'#0a0a0f',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Excel
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button onClick={exportarExcel} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
             </button>
+
+            <input
+              type="file"
+              accept=".xlsx"
+              style={{ display: 'none' }}
+              id="importar-input"
+              onChange={importarExcel}
+            />
+            <button onClick={() => document.getElementById('importar-input').click()} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Importar
+            </button>
+
             <button className="notification-btn"><IconBell size={20}/></button>
           </div>
         </div>
@@ -114,46 +172,46 @@ const ReportesAdmin = () => {
           </div>
           <div className="stat-card">
             <div className="stat-icon"><IconClock size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value" style={{color:'#facc15'}}>{pendientes}</div><div className="stat-label">Pendientes</div></div>
+            <div className="stat-card-text"><div className="stat-value" style={{ color: '#facc15' }}>{pendientes}</div><div className="stat-label">Pendientes</div></div>
           </div>
           <div className="stat-card">
             <div className="stat-icon"><IconReport size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value" style={{color:'#fb923c'}}>{enRevision}</div><div className="stat-label">En revision</div></div>
+            <div className="stat-card-text"><div className="stat-value" style={{ color: '#fb923c' }}>{enRevision}</div><div className="stat-label">En revision</div></div>
           </div>
           <div className="stat-card">
             <div className="stat-icon"><IconCheck size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value" style={{color:'#4ade80'}}>{resueltos}</div><div className="stat-label">Resueltos</div></div>
+            <div className="stat-card-text"><div className="stat-value" style={{ color: '#4ade80' }}>{resueltos}</div><div className="stat-label">Resueltos</div></div>
           </div>
         </div>
 
         {error && <p className="table-error">{error}</p>}
 
-        <div className="filters-row" style={{gridTemplateColumns:'2fr 1fr auto'}}>
-          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => setFiltros({...filtros, buscar: e.target.value})}/>
-          <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})}>
+        <div className="filters-row" style={{ gridTemplateColumns: '2fr 1fr auto' }}>
+          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => setFiltros({ ...filtros, buscar: e.target.value })}/>
+          <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({ ...filtros, estado: e.target.value })}>
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
             <option value="en_revision">En revision</option>
             <option value="resuelto">Resuelto</option>
           </select>
-          <button className="filter-clear" onClick={() => setFiltros({buscar:'',estado:''})}>Limpiar</button>
+          <button className="filter-clear" onClick={() => setFiltros({ buscar: '', estado: '' })}>Limpiar</button>
         </div>
 
-        {loading ? <div style={{textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Cargando...</div> : (
+        {loading ? <div style={{ textAlign: 'center', padding: '48px', color: '#b8a8d8' }}>Cargando...</div> : (
           <div className="ra-grid">
             {paginados.length === 0
-              ? <div style={{gridColumn:'1/-1',textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Sin resultados</div>
+              ? <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px', color: '#b8a8d8' }}>Sin resultados</div>
               : paginados.map(r => (
                 <div key={r.id_reporte} className="ra-card">
                   <div className="ra-card-top">
                     <span className="ra-card-id">#{r.id_reporte}</span>
-                    <span className="ra-estado-badge" style={{background:estadoBg(r.estado_reporte),color:estadoColor(r.estado_reporte),border:`1px solid ${estadoColor(r.estado_reporte)}44`}}>{r.estado_reporte}</span>
+                    <span className="ra-estado-badge" style={{ background: estadoBg(r.estado_reporte), color: estadoColor(r.estado_reporte), border: `1px solid ${estadoColor(r.estado_reporte)}44` }}>{r.estado_reporte}</span>
                   </div>
                   <p className="ra-card-desc">{r.descripcion}</p>
                   <div className="ra-card-fecha">{r.fecha_reporte?.split('T')[0] || r.fecha_reporte}</div>
                   <div className="ra-card-actions">
                     <button className="action-btn view" onClick={() => setSeleccionado(r)}><IconEye size={15}/></button>
-                    <button className="action-btn edit" onClick={() => { setSeleccionado(r); setEditData({estado_reporte: r.estado_reporte}); setShowEditModal(true); }}><IconPencil size={15}/></button>
+                    <button className="action-btn edit" onClick={() => { setSeleccionado(r); setEditData({ estado_reporte: r.estado_reporte }); setShowEditModal(true); }}><IconPencil size={15}/></button>
                     <button className="action-btn delete" onClick={() => handleEliminar(r.id_reporte)}><IconTrash size={15}/></button>
                   </div>
                 </div>
@@ -169,9 +227,9 @@ const ReportesAdmin = () => {
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <h2 className="modal-title">Reporte #{seleccionado.id_reporte}</h2>
               <div className="detalle-grid">
-                <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado_reporte),fontWeight:700}}>{seleccionado.estado_reporte}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{ color: estadoColor(seleccionado.estado_reporte), fontWeight: 700 }}>{seleccionado.estado_reporte}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{seleccionado.fecha_reporte?.split('T')[0]}</span></div>
-                <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}><span className="detalle-label">Descripcion</span><span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6'}}>{seleccionado.descripcion}</span></div>
+                <div className="detalle-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}><span className="detalle-label">Descripcion</span><span style={{ fontSize: '14px', color: '#f0eaff', lineHeight: '1.6' }}>{seleccionado.descripcion}</span></div>
               </div>
               <div className="modal-actions"><button className="btn-save" onClick={() => setSeleccionado(null)}>Cerrar</button></div>
             </div>
@@ -185,7 +243,7 @@ const ReportesAdmin = () => {
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleEditar}>
                 <div className="form-group"><label>Estado</label>
-                  <select value={editData.estado_reporte} onChange={e => setEditData({...editData, estado_reporte: e.target.value})}>
+                  <select value={editData.estado_reporte} onChange={e => setEditData({ ...editData, estado_reporte: e.target.value })}>
                     <option value="pendiente">Pendiente</option>
                     <option value="en_revision">En revision</option>
                     <option value="resuelto">Resuelto</option>

@@ -2,8 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import SidebarInstructor from '../../components/SidebarInstructor';
 import { IconBell, IconTrash, IconEye, IconPencil } from '../../components/Icons';
-import '../EquipmentManagement.css';
-import '../admin/PapeleraAdmin.css';
+import '../../pages/instructor/PapeleraInstructor.css';
 
 const PapeleraInstructor = () => {
   const navigate = useNavigate();

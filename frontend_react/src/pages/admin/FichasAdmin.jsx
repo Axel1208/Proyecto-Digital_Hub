@@ -4,8 +4,7 @@ import { IconBell, IconUser, IconMonitor, IconReport } from '../../components/Ic
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
-import '../EquipmentManagement.css';
-import './FichasAdmin.css';
+import '../../pages/admin/FichasAdmin.css';
 
 const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15', disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c', pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
 const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙', madrugada:'🌃' }[j] || '📅');
@@ -76,7 +75,9 @@ const FichasAdmin = () => {
             </div>
             <div className="fd-header-actions">
               <span className="fd-estado-pill" style={{background:`${estadoColor(fichaActiva.estado)}18`,border:`1px solid ${estadoColor(fichaActiva.estado)}44`,color:estadoColor(fichaActiva.estado)}}>{fichaActiva.estado}</span>
+
               <button className="notification-btn"><IconBell size={20}/></button>
+              
             </div>
           </div>
 

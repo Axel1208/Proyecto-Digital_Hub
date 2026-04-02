@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconBell, IconMonitor, IconBarChart } from '../../components/Icons';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
-import '../EquipmentManagement.css';
+import '../../pages/aprendiz/EquiposAprendiz.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 

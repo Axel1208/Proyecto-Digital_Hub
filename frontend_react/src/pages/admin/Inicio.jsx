@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconUser, IconMonitor, IconReport, IconBell, IconCheck, IconClock } from '../../components/Icons';
-import '../Inicio.css';
 import './InicioAdmin.css';
 
 const Inicio = () => {

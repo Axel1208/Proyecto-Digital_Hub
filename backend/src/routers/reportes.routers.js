@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require("../db/database");
 
 // 📊 Excel
-const { exportarReportesExcel } = require("../controllers/reportes.controller");
+const { exportarReportesExcel, importarReportesExcel } = require("../controllers/reportes.controller");
 
 // 🔐 Seguridad
 const verificarToken = require("../middlewares/verificarToken");
@@ -23,6 +23,14 @@ router.get(
   verificarToken,
   verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
   exportarReportesExcel
+);
+
+router.post(
+  "/importar",
+  verificarToken,
+  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  upload.single("archivo"),
+  importarReportesExcel
 );
 
 // =============================

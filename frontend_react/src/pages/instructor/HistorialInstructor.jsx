@@ -2,13 +2,12 @@
 import { useNavigate } from 'react-router-dom';
 import SidebarInstructor from '../../components/SidebarInstructor';
 import { IconBell, IconHistory, IconMonitor, IconCheck } from '../../components/Icons';
-import '../EquipmentManagement.css';
+import './HistorialInstructor.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 
 const LS_KEY = 'portatiles_local';
 const getLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
-import '../admin/HistorialAdmin.css';
 
 const estadoColor = (e) => ({ disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c' }[e] || '#c9a8ff');
 

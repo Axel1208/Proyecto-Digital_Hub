@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+
 const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
@@ -139,5 +140,7 @@ router.get("/:id/reportes", verificarToken, verificarRol(ROLES.INSTRUCTOR, ROLES
     res.status(500).json({ mensaje: "Error al obtener reportes" });
   }
 });
+
+
 
 module.exports = router;

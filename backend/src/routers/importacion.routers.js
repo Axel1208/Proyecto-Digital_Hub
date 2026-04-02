@@ -4,7 +4,7 @@ const upload = require("../middlewares/upload");
 const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 const { ROLES } = require("../constants/dominio");
-const { importarPortatiles, importarUsuarios, importarAmbientes } = require("../services/importacion.service");
+const { importarPortatiles, importarUsuarios, importarAmbientes, importarReportes } = require("../services/importacion.service");
 
 const manejarImportacion = (func) => async (req, res) => {
     try {
@@ -21,5 +21,6 @@ const manejarImportacion = (func) => async (req, res) => {
 router.post("/portatiles", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarPortatiles));
 router.post("/usuarios", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarUsuarios));
 router.post("/ambientes", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarAmbientes));
+router.post("/reportes", verificarToken, verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]), upload.single("archivo"), manejarImportacion(importarReportes));
 
 module.exports = router;

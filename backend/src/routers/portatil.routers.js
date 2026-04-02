@@ -6,6 +6,9 @@ const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 const validarSerialUnico = require("../middlewares/validarSerialUnico");
+const { exportarPortatilesExcel } = require("../services/exportacion.service");
+const { importarPortatiles } = require("../services/importacion.service");
+const upload = require("../middlewares/upload");
 
 
 /*
@@ -93,6 +96,31 @@ router.get(
   }
 );
 
+// 📥 EXPORTAR EXCEL
+router.get(
+  "/excel",
+  verificarToken,
+  verificarRol("administrador", "instructor"),
+  exportarPortatilesExcel
+);
+
+// 📤 IMPORTAR EXCEL
+router.post(
+  "/importar",
+  verificarToken,
+  verificarRol("administrador", "instructor"),
+  upload.single("archivo"),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No se envió archivo" });
+      const resultado = await importarPortatiles(req.file.path);
+      res.json(resultado);
+    } catch (error) {
+      const statusCode = error.message.includes("Faltan las columnas") ? 400 : 500;
+      res.status(statusCode).json({ error: error.message });
+    }
+  }
+);
 
 /*
 =========================================

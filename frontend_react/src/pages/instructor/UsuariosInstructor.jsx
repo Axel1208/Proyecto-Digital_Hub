@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconUser } from '../../components/Icons';
-import SidebarAdmin from '../../components/SidebarAdmin';
-import '../../pages/admin/UsuariosAdmin.css';
+import SidebarInstructor from '../../components/SidebarInstructor';
+import '../../pages/instructor/UsuariosInstructor.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 
@@ -11,7 +11,7 @@ const getLocalU = () => { try { return JSON.parse(localStorage.getItem('usuarios
 const saveLocalU = (data) => localStorage.setItem('usuarios_local', JSON.stringify(data));
 const nextIdU = (list) => list.length ? Math.max(...list.map(u => u.id_usuario || 0)) + 1 : 1;
 
-const UsuariosAdmin = () => {
+const UsuariosInstructor = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +123,7 @@ const importarExcel = async (e) => {
 
   return (
     <div className="equipment-layout">
-      <SidebarAdmin />
+      <SidebarInstructor />
       <main className="equipment-main">
         <div className="equipment-header">
           <div>
@@ -292,4 +292,4 @@ const importarExcel = async (e) => {
   );
 };
 
-export default UsuariosAdmin;
+export default UsuariosInstructor;

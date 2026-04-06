@@ -1,7 +1,7 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
-import { IconMonitor, IconReport, IconBell, IconUser } from '../../components/Icons';
+import { IconMonitor, IconReport, IconBell, IconUser, IconCheck, IconClock } from '../../components/Icons';
 import '../Inicio.css';
 import './InicioAprendiz.css';
 
@@ -9,21 +9,28 @@ const InicioAprendiz = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const nombre = localStorage.getItem('nombre') || 'Aprendiz';
-  const [stats, setStats] = useState({ portatiles: 0, disponibles: 0, asignados: 0 });
+  const [ficha, setFicha] = useState(null);
+  const [dispositivo, setDispositivo] = useState(null);
+  const [reportes, setReportes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
-    fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).catch(() => [])
-      .then(data => {
-        if (!Array.isArray(data)) return;
-        setStats({
-          portatiles: data.length,
-          disponibles: data.filter(p => p.estado === 'disponible').length,
-          asignados: data.filter(p => p.estado === 'asignado').length,
-        });
-      });
+    const h = { Authorization: `Bearer ${token}` };
+    Promise.all([
+      fetch('/ficha/mia', { headers: h }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/portatil', { headers: h }).then(r => r.json()).catch(() => []),
+      fetch('/reportes', { headers: h }).then(r => r.json()).catch(() => []),
+    ]).then(([f, portatiles, reps]) => {
+      setFicha(f);
+      const asignados = Array.isArray(portatiles) ? portatiles.filter(p => p.estado === 'asignado') : [];
+      setDispositivo(asignados[0] || null);
+      setReportes(Array.isArray(reps) ? reps : []);
+    }).finally(() => setLoading(false));
   }, []);
+
+  const pendientes = reportes.filter(r => r.estado_reporte === 'pendiente').length;
+  const resueltos  = reportes.filter(r => r.estado_reporte === 'resuelto').length;
 
   return (
     <div className="inicio-layout">
@@ -32,12 +39,9 @@ const InicioAprendiz = () => {
 
         <div className="inicio-header">
           <div>
-            <div className="aprendiz-badge">
-              <span className="aprendiz-badge-dot" />
-              Sesion activa
-            </div>
-            <h1 className="inicio-title aprendiz-title">Bienvenido Aprendiz</h1>
-            <p className="aprendiz-subtitle">Hola, <span>{nombre}</span>. Consulta equipos y gestiona tus solicitudes.</p>
+            <div className="aprendiz-badge"><span className="aprendiz-badge-dot" />Sesion activa</div>
+            <h1 className="inicio-title aprendiz-title">Hola, {nombre}</h1>
+            <p className="aprendiz-subtitle">Bienvenido a tu panel de aprendiz.</p>
           </div>
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
@@ -45,11 +49,11 @@ const InicioAprendiz = () => {
         <div className="aprendiz-hero">
           <div className="aprendiz-hero-content">
             <span className="aprendiz-hero-tag">Panel de Aprendiz</span>
-            <h2 className="aprendiz-hero-title">Gestiona tus equipos<br />desde un solo lugar</h2>
-            <p className="aprendiz-hero-desc">Consulta disponibilidad, revisa estados y reporta incidencias con facilidad.</p>
+            <h2 className="aprendiz-hero-title">Tu espacio<br />de gestion</h2>
+            <p className="aprendiz-hero-desc">Consulta tu dispositivo asignado, reporta incidencias y revisa el estado de tus solicitudes.</p>
             <div className="aprendiz-hero-btns">
-              <button className="aprendiz-btn-primary" onClick={() => navigate('/aprendiz/equipos')}>Ver Equipos</button>
-              <button className="aprendiz-btn-outline" onClick={() => navigate('/aprendiz/reportes')}>Mis Reportes</button>
+              <button className="aprendiz-btn-primary" onClick={() => navigate('/aprendiz/dispositivo')}>Mi Dispositivo</button>
+              <button className="aprendiz-btn-outline" onClick={() => navigate('/aprendiz/historial')}>Mis Reportes</button>
             </div>
           </div>
           <div className="aprendiz-hero-orbs">
@@ -59,62 +63,78 @@ const InicioAprendiz = () => {
           </div>
         </div>
 
+        {/* STATS */}
         <div className="inicio-stats-grid">
-          <div className="inicio-card aprendiz-stat-card">
+          <div className="inicio-card aprendiz-stat-card" style={{cursor:'pointer'}} onClick={() => navigate('/aprendiz/dispositivo')}>
             <div className="aprendiz-stat-icon" style={{background:'rgba(127,90,240,0.15)',color:'#c9a8ff'}}>
               <IconMonitor size={20} />
             </div>
             <div className="inicio-card-body">
-              <div className="inicio-card-title">Total Equipos</div>
+              <div className="inicio-card-title">Mi Dispositivo</div>
               <ul className="inicio-card-list">
-                <li>Portatiles en el sistema</li>
-                <li>Actualizados en tiempo real</li>
+                {dispositivo ? (
+                  <><li>{dispositivo.marca} {dispositivo.modelo}</li><li style={{fontFamily:'monospace',fontSize:'11px'}}>{dispositivo.num_serie}</li></>
+                ) : (
+                  <li>Sin dispositivo asignado</li>
+                )}
               </ul>
             </div>
-            <div className="inicio-card-value aprendiz-val-purple">{stats.portatiles}</div>
+            <div className="inicio-card-value aprendiz-val-purple">{dispositivo ? 1 : 0}</div>
+          </div>
+
+          <div className="inicio-card aprendiz-stat-card" style={{cursor:'pointer'}} onClick={() => navigate('/aprendiz/historial')}>
+            <div className="aprendiz-stat-icon" style={{background:'rgba(250,204,21,0.12)',color:'#facc15'}}>
+              <IconClock size={20} />
+            </div>
+            <div className="inicio-card-body">
+              <div className="inicio-card-title">Reportes Pendientes</div>
+              <ul className="inicio-card-list">
+                <li>Total enviados: {reportes.length}</li>
+                <li>Resueltos: {resueltos}</li>
+              </ul>
+            </div>
+            <div className="inicio-card-value aprendiz-val-yellow">{pendientes}</div>
           </div>
 
           <div className="inicio-card aprendiz-stat-card">
             <div className="aprendiz-stat-icon" style={{background:'rgba(74,222,128,0.12)',color:'#4ade80'}}>
-              <IconMonitor size={20} />
+              <IconUser size={20} />
             </div>
             <div className="inicio-card-body">
-              <div className="inicio-card-title">Disponibles</div>
+              <div className="inicio-card-title">Mi Ficha</div>
               <ul className="inicio-card-list">
-                <li>Listos para usar</li>
-                <li>Sin asignar actualmente</li>
+                {ficha ? (
+                  <><li>{ficha.nombre}</li><li>{ficha.jornada}</li></>
+                ) : (
+                  <li>Sin ficha asignada</li>
+                )}
               </ul>
             </div>
-            <div className="inicio-card-value aprendiz-val-green">{stats.disponibles}</div>
-          </div>
-
-          <div className="inicio-card aprendiz-stat-card">
-            <div className="aprendiz-stat-icon" style={{background:'rgba(250,204,21,0.12)',color:'#facc15'}}>
-              <IconReport size={20} />
-            </div>
-            <div className="inicio-card-body">
-              <div className="inicio-card-title">Asignados</div>
-              <ul className="inicio-card-list">
-                <li>En uso actualmente</li>
-                <li>Por aprendices</li>
-              </ul>
-            </div>
-            <div className="inicio-card-value aprendiz-val-yellow">{stats.asignados}</div>
+            <div className="inicio-card-value aprendiz-val-green">{ficha ? 1 : 0}</div>
           </div>
         </div>
 
+        {/* ULTIMOS REPORTES */}
         <div className="inicio-bottom-grid">
           <div className="inicio-card-wide">
-            <div className="inicio-card-title">Actividad del sistema</div>
-            <ul className="inicio-card-list">
-              <li>Equipos disponibles esta semana</li>
-              <li>Movimientos registrados</li>
-            </ul>
-            <div className="inicio-chart">
-              {[40, 70, 55, 90, 30, 65, 80].map((h, i) => (
-                <div key={i} className="inicio-bar" style={{ height: `${h}%` }} />
-              ))}
-            </div>
+            <div className="inicio-card-title" style={{marginBottom:'14px'}}>Ultimos reportes</div>
+            {reportes.length === 0 ? (
+              <div style={{color:'#b8a8d8',fontSize:'13px',display:'flex',alignItems:'center',gap:'8px'}}>
+                <IconCheck size={14} style={{color:'#4ade80'}}/> No tienes reportes aun
+              </div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                {reportes.slice(0,4).map(r => (
+                  <div key={r.id_reporte} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',background:'rgba(127,90,240,0.06)',borderRadius:'10px',border:'1px solid rgba(127,90,240,0.12)'}}>
+                    <span style={{fontSize:'13px',color:'#f0eaff',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'65%'}}>{r.descripcion}</span>
+                    <span style={{fontSize:'11px',fontWeight:700,color: r.estado_reporte==='resuelto'?'#4ade80':r.estado_reporte==='en_revision'?'#fb923c':'#facc15',flexShrink:0}}>{r.estado_reporte}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button className="aprendiz-btn-outline" style={{marginTop:'16px',fontSize:'12px',padding:'8px 16px'}} onClick={() => navigate('/aprendiz/historial')}>
+              Ver todos
+            </button>
           </div>
 
           <div className="inicio-card-narrow aprendiz-profile-card">

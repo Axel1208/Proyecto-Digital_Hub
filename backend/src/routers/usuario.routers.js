@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../db/database");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
+const { exportarUsuariosExcel } = require("../services/exportacion.service");
+const upload = require("../middlewares/upload");
+const { importarUsuarios } = require("../services/importacion.service");
 
 const {
   validarRol,
@@ -47,6 +50,35 @@ router.get("/test", (req, res) => {
   res.json({ mensaje: "usuarios funcionando" });
 });
 
+// ==============================
+// 📥 EXPORTAR EXCEL
+// ==============================
+router.get(
+  "/excel",
+  verificarToken,
+  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  exportarUsuariosExcel
+);
+
+// ==============================
+// 📤 IMPORTAR EXCEL
+// ==============================
+router.post(
+  "/importar",
+  verificarToken,
+  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  upload.single("archivo"),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No se envió archivo" });
+      const resultado = await importarUsuarios(req.file.path);
+      res.json(resultado);
+    } catch (error) {
+      const statusCode = error.message.includes("Faltan las columnas") ? 400 : 500;
+      res.status(statusCode).json({ error: error.message });
+    }
+  }
+);
 // ==============================
 // REGISTRO (PÚBLICO)
 // ==============================

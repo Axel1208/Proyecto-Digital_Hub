@@ -49,3 +49,43 @@
 
 @keyframes adminFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes adminPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.inicio-chart-real {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 120px;
+  padding-top: 8px;
+}
+.inicio-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+.inicio-chart-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.inicio-chart-bar-real {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.5s ease;
+  min-height: 6px;
+}
+.inicio-chart-label {
+  font-size: 10px;
+  color: #b8a8d8;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.inicio-chart-count {
+  font-size: 10px;
+  color: #c9a8ff;
+  font-weight: 700;
+}

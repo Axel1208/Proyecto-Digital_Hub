@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconBell, IconClock, IconCheck } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
-import '../EquipmentManagement.css';
+import '../../pages/instructor/ReportesInstructor.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 const LS_REPORTES = 'reportes_local';
 const getLocalR = () => { try { return JSON.parse(localStorage.getItem(LS_REPORTES)) || []; } catch { return []; } };
 const saveLocalR = (data) => localStorage.setItem(LS_REPORTES, JSON.stringify(data));
@@ -12,6 +14,8 @@ const ReportesInstructor = () => {
   const navigate = useNavigate();
   const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
@@ -26,6 +30,55 @@ const ReportesInstructor = () => {
     if (!token) { navigate('/login'); return; }
     cargar();
   }, []);
+
+  const exportarExcel = async () => {
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch('/reportes/excel', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const text = await res.text(); // leer como texto primero
+      let mensaje = 'Error al exportar';
+      try { mensaje = JSON.parse(text).mensaje || mensaje; } catch {}
+      alert(mensaje);
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'reportes.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    alert('Error al exportar: ' + err.message);
+  }
+};
+
+const importarExcel = async (e) => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+
+  try {
+    const res = await fetch('/importacion/reportes', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al importar');
+    alert(data.mensaje);
+    cargar(); // refresca la tabla
+  } catch (err) {
+    alert(err.message);
+  }
+  e.target.value = '';
+};
 
   const cargar = async () => {
     try {
@@ -77,10 +130,13 @@ const ReportesInstructor = () => {
   const abrirEditar = (r) => { setSeleccionado(r); setEditData({ estado_reporte: r.estado_reporte }); setShowEditModal(true); };
   const estadoColor = (e) => ({ pendiente: '#facc15', en_revision: '#fb923c', resuelto: '#4ade80' }[e] || '#c9a8ff');
 
+  // reset page on filter change
   const filtrados = reportes.filter(r => {
     const b = filtros.buscar.toLowerCase();
     return (!b || r.descripcion?.toLowerCase().includes(b) || String(r.id_reporte).includes(b)) && (!filtros.estado || r.estado_reporte === filtros.estado);
   });
+
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="equipment-layout">
@@ -88,12 +144,39 @@ const ReportesInstructor = () => {
       <main className="equipment-main">
         <div className="equipment-header">
           <div><h1 className="equipment-title">Comentarios y Reportes</h1><p className="equipment-subtitle">Total: <span>{reportes.length}</span></p></div>
-          <button className="notification-btn"><IconBell size={20} /></button>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button onClick={exportarExcel} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
+            </button>
+
+            <input
+              type="file"
+              accept=".xlsx"
+              style={{ display: 'none' }}
+              id="importar-input"
+              onChange={importarExcel}
+            />
+            <button onClick={() => document.getElementById('importar-input').click()} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Importar
+            </button>
+
+            <button className="notification-btn"><IconBell size={20}/></button>
+          </div>
         </div>
         <div className="stats-grid">
-          <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{reportes.length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconClock size={24} /></div><div className="stat-label">Pendientes</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'pendiente').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconCheck size={24} /></div><div className="stat-label">Resueltos</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'resuelto').length}</div></div>
+          <div className="stat-card"><div className="stat-card-text"><div className="stat-label">Total</div><div className="stat-value">{reportes.length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconClock size={24} /></div><div className="stat-card-text"><div className="stat-label">Pendientes</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'pendiente').length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconCheck size={24} /></div><div className="stat-card-text"><div className="stat-label">Resueltos</div><div className="stat-value">{reportes.filter(r => r.estado_reporte === 'resuelto').length}</div></div></div>
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
@@ -112,7 +195,7 @@ const ReportesInstructor = () => {
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
-              : filtrados.map(r => (
+              : paginados.map(r => (
                 <tr key={r.id_reporte}>
                   <td>#{r.id_reporte}</td>
                   <td style={{maxWidth:'250px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.descripcion}</td>
@@ -189,6 +272,7 @@ const ReportesInstructor = () => {
             </div>
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

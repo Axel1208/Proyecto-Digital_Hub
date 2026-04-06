@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconMonitor, IconBarChart } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
-import '../EquipmentManagement.css';
+import '../../pages/instructor/EquiposInstructor.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const LS_KEY = 'portatiles_local';
 const getLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
@@ -13,6 +15,8 @@ const EquiposInstructor = () => {
   const navigate = useNavigate();
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
@@ -27,6 +31,31 @@ const EquiposInstructor = () => {
     if (!token) { navigate('/login'); return; }
     cargar();
   }, []);
+
+  const exportarExcel = async () => {
+  try {
+    const res = await fetch('/portatil/excel', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) { const text = await res.text(); let m = 'Error al exportar'; try { m = JSON.parse(text).mensaje || m; } catch {} alert(m); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'portatiles.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) { alert('Error al exportar: ' + err.message); }
+};
+
+const importarExcel = async (e) => {
+  const archivo = e.target.files[0]; if (!archivo) return;
+  const formData = new FormData(); formData.append('archivo', archivo);
+  try {
+    const res = await fetch('/portatil/importar', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al importar');
+    alert(`${data.insertados} portátiles importados correctamente`);
+    cargar();
+  } catch (err) { alert(err.message); }
+  e.target.value = '';
+};
+
 
   const cargar = async () => {
     try {
@@ -104,9 +133,12 @@ const EquiposInstructor = () => {
   };
   const estadoColor = (e) => ({ disponible: '#4ade80', asignado: '#facc15', danado: '#f87171', mantenimiento: '#fb923c' }[e] || '#c9a8ff');
 
+  // reset page on filter change
   const filtrados = portatiles.filter(p => {
     const b = filtros.buscar.toLowerCase();
-    return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b) || p.modelo?.toLowerCase().includes(b))
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b) || p.modelo?.toLowerCase().includes(b))
       && (!filtros.estado || p.estado === filtros.estado)
       && (!filtros.marca || p.marca?.toLowerCase().includes(filtros.marca.toLowerCase()));
   });
@@ -117,12 +149,39 @@ const EquiposInstructor = () => {
       <main className="equipment-main">
         <div className="equipment-header">
           <div><h1 className="equipment-title">Gestion de equipos</h1><p className="equipment-subtitle">Total: <span>{portatiles.length}</span></p></div>
-          <button className="notification-btn"><IconBell size={20} /></button>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button onClick={exportarExcel} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
+            </button>
+
+            <input
+              type="file"
+              accept=".xlsx"
+              style={{ display: 'none' }}
+              id="importar-input"
+              onChange={importarExcel}
+            />
+            <button onClick={() => document.getElementById('importar-input').click()} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Importar
+            </button>
+
+            <button className="notification-btn"><IconBell size={20}/></button>
+          </div>
         </div>
         <div className="stats-grid">
-          <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconMonitor size={24} /></div><div className="stat-label">Disponibles</div><div className="stat-value">{portatiles.filter(p => p.estado === 'disponible').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconBarChart size={24} /></div><div className="stat-label">Asignados</div><div className="stat-value">{portatiles.filter(p => p.estado === 'asignado').length}</div></div>
+          <div className="stat-card"><div className="stat-card-text"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconMonitor size={24} /></div><div className="stat-card-text"><div className="stat-label">Disponibles</div><div className="stat-value">{portatiles.filter(p => p.estado === 'disponible').length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconBarChart size={24} /></div><div className="stat-card-text"><div className="stat-label">Asignados</div><div className="stat-value">{portatiles.filter(p => p.estado === 'asignado').length}</div></div></div>
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
@@ -143,7 +202,7 @@ const EquiposInstructor = () => {
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
-              : filtrados.map(p => (
+              : paginados.map(p => (
                 <tr key={p.id_portatil}>
                   <td>{p.num_serie}</td><td>{p.marca}</td><td>{p.modelo}</td>
                   <td><span style={{color:estadoColor(p.estado),fontWeight:600,fontSize:'13px'}}>{p.estado}</span></td>
@@ -228,6 +287,7 @@ const EquiposInstructor = () => {
             </div>
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

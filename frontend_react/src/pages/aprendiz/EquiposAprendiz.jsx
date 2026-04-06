@@ -2,12 +2,16 @@
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconBell, IconMonitor, IconBarChart } from '../../components/Icons';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
-import '../EquipmentManagement.css';
+import '../../pages/aprendiz/EquiposAprendiz.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const EquiposAprendiz = () => {
   const navigate = useNavigate();
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
   const [error, setError] = useState('');
   const [showVerModal, setShowVerModal] = useState(false);
   const [seleccionado, setSeleccionado] = useState(null);
@@ -24,7 +28,8 @@ const EquiposAprendiz = () => {
       setLoading(true);
       const res = await fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
-      setPortatiles(await res.json());
+      const data = await res.json();
+      setPortatiles(Array.isArray(data) ? data : []);
     } catch { setError('Error al cargar los portatiles'); }
     finally { setLoading(false); }
   };
@@ -32,9 +37,12 @@ const EquiposAprendiz = () => {
   const abrirVer = (p) => { setSeleccionado(p); setShowVerModal(true); };
   const estadoColor = (e) => ({ disponible: '#4ade80', asignado: '#facc15', 'danado': '#f87171', 'en reparacion': '#fb923c' }[e] || '#c9a8ff');
 
+  // reset page on filter change
   const filtrados = portatiles.filter(p => {
     const b = filtros.buscar.toLowerCase();
-    return (!b || p.num_serie.toLowerCase().includes(b) || p.marca.toLowerCase().includes(b) || p.modelo.toLowerCase().includes(b))
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  return (!b || p.num_serie.toLowerCase().includes(b) || p.marca.toLowerCase().includes(b) || p.modelo.toLowerCase().includes(b))
       && (!filtros.estado || p.estado === filtros.estado)
       && (!filtros.marca || p.marca.toLowerCase().includes(filtros.marca.toLowerCase()));
   });
@@ -48,9 +56,9 @@ const EquiposAprendiz = () => {
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
         <div className="stats-grid">
-          <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconMonitor size={24} /></div><div className="stat-label">Disponibles</div><div className="stat-value">{portatiles.filter(p => p.estado === 'disponible').length}</div></div>
-          <div className="stat-card"><div className="stat-icon"><IconBarChart size={24} /></div><div className="stat-label">Asignados</div><div className="stat-value">{portatiles.filter(p => p.estado === 'asignado').length}</div></div>
+          <div className="stat-card"><div className="stat-card-text"><div className="stat-label">Total</div><div className="stat-value">{portatiles.length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconMonitor size={24} /></div><div className="stat-card-text"><div className="stat-label">Disponibles</div><div className="stat-value">{portatiles.filter(p => p.estado === 'disponible').length}</div></div></div>
+          <div className="stat-card"><div className="stat-icon"><IconBarChart size={24} /></div><div className="stat-card-text"><div className="stat-label">Asignados</div><div className="stat-value">{portatiles.filter(p => p.estado === 'asignado').length}</div></div></div>
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
@@ -67,7 +75,7 @@ const EquiposAprendiz = () => {
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
-              : filtrados.map(p => (
+              : paginados.map(p => (
                 <tr key={p.id_portatil}>
                   <td>{p.num_serie}</td><td>{p.marca}</td><td>{p.modelo}</td>
                   <td><span style={{color:estadoColor(p.estado),fontWeight:600,fontSize:'13px'}}>{p.estado}</span></td>
@@ -95,6 +103,7 @@ const EquiposAprendiz = () => {
             </div>
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
       </main>
     </div>
   );

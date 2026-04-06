@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconBell } from '../../components/Icons';
-import '../EquipmentManagement.css';
 import '../Ajustes.css';
 
 const AjustesAdmin = () => {

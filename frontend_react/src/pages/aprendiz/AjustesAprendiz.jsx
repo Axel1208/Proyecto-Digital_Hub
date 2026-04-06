@@ -2,7 +2,6 @@
 import { useNavigate } from 'react-router-dom';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
 import { IconBell } from '../../components/Icons';
-import '../EquipmentManagement.css';
 import '../Ajustes.css';
 
 const AjustesAprendiz = () => {

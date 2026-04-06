@@ -16,10 +16,11 @@ const SidebarAprendiz = ({ onCollapse }) => {
   };
 
   const menuItems = [
-    { path: '/aprendiz/inicio',    icon: <IconDashboard size={18} />, label: 'Inicio' },
-    { path: '/aprendiz/equipos',   icon: <IconMonitor size={18} />,   label: 'Equipos' },
-    { path: '/aprendiz/reportes',  icon: <IconReport size={18} />,    label: 'Reportes' },
-    { path: '/aprendiz/historial', icon: <IconHistory size={18} />,   label: 'Historial' },
+    { path: '/aprendiz/inicio',       icon: <IconDashboard size={18} />, label: 'Inicio' },
+    { path: '/aprendiz/ficha',        icon: <IconUser size={18} />,      label: 'Mi Ficha' },
+    { path: '/aprendiz/dispositivo',  icon: <IconMonitor size={18} />,   label: 'Mi Dispositivo' },
+    { path: '/aprendiz/historial',    icon: <IconHistory size={18} />,   label: 'Mis Reportes' },
+    { path: '/aprendiz/ajustes',      icon: <IconSettings size={18} />,  label: 'Ajustes' },
   ];
 
   return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconBell, IconUser, IconCheck, IconMonitor, IconReport } from '../../components/Icons';
 import SidebarAprendiz from '../../components/SidebarAprendiz';
-import '../EquipmentManagement.css';
+import '../../pages/aprendiz/MiFicha.css';
 
 const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15' }[e] || '#c9a8ff');
 const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙' }[j] || '📅');

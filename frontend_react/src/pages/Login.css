@@ -218,14 +218,16 @@
   margin-top: -4px;
 }
 
-.login-forgot a {
+.login-forgot a,
+.login-forgot-link {
   font-size: 12px;
   color: #c9a8ff;
   text-decoration: none;
   transition: color 0.2s;
 }
 
-.login-forgot a:hover { color: #fff; }
+.login-forgot a:hover,
+.login-forgot-link:hover { color: #fff; }
 
 /* ===== BOTÓN SUBMIT ===== */
 .btn-submit {
@@ -298,4 +300,61 @@
     border-radius: 20px;
   }
   .login-title { font-size: 22px; }
+}
+
+/* ===== RECUPERAR PASSWORD ===== */
+.login-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c9a8ff;
+  text-decoration: none;
+  transition: color 0.2s, gap 0.2s;
+}
+.login-back:hover { color: #fff; gap: 10px; }
+
+/* Grid de 6 inputs para el codigo */
+.codigo-grid {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.codigo-input {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+  background: rgba(127,90,240,0.07);
+  border: 1px solid rgba(127,90,240,0.25);
+  border-radius: 14px;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  caret-color: #7f5af0;
+}
+
+.codigo-input:focus {
+  border-color: #7f5af0;
+  box-shadow: 0 0 0 3px rgba(127,90,240,0.18);
+  background: rgba(127,90,240,0.13);
+}
+
+/* Icono de exito */
+.exito-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 2px solid rgba(127,90,240,0.4);
+  margin: 0 auto;
+  color: #c9a8ff;
+  background: rgba(127,90,240,0.08);
+  box-shadow: 0 0 30px rgba(127,90,240,0.2);
 }

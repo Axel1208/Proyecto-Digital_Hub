@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import Login from './pages/Login';
-import EquipmentManagement from './pages/EquipmentManagement';
+import RecuperarPassword from './pages/RecuperarPassword';
+import VerificarCodigo from './pages/VerificarCodigo';
+import NuevaPassword from './pages/NuevaPassword';
 
 import InicioAdmin from './pages/admin/Inicio';
 import EquiposAdmin from './pages/admin/EquiposAdmin';
@@ -42,40 +44,39 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/registrarse" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/recuperar-password" element={<RecuperarPassword />} />
+        <Route path="/verificar-codigo" element={<VerificarCodigo />} />
+        <Route path="/nueva-password" element={<NuevaPassword />} />
 
-        <Route path="/admin/inicio"    element={<InicioAdmin />} />
-        <Route path="/admin/equipos"   element={<EquiposAdmin />} />
-        <Route path="/admin/historial" element={<HistorialAdmin />} />
-        <Route path="/admin/papelera"  element={<PapeleraAdmin />} />
-        <Route path="/admin/ajustes"   element={<AjustesAdmin />} />
-        <Route path="/admin/usuarios"   element={<UsuariosAdmin />} />
-        <Route path="/admin/reportes"   element={<ReportesAdmin />} />
-        <Route path="/admin/ambientes"  element={<AmbientesAdmin />} />
-        <Route path="/admin/fichas"     element={<FichasAdmin />} />
+        <Route path="/admin/inicio"      element={<InicioAdmin />} />
+        <Route path="/admin/equipos"     element={<EquiposAdmin />} />
+        <Route path="/admin/historial"   element={<HistorialAdmin />} />
+        <Route path="/admin/papelera"    element={<PapeleraAdmin />} />
+        <Route path="/admin/ajustes"     element={<AjustesAdmin />} />
+        <Route path="/admin/usuarios"    element={<UsuariosAdmin />} />
+        <Route path="/admin/reportes"    element={<ReportesAdmin />} />
+        <Route path="/admin/comentarios" element={<ReportesAdmin />} />
+        <Route path="/admin/ambientes"   element={<AmbientesAdmin />} />
+        <Route path="/admin/fichas"      element={<FichasAdmin />} />
 
-        <Route path="/instructor/inicio"    element={<InicioInstructor />} />
-        <Route path="/instructor/equipos"   element={<EquiposInstructor />} />
-        <Route path="/instructor/reportes"  element={<ReportesInstructor />} />
-        <Route path="/instructor/usuarios"  element={<UsuariosInstructor />} />
+        <Route path="/instructor/inicio"      element={<InicioInstructor />} />
+        <Route path="/instructor/equipos"     element={<EquiposInstructor />} />
+        <Route path="/instructor/reportes"    element={<ReportesInstructor />} />
         <Route path="/instructor/comentarios" element={<ReportesInstructor />} />
-        <Route path="/instructor/historial" element={<HistorialInstructor />} />
-        <Route path="/instructor/papelera"  element={<PapeleraInstructor />} />
-        <Route path="/instructor/ajustes"   element={<AjustesInstructor />} />
-        <Route path="/instructor/fichas"    element={<FichasInstructor />} />
+        <Route path="/instructor/usuarios"    element={<UsuariosInstructor />} />
+        <Route path="/instructor/historial"   element={<HistorialInstructor />} />
+        <Route path="/instructor/papelera"    element={<PapeleraInstructor />} />
+        <Route path="/instructor/ajustes"     element={<AjustesInstructor />} />
+        <Route path="/instructor/fichas"      element={<FichasInstructor />} />
 
-        <Route path="/aprendiz/inicio"    element={<InicioAprendiz />} />
-        <Route path="/aprendiz/equipos"   element={<EquiposAprendiz />} />
-        <Route path="/aprendiz/reportes"  element={<ReportesAprendiz />} />
-        <Route path="/aprendiz/historial" element={<HistorialAprendiz />} />
-        <Route path="/aprendiz/ajustes"   element={<AjustesAprendiz />} />
-        <Route path="/aprendiz/fichas"       element={<FichasAprendiz />} />
-        <Route path="/aprendiz/dispositivo"  element={<MiDispositivo />} />
-        <Route path="/aprendiz/ficha"        element={<MiFicha />} />
-
-        <Route path="/panel"     element={<EquipmentManagement />} />
-        <Route path="/equipos"   element={<EquipmentManagement />} />
-        <Route path="/historial" element={<EquipmentManagement />} />
-        <Route path="/papelera"  element={<EquipmentManagement />} />
+        <Route path="/aprendiz/inicio"      element={<InicioAprendiz />} />
+        <Route path="/aprendiz/equipos"     element={<EquiposAprendiz />} />
+        <Route path="/aprendiz/reportes"    element={<ReportesAprendiz />} />
+        <Route path="/aprendiz/historial"   element={<HistorialAprendiz />} />
+        <Route path="/aprendiz/ajustes"     element={<AjustesAprendiz />} />
+        <Route path="/aprendiz/fichas"      element={<FichasAprendiz />} />
+        <Route path="/aprendiz/dispositivo" element={<MiDispositivo />} />
+        <Route path="/aprendiz/ficha"       element={<MiFicha />} />
       </Routes>
     </Router>
   );

@@ -2,7 +2,6 @@
 import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconBell, IconTrash, IconEye, IconPencil } from '../../components/Icons';
-import '../EquipmentManagement.css';
 import './PapeleraAdmin.css';
 
 const PapeleraAdmin = () => {

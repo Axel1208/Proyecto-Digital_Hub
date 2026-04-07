@@ -25,12 +25,12 @@ const fichaTemplate = (nombreAprendiz, nombreFicha, programa, jornada, accion = 
       <p>Sistema de Gestión de Equipos</p>
     </div>
     <div class="body">
-      <h2>Hola, ${nombreAprendiz} 👋</h2>
+      <h2>Hola, ${nombreAprendiz} </h2>
       <p>Has sido <strong style="color:#c9a8ff">${accion}</strong> exitosamente a una ficha de formación.</p>
       <div class="info-box">
-        <p>📋 Ficha: <span>${nombreFicha}</span></p>
-        <p>🎓 Programa: <span>${programa}</span></p>
-        <p>🕐 Jornada: <span>${jornada}</span></p>
+        <p> Ficha: <span>${nombreFicha}</span></p>
+        <p> Programa: <span>${programa}</span></p>
+        <p> Jornada: <span>${jornada}</span></p>
       </div>
       <p>Si tienes alguna duda, comunícate con tu instructor.</p>
     </div>

@@ -25,13 +25,13 @@ const asignacionEquipoTemplate = (nombreAprendiz, marca, modelo, numSerie, estad
       <p>Sistema de Gestión de Equipos</p>
     </div>
     <div class="body">
-      <h2>Hola, ${nombreAprendiz} 👋</h2>
+      <h2>Hola, ${nombreAprendiz} </h2>
       <p>Se te ha <strong style="color:#c9a8ff">asignado un equipo portátil</strong> en el sistema.</p>
       <div class="info-box">
-        <p>💻 Marca: <span>${marca}</span></p>
-        <p>🖥️ Modelo: <span>${modelo}</span></p>
-        <p>🔢 N° Serie: <span>${numSerie}</span></p>
-        <p>📌 Estado: <span>${estado}</span></p>
+        <p> Marca: <span>${marca}</span></p>
+        <p> Modelo: <span>${modelo}</span></p>
+        <p> N° Serie: <span>${numSerie}</span></p>
+        <p> Estado: <span>${estado}</span></p>
       </div>
       <p>Si tienes alguna duda sobre el equipo asignado, comunícate con tu instructor.</p>
     </div>

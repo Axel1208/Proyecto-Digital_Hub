@@ -5,7 +5,7 @@ import SidebarAprendiz from '../../components/SidebarAprendiz';
 import '../EquipmentManagement.css';
 
 const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15' }[e] || '#c9a8ff');
-const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙', madrugada:'🌃' }[j] || '📅');
+const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙' }[j] || '📅');
 
 const MiFicha = () => {
   const navigate = useNavigate();
@@ -27,8 +27,8 @@ const MiFicha = () => {
       setLoading(true);
       const h = { Authorization: `Bearer ${token}` };
       const [miaRes, todasRes] = await Promise.all([
-        fetch('/ficha/mia', { headers: h }),
-        fetch('/ficha', { headers: h }),
+        fetch('/api/fichas/mia', { headers: h }),
+        fetch('/api/fichas', { headers: h }),
       ]);
       const mia = miaRes.ok ? await miaRes.json() : null;
       const todas = await todasRes.json();
@@ -43,7 +43,7 @@ const MiFicha = () => {
   const handleUnirse = async (id) => {
     setUniendose(id); setError(''); setSuccessMsg('');
     try {
-      const res = await fetch(`/ficha/${id}/unirse`, {
+      const res = await fetch(`/api/fichas/${id}/unirse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });

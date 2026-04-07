@@ -26,12 +26,12 @@ const reporteTemplate = (nombreAprendiz, estadoReporte, fechaReporte, descripcio
       <p>Sistema de Gestión de Equipos</p>
     </div>
     <div class="body">
-      <h2>Hola, ${nombreAprendiz} 👋</h2>
+      <h2>Hola, ${nombreAprendiz} </h2>
       <p>Tu reporte ha sido <strong style="color:#c9a8ff">registrado correctamente</strong> en el sistema.</p>
       <div class="info-box">
-        <p>📅 Fecha: <span>${new Date(fechaReporte).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })}</span></p>
-        <p>📌 Estado: <span class="badge">${estadoReporte}</span></p>
-        <p>📝 Descripción: <span>${descripcion}</span></p>
+        <p> Fecha: <span>${new Date(fechaReporte).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })}</span></p>
+        <p> Estado: <span class="badge">${estadoReporte}</span></p>
+        <p> Descripción: <span>${descripcion}</span></p>
       </div>
       <p>Puedes hacer seguimiento de tu reporte desde la plataforma Digital Hub.</p>
     </div>

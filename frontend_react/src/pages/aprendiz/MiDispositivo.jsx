@@ -14,7 +14,11 @@ const MiDispositivo = () => {
   const [showModal, setShowModal] = useState(false);
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0] });
+  const [formData, setFormData] = useState({
+    descripcion: '',
+    fecha_reporte: new Date().toISOString().split('T')[0],
+    correo_instructor: ''
+  });
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -25,44 +29,51 @@ const MiDispositivo = () => {
   const cargar = async () => {
     try {
       setLoading(true);
+      localStorage.removeItem('portatiles_local');
       const h = { Authorization: `Bearer ${token}` };
       const [fRes, pRes] = await Promise.all([
-        fetch('/ficha/mia', { headers: h }),
-        fetch('/portatil', { headers: h }),
+        fetch('/api/fichas/mia', { headers: h }),
+        fetch('/api/portatiles', { headers: h }),
       ]);
       const fData = fRes.ok ? await fRes.json() : null;
-      const pData = await pRes.json();
+      const pRaw = await pRes.json();
+      const lista = Array.isArray(pRaw) ? pRaw : (Array.isArray(pRaw?.data) ? pRaw.data : []);
       setFicha(fData);
-      setPortatiles(Array.isArray(pData) ? pData.filter(p => p.estado === 'asignado') : []);
+      setPortatiles(lista);
     } catch { setError('Error al cargar'); }
     finally { setLoading(false); }
   };
 
   const abrirReporte = (equipo) => {
     setEquipoSeleccionado(equipo);
-    setFormData({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0] });
+    setFormData({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0], correo_instructor: '' });
     setError(''); setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setSubmitting(true); setError('');
     try {
-      const res = await fetch('/reportes', {
+      const fd = new FormData();
+      fd.append('descripcion', formData.descripcion);
+      fd.append('fecha_reporte', formData.fecha_reporte);
+      fd.append('correo_instructor', formData.correo_instructor);
+      fd.append('estado_reporte', 'pendiente');
+
+      const res = await fetch('/api/reportes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...formData, estado_reporte: 'pendiente' }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
       });
+      const data = await res.json();
       if (res.ok) {
         setShowModal(false);
         setSuccessMsg('Reporte enviado correctamente');
         setTimeout(() => setSuccessMsg(''), 3000);
-        setSubmitting(false); return;
+      } else {
+        setError(data.message || 'Error al enviar el reporte');
       }
-    } catch {}
-    setShowModal(false);
-    setSuccessMsg('Reporte guardado');
-    setTimeout(() => setSuccessMsg(''), 3000);
-    setSubmitting(false);
+    } catch { setError('Error de conexion'); }
+    finally { setSubmitting(false); }
   };
 
   return (
@@ -83,7 +94,6 @@ const MiDispositivo = () => {
           </div>
         )}
 
-        {/* FICHA */}
         {ficha && (
           <div style={{background:'linear-gradient(135deg,rgba(127,90,240,0.12),rgba(99,102,241,0.06))',border:'1px solid rgba(127,90,240,0.3)',borderRadius:'16px',padding:'18px 22px',marginBottom:'24px',display:'flex',alignItems:'center',gap:'14px'}}>
             <div style={{width:'40px',height:'40px',borderRadius:'10px',background:'rgba(127,90,240,0.2)',display:'flex',alignItems:'center',justifyContent:'center',color:'#c9a8ff',flexShrink:0}}>
@@ -98,7 +108,6 @@ const MiDispositivo = () => {
           </div>
         )}
 
-        {/* DISPOSITIVOS */}
         <div style={{fontSize:'13px',fontWeight:700,color:'#b8a8d8',textTransform:'uppercase',letterSpacing:'0.6px',marginBottom:'14px'}}>
           Equipos asignados
         </div>
@@ -107,7 +116,7 @@ const MiDispositivo = () => {
           <div style={{color:'#b8a8d8',fontSize:'13px',padding:'20px 0'}}>Cargando...</div>
         ) : portatiles.length === 0 ? (
           <div style={{background:'#1a0f35',border:'1px solid rgba(127,90,240,0.2)',borderRadius:'16px',padding:'24px',color:'#b8a8d8',fontSize:'13px',display:'flex',alignItems:'center',gap:'12px'}}>
-            <IconMonitor size={20} style={{color:'rgba(201,168,255,0.3)'}}/> No tienes equipos asignados actualmente
+            <IconMonitor size={20}/> No tienes equipos asignados actualmente
           </div>
         ) : (
           <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
@@ -138,7 +147,6 @@ const MiDispositivo = () => {
           </div>
         )}
 
-        {/* MODAL */}
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -154,6 +162,10 @@ const MiDispositivo = () => {
               )}
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label>Correo del instructor <span style={{color:'#f87171'}}>*</span></label>
+                  <input type="email" placeholder="correo@instructor.com" value={formData.correo_instructor} onChange={e => setFormData({...formData, correo_instructor: e.target.value})} required />
+                </div>
                 <div className="form-group">
                   <label>Descripcion del problema <span style={{color:'#f87171'}}>*</span></label>
                   <textarea rows={4} placeholder="Describe el problema..." value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} maxLength={255} required style={{borderRadius:'12px',resize:'vertical'}}/>
@@ -175,4 +187,5 @@ const MiDispositivo = () => {
     </div>
   );
 };
+
 export default MiDispositivo;

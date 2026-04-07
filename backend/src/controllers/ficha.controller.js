@@ -10,6 +10,30 @@ const { fichaTemplate } = require("../services/templates/fichaTemplate");
 
 async function obtenerFichas(req, res) {
   try {
+    const { rol, id } = req.usuario;
+
+    // Aprendiz: solo la ficha a la que pertenece
+    if (rol === ROLES.APRENDIZ) {
+      const pool = require("../db/database");
+      const [rows] = await pool.query(
+        `SELECT f.* FROM ficha f
+         JOIN ficha_aprendiz fa ON fa.id_ficha = f.id
+         WHERE fa.id_aprendiz = ?`,
+        [id]
+      );
+      return res.status(200).json(rows);
+    }
+
+    // Instructor: solo las fichas que él creó
+    if (rol === ROLES.INSTRUCTOR) {
+      const pool = require("../db/database");
+      const [rows] = await pool.query(
+        "SELECT * FROM ficha WHERE id_instructor = ?", [id]
+      );
+      return res.status(200).json(rows);
+    }
+
+    // Admin: todas
     const fichas = await fichaService.getAllFichas();
     res.status(200).json(fichas);
   } catch (error) {

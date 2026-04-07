@@ -191,42 +191,31 @@ router.put(
 =========================================
 5. ELIMINAR PORTÁTIL
 =========================================
-Solo ADMIN
+ADMIN o INSTRUCTOR (instructor solo los suyos)
 */
 
 router.delete(
   "/:id",
   verificarToken,
-  verificarRol(["administrador"]),
+  verificarRol(["administrador", "instructor"]),
   async (req, res) => {
-
     try {
-
       const { id } = req.params;
 
-      const [resultado] = await pool.query(
-        "DELETE FROM portatil WHERE id_portatil = ?",
-        [id]
-      );
+      const [rows] = await pool.query("SELECT * FROM portatil WHERE id_portatil = ?", [id]);
+      if (rows.length === 0) return res.status(404).json({ mensaje: "Portátil no encontrado" });
 
-      if (resultado.affectedRows === 0) {
-        return res.status(404).json({
-          mensaje: "Portátil no encontrado"
-        });
+      if (req.usuario.rol === "instructor" && rows[0].id_instructor !== req.usuario.id) {
+        return res.status(403).json({ mensaje: "No puedes eliminar un portátil que no registraste" });
       }
 
-      res.json({
-        mensaje: "Portátil eliminado correctamente"
-      });
+      await pool.query("DELETE FROM portatil WHERE id_portatil = ?", [id]);
+      res.json({ mensaje: "Portátil eliminado correctamente" });
 
     } catch (error) {
-
-      res.status(500).json({
-        mensaje: "Error al eliminar el portátil"
-      });
-
+      console.error(error);
+      res.status(500).json({ mensaje: "Error al eliminar el portátil" });
     }
-
   }
 );
 
@@ -278,6 +267,24 @@ router.post(
       }
       if (aprendiz.estado !== "activo") {
         return res.status(400).json({ mensaje: "El aprendiz no está activo" });
+      }
+
+      // Validar que el aprendiz no tenga ya un equipo asignado
+      const [equipoActual] = await pool.query(
+        "SELECT id_portatil FROM portatil WHERE id_aprendiz = ? LIMIT 1",
+        [aprendiz.id_usuario]
+      );
+      if (equipoActual.length > 0) {
+        return res.status(400).json({ mensaje: "Este aprendiz ya tiene un equipo asignado" });
+      }
+
+      // Validar que el aprendiz esté en una ficha
+      const [fichaAprendiz] = await pool.query(
+        "SELECT 1 FROM ficha_aprendiz WHERE id_aprendiz = ? LIMIT 1",
+        [aprendiz.id_usuario]
+      );
+      if (fichaAprendiz.length === 0) {
+        return res.status(400).json({ mensaje: "El aprendiz no está inscrito en ninguna ficha" });
       }
 
       // Actualizar estado del portátil a asignado y guardar id_aprendiz

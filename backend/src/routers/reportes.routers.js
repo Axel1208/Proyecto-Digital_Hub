@@ -122,7 +122,7 @@ router.post(
       }
 
       const fecha = new Date(fecha_reporte);
-      if (isNaN(fecha.getTime()) || fecha.getFullYear() < 2000 || fecha > new Date()) {
+      if (isNaN(fecha.getTime()) || fecha.getFullYear() < 2000) {
         return res.status(400).json({ message: "Fecha no válida" });
       }
 
@@ -131,13 +131,23 @@ router.post(
       }
 
       if (req.file) {
-        const tiposPermitidos = ["image/jpeg", "image/png"];
+        const tiposPermitidos = ["image/jpeg", "image/png", "application/pdf"];
         if (!tiposPermitidos.includes(req.file.mimetype)) {
-          return res.status(400).json({ message: "Tipo de archivo no permitido (solo JPG y PNG)" });
+          return res.status(400).json({ message: "Tipo de archivo no permitido (JPG, PNG o PDF)" });
         }
         if (req.file.size > 5 * 1024 * 1024) {
           return res.status(400).json({ message: "El archivo supera el tamaño permitido (5MB)" });
         }
+      }
+
+      // Verificar que el aprendiz tiene un equipo asignado
+      const id_aprendiz = req.usuario.id;
+      const [equipoAsignado] = await pool.query(
+        "SELECT id_portatil FROM portatil WHERE id_aprendiz = ? LIMIT 1",
+        [id_aprendiz]
+      );
+      if (equipoAsignado.length === 0) {
+        return res.status(400).json({ message: "No puedes crear un reporte sin tener un equipo asignado" });
       }
 
       // Buscar instructor por correo
@@ -151,7 +161,6 @@ router.post(
       const instructor = instructorRows[0];
 
       const archivo = req.file ? req.file.filename : null;
-      const id_aprendiz = req.usuario.id;
 
       await pool.query(
         `INSERT INTO reportes (estado_reporte, fecha_reporte, archivo, descripcion, id_aprendiz, id_instructor)
@@ -206,6 +215,7 @@ router.post(
         </div></body></html>
       `;
       await enviarCorreo(instructor.correo, `📋 Nuevo reporte de ${aprendiz ? aprendiz.nombre : 'aprendiz'} - Digital Hub`, htmlInstructor);
+      console.log(`📧 Correo instructor enviado a: ${instructor.correo}`);
 
       res.status(201).json({ message: "Reporte creado correctamente" });
 

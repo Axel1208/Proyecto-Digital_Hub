@@ -9,16 +9,44 @@ const RecuperarPassword = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError("");
-    if (!correo) { setError("Ingresa tu correo electronico"); return; }
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  if (!correo) {
+    setError("Ingresa tu correo electronico");
+    return;
+  }
+
+  try {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/verificar-codigo", { state: { correo } });
-    }, 800);
-  };
+
+    const res = await fetch("http://localhost:3001/api/recuperacion/enviar-codigo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ correo })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.mensaje || "Error al enviar código");
+    }
+
+    console.log("✅ Backend respondió:", data);
+
+  
+    navigate("/verificar-codigo", { state: { correo } });
+
+  } catch (error) {
+    console.error("❌ ERROR:", error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-page">

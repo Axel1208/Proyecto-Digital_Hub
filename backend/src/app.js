@@ -23,6 +23,7 @@ const ambienteRouter = require("./routers/ambiente.routers");
 const fichaRouter = require("./routers/ficha.routers");
 const importacionRoutes = require("./routers/importacion.routers");
 const exportacionRoutes = require("./routers/exportacion.routers");
+const recuperacionRouter = require("./routers/recuperacion.routers");
 // ===============================
 // RUTAS PRINCIPALES (API)
 // ===============================
@@ -33,6 +34,7 @@ app.use("/api/ambientes", ambienteRouter);
 app.use("/api/fichas", fichaRouter);
 app.use("/importar", importacionRoutes);
 app.use("/exportar", exportacionRoutes);
+app.use("/api/recuperacion", recuperacionRouter);
 
 // ===============================
 // ARCHIVOS ESTÁTICOS

@@ -23,4 +23,22 @@ const enviarCorreo = async (destinatario, asunto, htmlContent) => {
   }
 };
 
-module.exports = { enviarCorreo };
+// ===============================
+// ENVIAR CÓDIGO DE RECUPERACIÓN
+// ===============================
+const enviarCodigoRecuperacion = async (correo, codigo, template) => {
+  try {
+    await enviarCorreo(
+      correo,
+      "Recuperación de contraseña - Digital Hub",
+      template(codigo)
+    );
+  } catch (error) {
+    console.error("❌ ERROR COMPLETO:", error);
+  }
+};
+
+module.exports = { 
+  enviarCorreo,
+  enviarCodigoRecuperacion
+};

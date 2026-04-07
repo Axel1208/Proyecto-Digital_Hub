@@ -4,7 +4,7 @@ import { IconEye, IconBell, IconClock, IconCheck, IconMonitor, IconReport } from
 import SidebarAprendiz from '../../components/SidebarAprendiz';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
-import '../EquipmentManagement.css';
+import '../../pages/aprendiz/ReportesAprendiz.css';
 
 const LS_REPORTES = 'reportes_local';
 const getLocalR = () => { try { return JSON.parse(localStorage.getItem(LS_REPORTES)) || []; } catch { return []; } };

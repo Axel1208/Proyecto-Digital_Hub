@@ -4,7 +4,7 @@ import { IconBell, IconEye, IconPencil, IconTrash, IconClock, IconCheck, IconRep
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
-import '../EquipmentManagement.css';
+import '../../pages/admin/ReportesAdmin.css';
 
 const LS_REP = 'rep_local';
 const getLocalRep = () => { try { return JSON.parse(localStorage.getItem(LS_REP)) || []; } catch { return []; } };

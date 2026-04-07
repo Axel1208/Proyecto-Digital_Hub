@@ -46,7 +46,6 @@ const Inicio = () => {
           <div>
             <div className="admin-badge"><span className="admin-badge-dot" />Panel Activo</div>
             <h1 className="inicio-title admin-title">Bienvenido, {nombre}</h1>
-            <p className="admin-subtitle">Vista general del sistema DigitalHub.</p>
           </div>
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>

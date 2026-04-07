@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconBell, IconPencil, IconTrash, IconUser, IconMonitor, IconReport } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
-import '../EquipmentManagement.css';
 import './FichasInstructor.css';
 
 const FichasInstructor = () => {

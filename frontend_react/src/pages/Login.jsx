@@ -103,7 +103,7 @@ const Login = () => {
             {error && <p className="login-error">{error}</p>}
 
             <div className="login-forgot">
-              <a href="#">Olvidaste tu contrasena?</a>
+              <Link to="/recuperar-password" className="login-forgot-link">Olvidaste tu contrasena?</Link>
             </div>
 
             <button className="btn-submit" type="submit" disabled={loading}>

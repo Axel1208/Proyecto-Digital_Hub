@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconBell, IconHistory, IconMonitor, IconCheck } from '../../components/Icons';
-import '../EquipmentManagement.css';
+import '../../pages/admin/HistorialAdmin.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 

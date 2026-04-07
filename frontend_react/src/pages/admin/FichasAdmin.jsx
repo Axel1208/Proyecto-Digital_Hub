@@ -7,7 +7,7 @@ import '../../components/Pagination.css';
 import '../../pages/admin/FichasAdmin.css';
 
 const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15', disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c', pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
-const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙', madrugada:'🌃' }[j] || '📅');
+const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙'}[j] || '📅');
 
 const FichasAdmin = () => {
   const navigate = useNavigate();

@@ -24,6 +24,8 @@ const UsuariosInstructor = () => {
   const [formData, setFormData] = useState({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' });
   const [editData, setEditData] = useState({ nombre: '', correo: '', rol: 'aprendiz', estado: 'activo' });
   const [filtro, setFiltro] = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const token = localStorage.getItem('token');
 
   const exportarExcel = async () => {
@@ -56,21 +58,16 @@ const importarExcel = async (e) => {
   }, []);
 
   const cargar = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/usuarios', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.status === 401) { navigate('/login'); return; }
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const local = getLocalU();
-        const backendIds = data.map(u => u.id_usuario);
-        const soloLocales = local.filter(u => !backendIds.includes(u.id_usuario));
-        const merged = [...data, ...soloLocales];
-        saveLocalU(merged); setUsuarios(merged);
-      } else { setUsuarios(getLocalU()); }
-    } catch { setUsuarios(getLocalU()); }
-    finally { setLoading(false); }
-  };
+  try {
+    setLoading(true);
+    localStorage.removeItem('usuarios_local');
+    const res = await fetch('/api/usuarios', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { navigate('/login'); return; }
+    const data = await res.json();
+    setUsuarios(Array.isArray(data) ? data : []);
+  } catch { setUsuarios([]); }
+  finally { setLoading(false); }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError('');
@@ -83,27 +80,22 @@ const importarExcel = async (e) => {
       if (res.ok) { setShowModal(false); setFormData({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' }); cargar(); return; }
       const data = await res.json(); setError(data.mensaje || 'Error al crear');
     } catch {}
-    // fallback localStorage
-    const local = getLocalU();
-    local.push({ ...formData, id_usuario: nextIdU(local) });
-    saveLocalU(local); setUsuarios(local);
-    setShowModal(false); setFormData({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' });
+   
   };
 
   const handleEditar = async (e) => {
-    e.preventDefault(); setError('');
-    try {
-      const res = await fetch(`/api/usuarios/${seleccionado.id_usuario}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(editData)
-      });
-      if (res.ok) { setShowEditModal(false); cargar(); return; }
-    } catch {}
-    // fallback localStorage
-    const local = getLocalU().map(u => u.id_usuario === seleccionado.id_usuario ? { ...u, ...editData } : u);
-    saveLocalU(local); setUsuarios([...local]); setShowEditModal(false);
-  };
+  e.preventDefault(); setError('');
+  try {
+    const res = await fetch(`/api/usuarios/${seleccionado.id_usuario}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(editData)
+    });
+    const data = await res.json();
+    if (res.ok) { setShowEditModal(false); cargar(); return; }
+    setError(data.mensaje || 'Error al actualizar');
+  } catch { setError('Error de conexion'); }
+};
 
   const handleEliminar = async (id) => {
     if (!confirm('Eliminar este usuario?')) return;
@@ -117,7 +109,13 @@ const importarExcel = async (e) => {
 
   const rolColor = (r) => ({ administrador: '#c9a8ff', instructor: '#60a5fa', aprendiz: '#4ade80' }[r] || '#facc15');
   // reset page on filter change
-  const filtrados = usuarios.filter(u => !filtro || u.nombre?.toLowerCase().includes(filtro.toLowerCase()) || u.correo?.toLowerCase().includes(filtro.toLowerCase()));
+  const filtrados = usuarios.filter(u =>
+  (!filtro || u.nombre?.toLowerCase().includes(filtro.toLowerCase()) || u.correo?.toLowerCase().includes(filtro.toLowerCase()))
+  && (!filtroRol || u.rol === filtroRol)
+  && (!filtroEstado || u.estado === filtroEstado)
+);
+
+
 
   const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -167,9 +165,20 @@ const importarExcel = async (e) => {
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
-          <input className="filter-input" placeholder="Buscar por nombre o correo..." value={filtro} onChange={e => setFiltro(e.target.value)} />
-          <button className="filter-clear" onClick={() => setFiltro('')}>Limpiar</button>
-        </div>
+        <input className="filter-input" placeholder="Buscar por nombre o correo..." value={filtro} onChange={e => setFiltro(e.target.value)} />
+        <select className="filter-input" value={filtroRol} onChange={e => setFiltroRol(e.target.value)}>
+          <option value="">Todos los roles</option>
+          <option value="administrador">Administrador</option>
+          <option value="instructor">Instructor</option>
+          <option value="aprendiz">Aprendiz</option>
+        </select>
+        <select className="filter-input" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
+          <option value="">Todos los estados</option>
+          <option value="activo">Activo</option>
+          <option value="inhabilitado">Inhabilitado</option>
+        </select>
+        <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroRol(''); setFiltroEstado(''); }}>Limpiar</button>
+      </div>
         <div className="table-container">
           <table className="equipment-table">
             <thead>
@@ -192,13 +201,17 @@ const importarExcel = async (e) => {
                     <td>{u.nombre}</td>
                     <td style={{ color: 'var(--text-muted-dark)', fontSize: '13px' }}>{u.correo}</td>
                     <td><span style={{ color: rolColor(u.rol), fontWeight: 600, fontSize: '13px' }}>{u.rol}</span></td>
-                    <td><span style={{ color: u.estado === 'activo' ? '#4ade80' : '#f87171', fontWeight: 600, fontSize: '13px' }}>{u.estado === 'activo' ? 'activo' : 'inactivo'}</span></td>
+                    <td><span style={{ color: u.estado === 'activo' ? '#4ade80' : '#f87171', fontWeight: 600, fontSize: '13px' }}>{u.estado}</span></td>
                     <td>
-                      <div className="action-buttons">
-                        <button className="action-btn edit" onClick={() => { setSeleccionado(u); setEditData({ nombre: u.nombre, correo: u.correo, rol: u.rol, estado: u.estado }); setShowEditModal(true); }}><IconPencil size={16} /></button>
-                        <button className="action-btn delete" onClick={() => handleEliminar(u.id_usuario)}><IconTrash size={16} /></button>
-                      </div>
-                    </td>
+                    <div className="action-buttons">
+                      {u.rol !== 'administrador' && (
+                        <>
+                          <button className="action-btn edit" onClick={() => { setSeleccionado(u); setEditData({ nombre: u.nombre, correo: u.correo, rol: u.rol, estado: u.estado }); setShowEditModal(true); }}><IconPencil size={16} /></button>
+                          <button className="action-btn delete" onClick={() => handleEliminar(u.id_usuario)}><IconTrash size={16} /></button>
+                        </>
+                      )}
+                    </div>
+                  </td>
                   </tr>
                 ))
               )}

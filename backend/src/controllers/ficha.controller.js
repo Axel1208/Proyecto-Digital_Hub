@@ -1,5 +1,7 @@
 const fichaService = require("../services/ficha.service");
 const { ROLES } = require("../constants/dominio");
+const { enviarCorreo } = require("../services/email.service");
+const { fichaTemplate } = require("../services/templates/fichaTemplate");
 
 /**
  * Controlador de fichas.
@@ -8,6 +10,30 @@ const { ROLES } = require("../constants/dominio");
 
 async function obtenerFichas(req, res) {
   try {
+    const { rol, id } = req.usuario;
+
+    // Aprendiz: solo la ficha a la que pertenece
+    if (rol === ROLES.APRENDIZ) {
+      const pool = require("../db/database");
+      const [rows] = await pool.query(
+        `SELECT f.* FROM ficha f
+         JOIN ficha_aprendiz fa ON fa.id_ficha = f.id
+         WHERE fa.id_aprendiz = ?`,
+        [id]
+      );
+      return res.status(200).json(rows);
+    }
+
+    // Instructor: solo las fichas que él creó
+    if (rol === ROLES.INSTRUCTOR) {
+      const pool = require("../db/database");
+      const [rows] = await pool.query(
+        "SELECT * FROM ficha WHERE id_instructor = ?", [id]
+      );
+      return res.status(200).json(rows);
+    }
+
+    // Admin: todas
     const fichas = await fichaService.getAllFichas();
     res.status(200).json(fichas);
   } catch (error) {
@@ -157,6 +183,14 @@ async function unirseFicha(req, res) {
     }
 
     await fichaService.addAprendizToFicha(id, id_aprendiz);
+
+    // 📧 Notificación al aprendiz
+    const aprendizData = await fichaService.getAprendizById(id_aprendiz);
+    if (aprendizData?.correo) {
+      const html = fichaTemplate(aprendizData.nombre, ficha.nombre, ficha.programa_formacion, ficha.jornada, "unido");
+      await enviarCorreo(aprendizData.correo, "✅ Te uniste a una ficha - Digital Hub", html);
+    }
+
     res.status(201).json({ mensaje: "Aprendiz unido a ficha correctamente" });
   } catch (error) {
     console.error("Error unirseFicha:", error);
@@ -207,6 +241,10 @@ async function asignarAprendiz(req, res) {
     }
 
     await fichaService.addAprendizToFicha(id, aprendiz.id_usuario);
+
+    // 📧 Notificación al aprendiz asignado
+    const html = fichaTemplate(aprendiz.nombre, ficha.nombre, ficha.programa_formacion, ficha.jornada, "asignado");
+    await enviarCorreo(aprendiz.correo, "✅ Fuiste asignado a una ficha - Digital Hub", html);
 
     res.status(201).json({ mensaje: "Aprendiz asignado correctamente" });
   } catch (error) {

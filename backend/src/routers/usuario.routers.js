@@ -56,7 +56,7 @@ router.get("/test", (req, res) => {
 router.get(
   "/excel",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   exportarUsuariosExcel
 );
 
@@ -66,7 +66,7 @@ router.get(
 router.post(
   "/importar",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   upload.single("archivo"),
   async (req, res) => {
     try {
@@ -157,7 +157,7 @@ router.post(
 
       if (usuarios.length === 0) {
         return res.status(401).json({
-          mensaje: "Credenciales inválidas"
+          mensaje: "El correo no está registrado"
         });
       }
 
@@ -174,11 +174,11 @@ router.post(
         usuario.password_hash
       );
 
-    if (!passwordValida) {
-      return res.status(401).json({
-        mensaje: "Credenciales inválidas"
-      });
-    }
+      if (!passwordValida) {
+        return res.status(401).json({
+          mensaje: "Contraseña incorrecta"
+        });
+      }
 
       const token = jwt.sign(
         {
@@ -209,7 +209,7 @@ router.post(
 router.get(
   "/",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   async (req, res) => {
     try {
       const [usuarios] = await db.query(
@@ -233,7 +233,7 @@ router.get(
 router.post(
   "/",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   validarCamposObligatorios(["nombre", "correo", "password", "rol"]),
   async (req, res) => {
     try {
@@ -316,7 +316,7 @@ router.post(
 router.put(
   "/:id",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   validarCamposObligatorios(["nombre", "correo", "rol", "estado"]),
   async (req, res) => {
     try {
@@ -340,22 +340,21 @@ router.put(
       rol = normalizarTexto(rol);
       estado = normalizarTexto(estado);
 
+      console.log('PUT usuario - estado recibido:', JSON.stringify(estado), '| válido:', ESTADOS_USUARIO.includes(estado));
+
       if (!validarCorreo(correo)) {
-        return res.status(400).json({
-          mensaje: "Correo inválido"
-        });
+        console.log('Falla: correo inválido', correo);
+        return res.status(400).json({ mensaje: "Correo inválido" });
       }
 
       if (!validarRol(rol)) {
-        return res.status(400).json({
-          mensaje: "Rol inválido"
-        });
+        console.log('Falla: rol inválido', rol);
+        return res.status(400).json({ mensaje: "Rol inválido" });
       }
 
       if (!validarEstado(estado)) {
-        return res.status(400).json({
-          mensaje: "Estado inválido"
-        });
+        console.log('Falla: estado inválido', estado);
+        return res.status(400).json({ mensaje: "Estado inválido" });
       }
 
       const [usuarioDB] = await db.query(
@@ -422,7 +421,7 @@ router.put(
 router.delete(
   "/:id",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   async (req, res) => {
     try {
       const { id } = req.params;

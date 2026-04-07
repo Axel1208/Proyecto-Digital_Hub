@@ -5,11 +5,6 @@ import SidebarInstructor from '../../components/SidebarInstructor';
 import '../EquipmentManagement.css';
 import './FichasInstructor.css';
 
-const LS_FIC = 'fichas_local';
-const getLocalF = () => { try { return JSON.parse(localStorage.getItem(LS_FIC)) || []; } catch { return []; } };
-const saveLocalF = (data) => localStorage.setItem(LS_FIC, JSON.stringify(data));
-const nextIdF = (list) => list.length ? Math.max(...list.map(f => f.id_ficha || 0)) + 1 : 1;
-
 const FichasInstructor = () => {
   const navigate = useNavigate();
   const [fichas, setFichas] = useState([]);
@@ -39,29 +34,23 @@ const FichasInstructor = () => {
   const cargar = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/ficha', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/fichas', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const local = getLocalF();
-        const ids = data.map(f => f.id_ficha);
-        const soloLocales = local.filter(f => !ids.includes(f.id_ficha));
-        const merged = [...data, ...soloLocales];
-        saveLocalF(merged); setFichas(merged);
-      } else { setFichas(getLocalF()); }
-    } catch { setFichas(getLocalF()); }
+      setFichas(Array.isArray(data) ? data : []);
+    } catch { setFichas([]); }
     finally { setLoading(false); }
   };
 
   const cargarDetalle = async (ficha) => {
     setLoadingDetalle(true);
     const h = { Authorization: `Bearer ${token}` };
-    const id = ficha.id_ficha;
+    const id = ficha.id;
     try {
       const [ra, rp, rr] = await Promise.all([
-        fetch(`/ficha/${id}/aprendices`, { headers: h }).then(r => r.json()).catch(() => []),
-        fetch(`/ficha/${id}/portatiles`, { headers: h }).then(r => r.json()).catch(() => []),
-        fetch(`/ficha/${id}/reportes`,   { headers: h }).then(r => r.json()).catch(() => []),
+        fetch(`/api/fichas/${id}/aprendices`, { headers: h }).then(r => r.json()).catch(() => []),
+        fetch(`/api/fichas/${id}/portatiles`, { headers: h }).then(r => r.json()).catch(() => []),
+        fetch(`/api/fichas/${id}/reportes`,   { headers: h }).then(r => r.json()).catch(() => []),
       ]);
       setAprendices(Array.isArray(ra) ? ra : []);
       setPortatiles(Array.isArray(rp) ? rp : []);
@@ -71,7 +60,7 @@ const FichasInstructor = () => {
   };
 
   const exportarExcel = () => {
-    fetch('/reportes/excel', { headers: { Authorization: `Bearer ${token}` } })
+    fetch('/api/reportes/excel', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.blob())
       .then(blob => {
         const url = URL.createObjectURL(blob);
@@ -90,7 +79,7 @@ const FichasInstructor = () => {
   const handleSubmit = async (e) => {
     e.preventDefault(); setError('');
     try {
-      const res = await fetch('/ficha', {
+      const res = await fetch('/api/fichas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -106,7 +95,7 @@ const FichasInstructor = () => {
   const handleEditar = async (e) => {
     e.preventDefault(); setError('');
     try {
-      const res = await fetch(`/ficha/${fichaActiva.id_ficha}`, {
+      const res = await fetch(`/api/fichas/${fichaActiva.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData)
@@ -122,7 +111,7 @@ const FichasInstructor = () => {
   const handleEliminar = async (id) => {
     if (!confirm('Eliminar esta ficha?')) return;
     try {
-      const res = await fetch(`/ficha/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/fichas/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { setVista('lista'); setFichaActiva(null); cargar(); }
       else { const d = await res.json(); setError(d.mensaje || d.message || 'Error'); }
     } catch { setError('Error al eliminar'); }
@@ -131,7 +120,7 @@ const FichasInstructor = () => {
   const handleAsignar = async (e) => {
     e.preventDefault(); setError(''); setSuccessMsg('');
     try {
-      const res = await fetch(`/ficha/${fichaActiva.id_ficha}/asignar`, {
+      const res = await fetch(`/api/fichas/${fichaActiva.id}/asignar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ correo_aprendiz: correoAsignar })
@@ -145,19 +134,16 @@ const FichasInstructor = () => {
     } catch { setError('Error al conectar'); }
   };
 
-  const estadoColor = (e) => ({ activa: '#4ade80', inactiva: '#f87171', cerrada: '#facc15', disponible: '#4ade80', asignado: '#facc15', danado: '#f87171', mantenimiento: '#fb923c', pendiente: '#facc15', en_revision: '#fb923c', resuelto: '#4ade80' }[e] || '#c9a8ff');
-  const jornadaIcon = (j) => ({ manana: '🌅', tarde: '🌇', noche: '🌙', madrugada: '🌃' }[j] || '📅');
+  const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15', disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c', pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
+  const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙' }[j] || '📅');
   const filtrados = fichas.filter(f => !filtro || f.nombre?.toLowerCase().includes(filtro.toLowerCase()) || f.programa_formacion?.toLowerCase().includes(filtro.toLowerCase()));
 
-  // ===================== VISTA DETALLE =====================
   if (vista === 'detalle' && fichaActiva) {
     const pct = fichaActiva.cupo_maximo > 0 ? Math.round((aprendices.length / fichaActiva.cupo_maximo) * 100) : 0;
     return (
       <div className="equipment-layout">
         <SidebarInstructor />
         <main className="equipment-main">
-
-          {/* TOP BAR */}
           <div className="fd-header">
             <button onClick={() => setVista('lista')} className="fd-back-btn">← Volver</button>
             <div className="fd-header-info" style={{display:'flex',alignItems:'center',gap:'10px',flex:1,flexWrap:'wrap'}}>
@@ -170,14 +156,11 @@ const FichasInstructor = () => {
             <div className="fd-header-actions">
               <span className="fd-estado-pill" style={{background:`${estadoColor(fichaActiva.estado)}22`,border:`1px solid ${estadoColor(fichaActiva.estado)}55`,color:estadoColor(fichaActiva.estado)}}>{fichaActiva.estado}</span>
               <button className="fd-icon-btn fd-edit-btn" onClick={() => { setEditData({ nombre: fichaActiva.nombre, programa_formacion: fichaActiva.programa_formacion, jornada: fichaActiva.jornada, cupo_maximo: fichaActiva.cupo_maximo, estado: fichaActiva.estado || 'activa' }); setShowEditModal(true); }}><IconPencil size={14}/></button>
-              <button className="fd-icon-btn fd-del-btn" onClick={() => handleEliminar(fichaActiva.id_ficha)}><IconTrash size={14}/></button>
+              <button className="fd-icon-btn fd-del-btn" onClick={() => handleEliminar(fichaActiva.id)}><IconTrash size={14}/></button>
             </div>
           </div>
 
-          {/* BENTO GRID */}
           <div className="fd-bento">
-
-            {/* Widget cupo - grande izquierda */}
             <div className="fd-widget fd-widget-cupo">
               <div className="fd-widget-label">Ocupacion</div>
               <div className="fd-cupo-ring-wrap">
@@ -199,42 +182,26 @@ const FichasInstructor = () => {
               </div>
               <div className="fd-cupo-label">Cupo utilizado</div>
             </div>
-
-            {/* Widget aprendices */}
             <div className="fd-widget fd-widget-apr" onClick={() => setTab('aprendices')}>
-              <div className="fd-widget-icon-wrap" style={{background:'rgba(127,90,240,0.2)'}}>
-                <IconUser size={22} style={{color:'#c9a8ff'}}/>
-              </div>
+              <div className="fd-widget-icon-wrap" style={{background:'rgba(127,90,240,0.2)'}}><IconUser size={22} style={{color:'#c9a8ff'}}/></div>
               <div className="fd-widget-num" style={{color:'#c9a8ff'}}>{aprendices.length}</div>
               <div className="fd-widget-label">Aprendices</div>
               <div className="fd-widget-hint">Ver lista →</div>
             </div>
-
-            {/* Widget dispositivos */}
             <div className="fd-widget fd-widget-dev" onClick={() => setTab('dispositivos')}>
-              <div className="fd-widget-icon-wrap" style={{background:'rgba(96,165,250,0.2)'}}>
-                <IconMonitor size={22} style={{color:'#60a5fa'}}/>
-              </div>
+              <div className="fd-widget-icon-wrap" style={{background:'rgba(96,165,250,0.2)'}}><IconMonitor size={22} style={{color:'#60a5fa'}}/></div>
               <div className="fd-widget-num" style={{color:'#60a5fa'}}>{portatiles.length}</div>
               <div className="fd-widget-label">Dispositivos</div>
               <div className="fd-widget-hint">Ver lista →</div>
             </div>
-
-            {/* Widget reportes */}
             <div className="fd-widget fd-widget-rep" onClick={() => setTab('reportes')}>
-              <div className="fd-widget-icon-wrap" style={{background:'rgba(251,146,60,0.2)'}}>
-                <IconReport size={22} style={{color:'#fb923c'}}/>
-              </div>
+              <div className="fd-widget-icon-wrap" style={{background:'rgba(251,146,60,0.2)'}}><IconReport size={22} style={{color:'#fb923c'}}/></div>
               <div className="fd-widget-num" style={{color:'#fb923c'}}>{reportes.length}</div>
               <div className="fd-widget-label">Reportes</div>
               <div className="fd-widget-hint">Ver lista →</div>
             </div>
-
-            {/* Widget asignar - ancho completo */}
             <div className="fd-widget fd-widget-asignar">
-              <div className="fd-asignar-header">
-                <IconUser size={13}/> Asignar aprendiz a esta ficha
-              </div>
+              <div className="fd-asignar-header"><IconUser size={13}/> Asignar aprendiz a esta ficha</div>
               {error && <p className="table-error" style={{margin:'0 0 8px'}}>{error}</p>}
               {successMsg && <div className="fd-success-msg">{successMsg}</div>}
               <form onSubmit={handleAsignar} className="fd-asignar-form">
@@ -242,10 +209,8 @@ const FichasInstructor = () => {
                 <button type="submit" className="fd-asignar-btn">Asignar</button>
               </form>
             </div>
-
           </div>
 
-          {/* TABS */}
           {tab === 'reportes' && reportes.length > 0 && (
             <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'8px'}}>
               <button onClick={exportarExcel} style={{background:'linear-gradient(135deg,#4ade80,#22c55e)',border:'none',borderRadius:'10px',padding:'8px 14px',color:'#0a0a0f',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
@@ -254,22 +219,19 @@ const FichasInstructor = () => {
               </button>
             </div>
           )}
+
           <div className="fd-tabs-bar">
             <button className={`fd-tab ${tab==='aprendices'?'fd-tab-active':''}`} onClick={()=>setTab('aprendices')}>
-              <IconUser size={14}/> Aprendices
-              <span className="fd-tab-badge" style={{background:'rgba(127,90,240,0.2)',color:'#c9a8ff'}}>{aprendices.length}</span>
+              <IconUser size={14}/> Aprendices <span className="fd-tab-badge" style={{background:'rgba(127,90,240,0.2)',color:'#c9a8ff'}}>{aprendices.length}</span>
             </button>
             <button className={`fd-tab ${tab==='dispositivos'?'fd-tab-active':''}`} onClick={()=>setTab('dispositivos')}>
-              <IconMonitor size={14}/> Dispositivos
-              <span className="fd-tab-badge" style={{background:'rgba(96,165,250,0.2)',color:'#60a5fa'}}>{portatiles.length}</span>
+              <IconMonitor size={14}/> Dispositivos <span className="fd-tab-badge" style={{background:'rgba(96,165,250,0.2)',color:'#60a5fa'}}>{portatiles.length}</span>
             </button>
             <button className={`fd-tab ${tab==='reportes'?'fd-tab-active':''}`} onClick={()=>setTab('reportes')}>
-              <IconReport size={14}/> Reportes
-              <span className="fd-tab-badge" style={{background:'rgba(251,146,60,0.2)',color:'#fb923c'}}>{reportes.length}</span>
+              <IconReport size={14}/> Reportes <span className="fd-tab-badge" style={{background:'rgba(251,146,60,0.2)',color:'#fb923c'}}>{reportes.length}</span>
             </button>
           </div>
 
-          {/* TABLA */}
           {loadingDetalle ? (
             <div className="fd-loading">Cargando datos...</div>
           ) : (
@@ -338,7 +300,7 @@ const FichasInstructor = () => {
                   <div className="form-group"><label>Jornada</label>
                     <select value={editData.jornada} onChange={e => setEditData({...editData, jornada: e.target.value})}>
                       <option value="manana">Manana</option><option value="tarde">Tarde</option>
-                      <option value="noche">Noche</option><option value="madrugada">Madrugada</option>
+                      <option value="noche">Noche</option>
                     </select>
                   </div>
                   <div className="form-group"><label>Cupo maximo</label><input type="number" min="1" value={editData.cupo_maximo} onChange={e => setEditData({...editData, cupo_maximo: parseInt(e.target.value)})} required /></div>
@@ -360,7 +322,6 @@ const FichasInstructor = () => {
     );
   }
 
-  // ===================== VISTA LISTA =====================
   return (
     <div className="equipment-layout">
       <SidebarInstructor />
@@ -386,7 +347,7 @@ const FichasInstructor = () => {
         ) : (
           <div className="fichas-grid">
             {filtrados.map(f => (
-              <div key={f.id_ficha} className="ficha-card" onClick={() => abrirFicha(f)}>
+              <div key={f.id} className="ficha-card" onClick={() => abrirFicha(f)}>
                 <div className="ficha-card-top">
                   <span className="ficha-jornada-badge">{jornadaIcon(f.jornada)} {f.jornada}</span>
                   <span style={{background:`${estadoColor(f.estado)}18`,border:`1px solid ${estadoColor(f.estado)}44`,color:estadoColor(f.estado),borderRadius:'50px',padding:'2px 10px',fontSize:'11px',fontWeight:600}}>{f.estado}</span>
@@ -414,7 +375,7 @@ const FichasInstructor = () => {
                 <div className="form-group"><label>Jornada</label>
                   <select value={formData.jornada} onChange={e => setFormData({...formData, jornada: e.target.value})}>
                     <option value="manana">Manana</option><option value="tarde">Tarde</option>
-                    <option value="noche">Noche</option><option value="madrugada">Madrugada</option>
+                    <option value="noche">Noche</option>
                   </select>
                 </div>
                 <div className="form-group"><label>Cupo maximo</label><input type="number" min="1" value={formData.cupo_maximo} onChange={e => setFormData({...formData, cupo_maximo: parseInt(e.target.value)})} required /></div>

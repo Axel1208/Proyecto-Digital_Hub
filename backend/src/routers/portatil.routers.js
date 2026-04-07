@@ -6,9 +6,8 @@ const verificarToken = require("../middlewares/verificarToken");
 const verificarRol = require("../middlewares/verificarRol");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
 const validarSerialUnico = require("../middlewares/validarSerialUnico");
-const { exportarPortatilesExcel } = require("../services/exportacion.service");
-const { importarPortatiles } = require("../services/importacion.service");
-const upload = require("../middlewares/upload");
+const { enviarCorreo } = require("../services/email.service");
+const { asignacionEquipoTemplate } = require("../services/templates/asignacionEquipoTemplate");
 
 
 /*
@@ -21,17 +20,18 @@ Solo ADMIN o INSTRUCTOR
 router.post(
   "/",
   verificarToken,
-  verificarRol("administrador", "instructor"),
+  verificarRol(["administrador", "instructor"]),
   validarCamposObligatorios(["num_serie", "marca", "tipo", "modelo", "estado"]),
   validarSerialUnico,
   async (req, res) => {
     try {
       const { num_serie, marca, tipo, modelo, estado, ubicacion, descripcion } = req.body;
+      const id_instructor = req.usuario.id;
 
       const [resultado] = await pool.query(
-        `INSERT INTO portatil (num_serie, marca, tipo, modelo, estado, ubicacion, descripcion)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [num_serie, marca, tipo, modelo, estado, ubicacion || null, descripcion || null]
+        `INSERT INTO portatil (num_serie, marca, tipo, modelo, estado, ubicacion, descripcion, id_instructor)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [num_serie, marca, tipo, modelo, estado, ubicacion || '', descripcion || '', id_instructor]
       );
 
       res.status(201).json({
@@ -40,10 +40,8 @@ router.post(
       });
 
     } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        mensaje: "Error al registrar el portátil"
-      });
+      console.error("ERROR CREAR PORTATIL:", error.message);
+      res.status(500).json({ mensaje: "Error al registrar el portátil", detalle: error.message });
     }
   }
 );
@@ -60,67 +58,45 @@ router.get(
   verificarToken,
   async (req, res) => {
     try {
-
-      let { page = 1, limit = 10 } = req.query;
-
+      const { rol, id } = req.usuario;
+      let { page = 1, limit = 100 } = req.query;
       page = parseInt(page);
       limit = parseInt(limit);
-
       const offset = (page - 1) * limit;
 
-      // 🔹 Obtener portátiles paginados
-      const [rows] = await pool.query(
-        "SELECT * FROM portatil LIMIT ? OFFSET ?",
-        [limit, offset]
-      );
+      // APRENDIZ: solo el portátil que tiene asignado
+      if (rol === "aprendiz") {
+        const [rows] = await pool.query(
+          "SELECT * FROM portatil WHERE id_aprendiz = ?",
+          [id]
+        );
+        return res.json({ total: rows.length, pagina: 1, totalPaginas: 1, data: rows });
+      }
 
-      // 🔹 Obtener total de registros
-      const [totalResult] = await pool.query(
-        "SELECT COUNT(*) as total FROM portatil"
-      );
+      // INSTRUCTOR: solo los que él creó
+      if (rol === "instructor") {
+        const [rows] = await pool.query(
+          "SELECT * FROM portatil WHERE id_instructor = ? LIMIT ? OFFSET ?",
+          [id, limit, offset]
+        );
+        const [[{ total }]] = await pool.query(
+          "SELECT COUNT(*) as total FROM portatil WHERE id_instructor = ?", [id]
+        );
+        return res.json({ total, pagina: page, totalPaginas: Math.ceil(total / limit), data: rows });
+      }
 
-      const total = totalResult[0].total;
-
-      res.json({
-        total,
-        pagina: page,
-        totalPaginas: Math.ceil(total / limit),
-        data: rows
-      });
+      // ADMIN: todos
+      const [rows] = await pool.query("SELECT * FROM portatil LIMIT ? OFFSET ?", [limit, offset]);
+      const [[{ total }]] = await pool.query("SELECT COUNT(*) as total FROM portatil");
+      res.json({ total, pagina: page, totalPaginas: Math.ceil(total / limit), data: rows });
 
     } catch (error) {
-      res.status(500).json({
-        mensaje: "Error al obtener los portátiles"
-      });
+      console.error(error);
+      res.status(500).json({ mensaje: "Error al obtener los portátiles" });
     }
   }
 );
 
-// 📥 EXPORTAR EXCEL
-router.get(
-  "/excel",
-  verificarToken,
-  verificarRol("administrador", "instructor"),
-  exportarPortatilesExcel
-);
-
-// 📤 IMPORTAR EXCEL
-router.post(
-  "/importar",
-  verificarToken,
-  verificarRol("administrador", "instructor"),
-  upload.single("archivo"),
-  async (req, res) => {
-    try {
-      if (!req.file) return res.status(400).json({ error: "No se envió archivo" });
-      const resultado = await importarPortatiles(req.file.path);
-      res.json(resultado);
-    } catch (error) {
-      const statusCode = error.message.includes("Faltan las columnas") ? 400 : 500;
-      res.status(statusCode).json({ error: error.message });
-    }
-  }
-);
 
 /*
 =========================================
@@ -172,7 +148,7 @@ Solo ADMIN o INSTRUCTOR
 router.put(
   "/:id",
   verificarToken,
-  verificarRol("administrador", "instructor"),
+  verificarRol(["administrador", "instructor"]),
   validarCamposObligatorios(["marca", "tipo", "modelo", "estado"]),
   async (req, res) => {
 
@@ -183,9 +159,10 @@ router.put(
 
       const [resultado] = await pool.query(
         `UPDATE portatil
-         SET marca = ?, tipo = ?, modelo = ?, estado = ?, ubicacion = ?, descripcion = ?
+         SET marca = ?, tipo = ?, modelo = ?, estado = ?, ubicacion = ?, descripcion = ?,
+             id_aprendiz = CASE WHEN ? != 'asignado' THEN NULL ELSE id_aprendiz END
          WHERE id_portatil = ?`,
-        [marca, tipo, modelo, estado, ubicacion || null, descripcion || null, id]
+        [marca, tipo, modelo, estado, ubicacion || '', descripcion || '', estado, id]
       );
 
       if (resultado.affectedRows === 0) {
@@ -214,44 +191,132 @@ router.put(
 =========================================
 5. ELIMINAR PORTÁTIL
 =========================================
-Solo ADMIN
+ADMIN o INSTRUCTOR (instructor solo los suyos)
 */
 
 router.delete(
   "/:id",
   verificarToken,
-  verificarRol("administrador"),
+  verificarRol(["administrador", "instructor"]),
   async (req, res) => {
-
     try {
-
       const { id } = req.params;
 
-      const [resultado] = await pool.query(
-        "DELETE FROM portatil WHERE id_portatil = ?",
-        [id]
-      );
+      const [rows] = await pool.query("SELECT * FROM portatil WHERE id_portatil = ?", [id]);
+      if (rows.length === 0) return res.status(404).json({ mensaje: "Portátil no encontrado" });
 
-      if (resultado.affectedRows === 0) {
-        return res.status(404).json({
-          mensaje: "Portátil no encontrado"
-        });
+      if (req.usuario.rol === "instructor" && rows[0].id_instructor !== req.usuario.id) {
+        return res.status(403).json({ mensaje: "No puedes eliminar un portátil que no registraste" });
       }
 
-      res.json({
-        mensaje: "Portátil eliminado correctamente"
-      });
+      await pool.query("DELETE FROM portatil WHERE id_portatil = ?", [id]);
+      res.json({ mensaje: "Portátil eliminado correctamente" });
 
     } catch (error) {
-
-      res.status(500).json({
-        mensaje: "Error al eliminar el portátil"
-      });
-
+      console.error(error);
+      res.status(500).json({ mensaje: "Error al eliminar el portátil" });
     }
-
   }
 );
 
+
+/*
+=========================================
+6. ASIGNAR PORTÁTIL A APRENDIZ POR CORREO
+=========================================
+Solo INSTRUCTOR
+*/
+router.post(
+  "/:id/asignar",
+  verificarToken,
+  verificarRol(["administrador", "instructor"]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { correo_aprendiz } = req.body;
+
+      if (!correo_aprendiz) {
+        return res.status(400).json({ mensaje: "correo_aprendiz es obligatorio" });
+      }
+
+      // Verificar que el portátil existe
+      const [portatilRows] = await pool.query(
+        "SELECT * FROM portatil WHERE id_portatil = ?", [id]
+      );
+      if (portatilRows.length === 0) {
+        return res.status(404).json({ mensaje: "Portátil no encontrado" });
+      }
+      const portatil = portatilRows[0];
+
+      if (portatil.estado !== "disponible") {
+        return res.status(400).json({ mensaje: "El portátil no está disponible para asignar" });
+      }
+
+      // Buscar aprendiz por correo
+      const [aprendizRows] = await pool.query(
+        "SELECT id_usuario, nombre, correo, rol, estado FROM usuario WHERE correo = ?",
+        [correo_aprendiz.trim().toLowerCase()]
+      );
+      if (aprendizRows.length === 0) {
+        return res.status(404).json({ mensaje: "No se encontró un usuario con ese correo" });
+      }
+      const aprendiz = aprendizRows[0];
+
+      if (aprendiz.rol !== "aprendiz") {
+        return res.status(400).json({ mensaje: "El usuario no tiene rol de aprendiz" });
+      }
+      if (aprendiz.estado !== "activo") {
+        return res.status(400).json({ mensaje: "El aprendiz no está activo" });
+      }
+
+      // Validar que el aprendiz no tenga ya un equipo asignado
+      const [equipoActual] = await pool.query(
+        "SELECT id_portatil FROM portatil WHERE id_aprendiz = ? LIMIT 1",
+        [aprendiz.id_usuario]
+      );
+      if (equipoActual.length > 0) {
+        return res.status(400).json({ mensaje: "Este aprendiz ya tiene un equipo asignado" });
+      }
+
+      // Validar que el aprendiz esté en una ficha
+      const [fichaAprendiz] = await pool.query(
+        "SELECT 1 FROM ficha_aprendiz WHERE id_aprendiz = ? LIMIT 1",
+        [aprendiz.id_usuario]
+      );
+      if (fichaAprendiz.length === 0) {
+        return res.status(400).json({ mensaje: "El aprendiz no está inscrito en ninguna ficha" });
+      }
+
+      // Actualizar estado del portátil a asignado y guardar id_aprendiz
+      await pool.query(
+        "UPDATE portatil SET estado = 'asignado', id_aprendiz = ? WHERE id_portatil = ?",
+        [aprendiz.id_usuario, id]
+      );
+
+      // 📧 Notificación al aprendiz
+      const html = asignacionEquipoTemplate(
+        aprendiz.nombre,
+        portatil.marca,
+        portatil.modelo,
+        portatil.num_serie,
+        "asignado"
+      );
+      await enviarCorreo(
+        aprendiz.correo,
+        "💻 Se te asignó un equipo - Digital Hub",
+        html
+      );
+
+      res.json({
+        mensaje: `Portátil asignado correctamente a ${aprendiz.nombre}`,
+        aprendiz: { nombre: aprendiz.nombre, correo: aprendiz.correo }
+      });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: "Error al asignar el portátil" });
+    }
+  }
+);
 
 module.exports = router;

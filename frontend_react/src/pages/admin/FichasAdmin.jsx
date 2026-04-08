@@ -4,6 +4,7 @@ import { IconBell, IconUser, IconMonitor, IconReport, IconPencil, IconTrash } fr
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
+import '../../pages/admin/EquiposAdmin.css';
 import '../../pages/admin/FichasAdmin.css';
 import ConfirmModal from '../../components/ConfirmModal';
 
@@ -36,6 +37,7 @@ const FichasAdmin = () => {
   const [errorAmb, setErrorAmb] = useState('');
   const [confirmAmbId, setConfirmAmbId] = useState(null);
   const [page, setPage] = useState(1);
+  const [errorExport, setErrorExport] = useState('');
   const PER_PAGE = 9;
   const token = localStorage.getItem('token');
 
@@ -54,7 +56,7 @@ const FichasAdmin = () => {
   const cargarDetalle = async (ficha) => {
     setLoadingDetalle(true);
     const h = { Authorization: `Bearer ${token}` };
-    const id = ficha.id_ficha;
+    const id = ficha.id_ficha ?? ficha.id;
     try {
       const [ra, rp, rr] = await Promise.all([
         fetch(`/ficha/${id}/aprendices`, { headers: h }).then(r => r.json()).catch(() => []),
@@ -251,8 +253,6 @@ const FichasAdmin = () => {
   const ambFiltrados = ambientes.filter(a => !filtroAmb || a.nombre?.toLowerCase().includes(filtroAmb.toLowerCase()) || a.direccion?.toLowerCase().includes(filtroAmb.toLowerCase()));
   const AMB_COLORS = ['#c9a8ff','#60a5fa','#4ade80','#fb923c','#f472b6','#34d399','#facc15','#a78bfa'];
 
-  const [errorExport, setErrorExport] = useState('');
-
   const exportarFichas = async () => {
     setErrorExport('');
     try {
@@ -340,7 +340,7 @@ const FichasAdmin = () => {
               {paginados.length === 0
                 ? <div style={{gridColumn:'1/-1',textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Sin fichas</div>
                 : paginados.map(f => (
-                  <div key={f.id_ficha} className="ficha-card" onClick={() => abrirFicha(f)}>
+                  <div key={f.id_ficha ?? f.id} className="ficha-card" onClick={() => abrirFicha(f)}>
                     <div className="ficha-card-top">
                       <span className="ficha-jornada-badge">{jornadaIcon(f.jornada)} {f.jornada}</span>
                       <span style={{background:`${estadoColor(f.estado)}18`,border:`1px solid ${estadoColor(f.estado)}44`,color:estadoColor(f.estado),borderRadius:'50px',padding:'2px 10px',fontSize:'11px',fontWeight:600}}>{f.estado}</span>

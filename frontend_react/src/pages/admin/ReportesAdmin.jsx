@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { IconBell, IconEye, IconPencil, IconTrash, IconClock, IconCheck, IconReport } from '../../components/Icons';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
+import ConfirmModal from '../../components/ConfirmModal';
 import '../../components/Pagination.css';
 import '../../pages/admin/ReportesAdmin.css';
 
 const LS_REP = 'rep_local';
 const getLocalRep = () => { try { return JSON.parse(localStorage.getItem(LS_REP)) || []; } catch { return []; } };
 const saveLocalRep = (data) => localStorage.setItem(LS_REP, JSON.stringify(data));
-import './ReportesAdmin.css';
 
 const estadoColor = (e) => ({ pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
 const estadoBg   = (e) => ({ pendiente:'rgba(250,204,21,0.12)', en_revision:'rgba(251,146,60,0.12)', resuelto:'rgba(74,222,128,0.12)' }[e] || 'rgba(201,168,255,0.12)');
@@ -25,6 +25,7 @@ const ReportesAdmin = () => {
   const [filtros, setFiltros] = useState({ buscar: '', estado: '' });
   const [page, setPage] = useState(1);
   const PER_PAGE = 9;
+  const [confirmId, setConfirmId] = useState(null);
   const token = localStorage.getItem('token');
 
   useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, []);
@@ -47,7 +48,7 @@ const exportarExcel = async () => {
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'reportes.xlsx'; a.click();
+    a.href = url; a.download = `Reporte_DigitalHub_${new Date().toISOString().split('T')[0]}.xlsx`; a.click();
     URL.revokeObjectURL(url);
 
   } catch (err) {
@@ -106,13 +107,11 @@ const importarExcel = async (e) => {
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('Eliminar este reporte?')) return;
     try {
-      const res = await fetch(`/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { cargar(); return; }
+      const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) { setConfirmId(null); cargar(); return; }
     } catch {}
-    const local = getLocalRep().filter(r => r.id_reporte !== id);
-    saveLocalRep(local); setReportes(local);
+    setConfirmId(null);
   };
 
   const filtrados = reportes.filter(r => {
@@ -187,14 +186,14 @@ const importarExcel = async (e) => {
         {error && <p className="table-error">{error}</p>}
 
         <div className="filters-row" style={{ gridTemplateColumns: '2fr 1fr auto' }}>
-          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => setFiltros({ ...filtros, buscar: e.target.value })}/>
-          <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({ ...filtros, estado: e.target.value })}>
+          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => { setFiltros({ ...filtros, buscar: e.target.value }); setPage(1); }}/>
+          <select className="filter-input" value={filtros.estado} onChange={e => { setFiltros({ ...filtros, estado: e.target.value }); setPage(1); }}>
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
             <option value="en_revision">En revision</option>
             <option value="resuelto">Resuelto</option>
           </select>
-          <button className="filter-clear" onClick={() => setFiltros({ buscar: '', estado: '' })}>Limpiar</button>
+          <button className="filter-clear" onClick={() => { setFiltros({ buscar: '', estado: '' }); setPage(1); }}>Limpiar</button>
         </div>
 
         {loading ? <div style={{ textAlign: 'center', padding: '48px', color: '#b8a8d8' }}>Cargando...</div> : (
@@ -212,7 +211,7 @@ const importarExcel = async (e) => {
                   <div className="ra-card-actions">
                     <button className="action-btn view" onClick={() => setSeleccionado(r)}><IconEye size={15}/></button>
                     <button className="action-btn edit" onClick={() => { setSeleccionado(r); setEditData({ estado_reporte: r.estado_reporte }); setShowEditModal(true); }}><IconPencil size={15}/></button>
-                    <button className="action-btn delete" onClick={() => handleEliminar(r.id_reporte)}><IconTrash size={15}/></button>
+                    <button className="action-btn delete" onClick={() => setConfirmId(r.id_reporte)}><IconTrash size={15}/></button>
                   </div>
                 </div>
               ))
@@ -221,6 +220,7 @@ const importarExcel = async (e) => {
         )}
 
         <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)}/>
+        {confirmId && <ConfirmModal mensaje="Esta acción no se puede deshacer." onConfirm={() => handleEliminar(confirmId)} onCancel={() => setConfirmId(null)} />}
 
         {seleccionado && !showEditModal && (
           <div className="modal-overlay" onClick={() => setSeleccionado(null)}>

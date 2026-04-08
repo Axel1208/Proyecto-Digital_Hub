@@ -16,17 +16,23 @@ const InicioAprendiz = () => {
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
-    const h = { Authorization: `Bearer ${token}` };
-    Promise.all([
-      fetch('/ficha/mia', { headers: h }).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch('/portatil', { headers: h }).then(r => r.json()).catch(() => []),
-      fetch('/reportes', { headers: h }).then(r => r.json()).catch(() => []),
-    ]).then(([f, portatiles, reps]) => {
-      setFicha(f);
-      const asignados = Array.isArray(portatiles) ? portatiles.filter(p => p.estado === 'asignado') : [];
-      setDispositivo(asignados[0] || null);
-      setReportes(Array.isArray(reps) ? reps : []);
-    }).finally(() => setLoading(false));
+    const cargar = () => {
+      const h = { Authorization: `Bearer ${token}` };
+      Promise.all([
+        fetch('/api/fichas/mia',  { headers: h }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/portatiles',  { headers: h }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/reportes',    { headers: h }).then(r => r.json()).catch(() => []),
+      ]).then(([f, portatilesRes, reps]) => {
+        setFicha(f);
+        const lista = Array.isArray(portatilesRes) ? portatilesRes : (Array.isArray(portatilesRes?.data) ? portatilesRes.data : []);
+        const asignados = lista.filter(p => p.estado === 'asignado');
+        setDispositivo(asignados[0] || null);
+        setReportes(Array.isArray(reps) ? reps : []);
+      }).finally(() => setLoading(false));
+    };
+    cargar();
+    const intervalo = setInterval(cargar, 30000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const pendientes = reportes.filter(r => r.estado_reporte === 'pendiente').length;

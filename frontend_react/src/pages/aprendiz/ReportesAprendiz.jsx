@@ -26,7 +26,8 @@ const ReportesAprendiz = () => {
   const [seleccionado, setSeleccionado] = useState(null);
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0] });
+  const [formData, setFormData] = useState({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0], correo_instructor: '' });
+  const [imagenFile, setImagenFile] = useState(null);
   const [filtros, setFiltros] = useState({ buscar: '', estado: '' });
   const [page, setPage] = useState(1);
   const PER_PAGE = 6;
@@ -42,28 +43,23 @@ const ReportesAprendiz = () => {
       setLoading(true);
       const h = { Authorization: `Bearer ${token}` };
       const [rRes, pRes] = await Promise.all([
-        fetch('/reportes', { headers: h }),
-        fetch('/portatil', { headers: h }),
+        fetch('/api/reportes', { headers: h }),
+        fetch('/api/portatiles', { headers: h }),
       ]);
       if (rRes.status === 401) { navigate('/login'); return; }
       const rData = await rRes.json();
-      const pData = await pRes.json();
-      if (Array.isArray(rData)) {
-        const local = getLocalR();
-        const backendIds = rData.map(r => r.id_reporte);
-        const soloLocales = local.filter(r => !backendIds.includes(r.id_reporte));
-        const merged = [...rData, ...soloLocales];
-        saveLocalR(merged);
-        setReportes(merged);
-      } else { setReportes(getLocalR()); }
-      setPortatiles(Array.isArray(pData) ? pData.filter(p => p.estado === 'asignado') : []);
-    } catch { setReportes(getLocalR()); }
+      const pRaw = await pRes.json();
+      setReportes(Array.isArray(rData) ? rData : []);
+      const lista = Array.isArray(pRaw) ? pRaw : (pRaw?.data || []);
+      setPortatiles(lista.filter(p => p.estado === 'asignado'));
+    } catch { setError('Error al cargar'); }
     finally { setLoading(false); }
   };
 
   const abrirReporte = (equipo) => {
     setEquipoSeleccionado(equipo);
-    setFormData({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0] });
+    setFormData({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0], correo_instructor: '' });
+    setImagenFile(null);
     setError('');
     setShowModal(true);
   };
@@ -71,12 +67,17 @@ const ReportesAprendiz = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true); setError('');
-    const payload = { ...formData, estado_reporte: 'pendiente' };
     try {
-      const res = await fetch('/reportes', {
+      const fd = new FormData();
+      fd.append('descripcion', formData.descripcion);
+      fd.append('fecha_reporte', formData.fecha_reporte);
+      fd.append('correo_instructor', formData.correo_instructor);
+      if (imagenFile) fd.append('archivo', imagenFile);
+
+      const res = await fetch('/api/reportes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload),
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
       });
       if (res.ok) {
         setShowModal(false);
@@ -84,13 +85,9 @@ const ReportesAprendiz = () => {
         setTimeout(() => setSuccessMsg(''), 3000);
         cargar(); setSubmitting(false); return;
       }
-    } catch {}
-    const local = getLocalR();
-    local.push({ ...payload, id_reporte: nextIdR(local) });
-    saveLocalR(local); setReportes(local);
-    setShowModal(false);
-    setSuccessMsg('Reporte guardado localmente');
-    setTimeout(() => setSuccessMsg(''), 3000);
+      const d = await res.json();
+      setError(d.message || 'Error al enviar');
+    } catch { setError('Error de conexión'); }
     setSubmitting(false);
   };
 
@@ -183,14 +180,14 @@ const ReportesAprendiz = () => {
         {error && <p className="table-error">{error}</p>}
 
         <div className="filters-row" style={{gridTemplateColumns:'2fr 1fr auto'}}>
-          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => setFiltros({...filtros, buscar: e.target.value})}/>
-          <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})}>
+          <input className="filter-input" placeholder="Buscar reporte..." value={filtros.buscar} onChange={e => { setFiltros({...filtros, buscar: e.target.value}); setPage(1); }}/>
+          <select className="filter-input" value={filtros.estado} onChange={e => { setFiltros({...filtros, estado: e.target.value}); setPage(1); }}>
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
             <option value="en_revision">En revision</option>
             <option value="resuelto">Resuelto</option>
           </select>
-          <button className="filter-clear" onClick={() => setFiltros({buscar:'',estado:''})}>Limpiar</button>
+          <button className="filter-clear" onClick={() => { setFiltros({buscar:'',estado:''}); setPage(1); }}>Limpiar</button>
         </div>
 
         <div className="table-container">
@@ -216,7 +213,7 @@ const ReportesAprendiz = () => {
         {/* MODAL CREAR REPORTE */}
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxHeight:'90vh',overflowY:'auto'}}>
               <h2 className="modal-title">Nuevo Reporte</h2>
               {equipoSeleccionado && (
                 <div style={{background:'rgba(127,90,240,0.1)',border:'1px solid rgba(127,90,240,0.25)',borderRadius:'10px',padding:'12px 16px',marginBottom:'20px',display:'flex',alignItems:'center',gap:'10px'}}>
@@ -238,6 +235,16 @@ const ReportesAprendiz = () => {
                   <label>Fecha <span style={{color:'#f87171'}}>*</span></label>
                   <input type="date" value={formData.fecha_reporte} onChange={e => setFormData({...formData, fecha_reporte: e.target.value})} required/>
                 </div>
+                <div className="form-group">
+                  <label>Correo del instructor <span style={{color:'#f87171'}}>*</span></label>
+                  <input type="email" placeholder="instructor@sena.edu.co" value={formData.correo_instructor} onChange={e => setFormData({...formData, correo_instructor: e.target.value})} required/>
+                </div>
+                <div className="form-group">
+                  <label>Imagen o evidencia <span style={{color:'#b8a8d8',fontWeight:400}}>(opcional, JPG/PNG/PDF, máx 5MB)</span></label>
+                  <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={e => setImagenFile(e.target.files[0] || null)}
+                    style={{background:'#1a0f35',border:'1px solid rgba(127,90,240,0.3)',borderRadius:'10px',padding:'10px',color:'#f0eaff',fontSize:'13px',cursor:'pointer'}}/>
+                  {imagenFile && <div style={{fontSize:'12px',color:'#4ade80',marginTop:'6px'}}>✓ {imagenFile.name}</div>}
+                </div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
                   <button type="submit" className="btn-save" disabled={submitting}>{submitting ? 'Enviando...' : 'Enviar Reporte'}</button>
@@ -256,6 +263,16 @@ const ReportesAprendiz = () => {
                 <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado_reporte),fontWeight:700}}>{seleccionado.estado_reporte}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{seleccionado.fecha_reporte?.split('T')[0]}</span></div>
                 <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}><span className="detalle-label">Descripcion</span><span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6'}}>{seleccionado.descripcion}</span></div>
+                {seleccionado.archivo && (
+                  <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}>
+                    <span className="detalle-label">Evidencia</span>
+                    {/\.(jpg|jpeg|png)$/i.test(seleccionado.archivo) ? (
+                      <img src={`/uploads/${seleccionado.archivo}`} alt="evidencia" style={{maxWidth:'100%',borderRadius:'10px',border:'1px solid rgba(127,90,240,0.3)'}}/>
+                    ) : (
+                      <a href={`/uploads/${seleccionado.archivo}`} target="_blank" rel="noreferrer" style={{color:'#c9a8ff',fontSize:'13px'}}>Ver archivo adjunto</a>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="modal-actions"><button className="btn-save" onClick={() => setShowVerModal(false)}>Cerrar</button></div>
             </div>

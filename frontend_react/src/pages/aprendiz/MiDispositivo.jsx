@@ -14,6 +14,7 @@ const MiDispositivo = () => {
   const [showModal, setShowModal] = useState(false);
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [imagenFile, setImagenFile] = useState(null);
   const [formData, setFormData] = useState({
     descripcion: '',
     fecha_reporte: new Date().toISOString().split('T')[0],
@@ -47,6 +48,7 @@ const MiDispositivo = () => {
   const abrirReporte = (equipo) => {
     setEquipoSeleccionado(equipo);
     setFormData({ descripcion: '', fecha_reporte: new Date().toISOString().split('T')[0], correo_instructor: '' });
+    setImagenFile(null);
     setError(''); setShowModal(true);
   };
 
@@ -58,6 +60,7 @@ const MiDispositivo = () => {
       fd.append('fecha_reporte', formData.fecha_reporte);
       fd.append('correo_instructor', formData.correo_instructor);
       fd.append('estado_reporte', 'pendiente');
+      if (imagenFile) fd.append('archivo', imagenFile);
 
       const res = await fetch('/api/reportes', {
         method: 'POST',
@@ -149,7 +152,7 @@ const MiDispositivo = () => {
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxHeight:'90vh',overflowY:'auto'}}>
               <h2 className="modal-title">Nuevo Reporte</h2>
               {equipoSeleccionado && (
                 <div style={{background:'rgba(127,90,240,0.1)',border:'1px solid rgba(127,90,240,0.25)',borderRadius:'10px',padding:'12px 16px',marginBottom:'20px',display:'flex',alignItems:'center',gap:'10px'}}>
@@ -174,6 +177,13 @@ const MiDispositivo = () => {
                 <div className="form-group">
                   <label>Fecha <span style={{color:'#f87171'}}>*</span></label>
                   <input type="date" value={formData.fecha_reporte} onChange={e => setFormData({...formData, fecha_reporte: e.target.value})} required/>
+                </div>
+                <div className="form-group">
+                  <label>Imagen o evidencia <span style={{color:'#b8a8d8',fontWeight:400}}>(opcional · JPG/PNG/PDF · máx 5MB)</span></label>
+                  <input type="file" accept="image/jpeg,image/png,application/pdf"
+                    onChange={e => setImagenFile(e.target.files[0] || null)}
+                    style={{background:'#1a0f35',border:'1px solid rgba(127,90,240,0.3)',borderRadius:'10px',padding:'10px',color:'#f0eaff',fontSize:'13px',cursor:'pointer',width:'100%'}}/>
+                  {imagenFile && <div style={{fontSize:'12px',color:'#4ade80',marginTop:'6px'}}>✓ {imagenFile.name}</div>}
                 </div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>

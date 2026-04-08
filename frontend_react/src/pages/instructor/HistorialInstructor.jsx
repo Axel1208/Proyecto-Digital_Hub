@@ -17,8 +17,10 @@ const HistorialInstructor = () => {
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const [page, setPage] = useState(1);
   const PER_PAGE = 10;
+  const [seleccionado, setSeleccionado] = useState(null);
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
@@ -38,10 +40,11 @@ const HistorialInstructor = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtrados = portatiles.filter(p =>
-    !filtro || p.num_serie?.toLowerCase().includes(filtro.toLowerCase()) ||
-    p.marca?.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const filtrados = portatiles.filter(p => {
+    const b = filtro.toLowerCase();
+    return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b))
+      && (!filtroEstado || p.estado === filtroEstado);
+  });
 
   const total      = portatiles.length;
   const disponibles = portatiles.filter(p => p.estado === 'disponible').length;
@@ -81,7 +84,15 @@ const HistorialInstructor = () => {
         </div>
 
         <div className="hist-search-row">
-          <input className="filter-input" placeholder="Buscar por serie o marca..." value={filtro} onChange={e => setFiltro(e.target.value)} style={{maxWidth:'360px'}} />
+          <input className="filter-input" placeholder="Buscar por serie o marca..." value={filtro} onChange={e => { setFiltro(e.target.value); setPage(1); }} style={{maxWidth:'280px'}} />
+          <select className="filter-input" value={filtroEstado} onChange={e => { setFiltroEstado(e.target.value); setPage(1); }} style={{maxWidth:'180px'}}>
+            <option value="">Todos los estados</option>
+            <option value="disponible">Disponible</option>
+            <option value="asignado">Asignado</option>
+            <option value="dañado">Dañado</option>
+            <option value="mantenimiento">Mantenimiento</option>
+          </select>
+          <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroEstado(''); setPage(1); }}>Limpiar</button>
           <span className="hist-count">{filtrados.length} registros</span>
         </div>
 

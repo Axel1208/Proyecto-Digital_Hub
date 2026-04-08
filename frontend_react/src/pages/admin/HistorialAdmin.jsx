@@ -2,15 +2,11 @@
 import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconBell, IconHistory, IconMonitor, IconCheck } from '../../components/Icons';
-import '../../pages/admin/HistorialAdmin.css';
+import './HistorialAdmin.css';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 
-const LS_KEY = 'portatiles_local';
-const getLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
-import './HistorialAdmin.css';
-
-const estadoColor = (e) => ({ disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c' }[e] || '#c9a8ff');
+const estadoColor = (e) => ({ disponible:'#4ade80', asignado:'#facc15', 'dañado':'#f87171', mantenimiento:'#fb923c' }[e] || '#c9a8ff');
 
 const HistorialAdmin = () => {
   const navigate = useNavigate();
@@ -18,32 +14,28 @@ const HistorialAdmin = () => {
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const [page, setPage] = useState(1);
   const PER_PAGE = 10;
   const [seleccionado, setSeleccionado] = useState(null);
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
-    fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } })
+    fetch('/api/portatiles', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.status === 401 ? navigate('/login') : r.json())
       .then(d => {
-        if (Array.isArray(d)) {
-          const local = getLocal();
-          const backendIds = d.map(p => p.id_portatil);
-          const soloLocales = local.filter(p => !backendIds.includes(p.id_portatil));
-          setPortatiles([...d, ...soloLocales]);
-        } else {
-          setPortatiles(getLocal());
-        }
+        const lista = Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
+        setPortatiles(lista);
       })
-      .catch(() => setPortatiles(getLocal()))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const filtrados = portatiles.filter(p =>
-    !filtro || p.num_serie?.toLowerCase().includes(filtro.toLowerCase()) ||
-    p.marca?.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const filtrados = portatiles.filter(p => {
+    const b = filtro.toLowerCase();
+    return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b))
+      && (!filtroEstado || p.estado === filtroEstado);
+  });
 
   const total      = portatiles.length;
   const disponibles = portatiles.filter(p => p.estado === 'disponible').length;
@@ -78,12 +70,20 @@ const HistorialAdmin = () => {
           </div>
           <div className="hist-summary-card">
             <div className="hist-summary-icon" style={{background:'rgba(248,113,113,0.12)',color:'#f87171'}}><IconMonitor size={20}/></div>
-            <div><div className="hist-summary-num" style={{color:'#f87171'}}>{portatiles.filter(p=>p.estado==='danado').length}</div><div className="hist-summary-label">Con fallas</div></div>
+            <div><div className="hist-summary-num" style={{color:'#f87171'}}>{portatiles.filter(p=>p.estado==='dañado').length}</div><div className="hist-summary-label">Con fallas</div></div>
           </div>
         </div>
 
         <div className="hist-search-row">
-          <input className="filter-input" placeholder="Buscar por serie o marca..." value={filtro} onChange={e => setFiltro(e.target.value)} style={{maxWidth:'360px'}} />
+          <input className="filter-input" placeholder="Buscar por serie o marca..." value={filtro} onChange={e => { setFiltro(e.target.value); setPage(1); }} style={{maxWidth:'300px'}} />
+          <select className="filter-input" value={filtroEstado} onChange={e => { setFiltroEstado(e.target.value); setPage(1); }} style={{maxWidth:'180px'}}>
+            <option value="">Todos los estados</option>
+            <option value="disponible">Disponible</option>
+            <option value="asignado">Asignado</option>
+            <option value="dañado">Dañado</option>
+            <option value="mantenimiento">Mantenimiento</option>
+          </select>
+          <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroEstado(''); setPage(1); }}>Limpiar</button>
           <span className="hist-count">{filtrados.length} registros</span>
         </div>
 

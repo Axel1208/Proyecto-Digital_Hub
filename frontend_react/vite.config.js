@@ -14,6 +14,9 @@ export default defineConfig({
       '/reportes':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
       '/ambiente':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
       '/asignacion':{ target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/exportar':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/importar':  { target: 'http://127.0.0.1:3001', changeOrigin: true },
+      '/uploads':   { target: 'http://127.0.0.1:3001', changeOrigin: true },
     }
   }
 })

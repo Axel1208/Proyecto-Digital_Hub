@@ -99,16 +99,16 @@ const HistorialAprendiz = () => {
 
         <div className="hist-search-row">
           <div style={{display:'flex',gap:'10px',flex:1,flexWrap:'wrap'}}>
-            <input className="filter-input" placeholder="Buscar por descripcion o ID..." value={filtros.buscar} onChange={e => setFiltros({...filtros, buscar: e.target.value})} style={{flex:'2',minWidth:'200px'}} />
-            <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})} style={{flex:'1',minWidth:'140px'}}>
+            <input className="filter-input" placeholder="Buscar por descripcion o ID..." value={filtros.buscar} onChange={e => { setFiltros({...filtros, buscar: e.target.value}); setPage(1); }} style={{flex:'2',minWidth:'200px'}} />
+            <select className="filter-input" value={filtros.estado} onChange={e => { setFiltros({...filtros, estado: e.target.value}); setPage(1); }} style={{flex:'1',minWidth:'140px'}}>
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendiente</option>
               <option value="en_revision">En revision</option>
               <option value="resuelto">Resuelto</option>
             </select>
-            <input className="filter-input" type="date" title="Desde" value={filtros.desde} onChange={e => setFiltros({...filtros, desde: e.target.value})} style={{flex:'1',minWidth:'130px'}} />
-            <input className="filter-input" type="date" title="Hasta" value={filtros.hasta} onChange={e => setFiltros({...filtros, hasta: e.target.value})} style={{flex:'1',minWidth:'130px'}} />
-            <button className="filter-clear" onClick={() => setFiltros({ buscar:'', estado:'', desde:'', hasta:'' })}>Limpiar</button>
+            <input className="filter-input" type="date" title="Desde" value={filtros.desde} onChange={e => { setFiltros({...filtros, desde: e.target.value}); setPage(1); }} style={{flex:'1',minWidth:'130px'}} />
+            <input className="filter-input" type="date" title="Hasta" value={filtros.hasta} onChange={e => { setFiltros({...filtros, hasta: e.target.value}); setPage(1); }} style={{flex:'1',minWidth:'130px'}} />
+            <button className="filter-clear" onClick={() => { setFiltros({ buscar:'', estado:'', desde:'', hasta:'' }); setPage(1); }}>Limpiar</button>
           </div>
           <span className="hist-count">{filtrados.length} registros</span>
         </div>

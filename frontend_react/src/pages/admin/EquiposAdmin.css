@@ -252,3 +252,19 @@
 .usr-stat-num { font-size: 32px; font-weight: 800; color: #f0eaff; line-height: 1; }
 .usr-stat-label { font-size: 11px; color: #b8a8d8; text-transform: uppercase; letter-spacing: 0.6px; }
 .usr-stat-div { width: 1px; height: 40px; background: rgba(127,90,240,0.2); flex-shrink: 0; margin: 0 8px; }
+
+/* ===== EXPORT BUTTONS ===== */
+.btn-export {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-export:hover { background: #16a34a; }
+.btn-export.csv { background: #6366f1; }
+.btn-export.csv:hover { background: #4f46e5; }

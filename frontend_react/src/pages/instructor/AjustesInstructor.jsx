@@ -6,7 +6,6 @@ import '../Ajustes.css';
 
 const AjustesInstructor = () => {
   const navigate = useNavigate();
-  const [idioma, setIdioma] = useState(localStorage.getItem('idioma') || 'es');
   const [tema, setTema] = useState(localStorage.getItem('tema') || 'oscuro');
   const [notifSistema, setNotifSistema] = useState(localStorage.getItem('notif_sistema') !== 'false');
   const [notifReportes, setNotifReportes] = useState(localStorage.getItem('notif_reportes') !== 'false');
@@ -14,8 +13,6 @@ const AjustesInstructor = () => {
   useEffect(() => {
     if (!localStorage.getItem('token')) { navigate('/login'); return; }
   }, []);
-
-  useEffect(() => { localStorage.setItem('idioma', idioma); }, [idioma]);
 
   useEffect(() => {
     localStorage.setItem('tema', tema);
@@ -44,17 +41,6 @@ const AjustesInstructor = () => {
 
         <div className="ajustes-section">
           <div className="ajustes-section-title">Apariencia</div>
-
-          <div className="ajustes-row">
-            <div>
-              <div className="ajustes-row-label">Idioma</div>
-              <div className="ajustes-row-desc">Idioma de la interfaz</div>
-            </div>
-            <select className="ajustes-select" value={idioma} onChange={e => setIdioma(e.target.value)}>
-              <option value="es">Español</option>
-              <option value="en">English</option>
-            </select>
-          </div>
 
           <div className="ajustes-row">
             <div>

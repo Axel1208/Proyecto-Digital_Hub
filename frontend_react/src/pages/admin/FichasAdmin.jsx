@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconBell, IconUser, IconMonitor, IconReport } from '../../components/Icons';
+import { IconBell, IconUser, IconMonitor, IconReport, IconPencil, IconTrash } from '../../components/Icons';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 import '../../pages/admin/FichasAdmin.css';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15', disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c', pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
 const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙'}[j] || '📅');
@@ -21,11 +22,24 @@ const FichasAdmin = () => {
   const [reportes, setReportes] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [filtro, setFiltro] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroJornada, setFiltroJornada] = useState('');
+  const [tabPrincipal, setTabPrincipal] = useState('fichas');
+  const [ambientes, setAmbientes] = useState([]);
+  const [loadingAmb, setLoadingAmb] = useState(false);
+  const [filtroAmb, setFiltroAmb] = useState('');
+  const [showModalAmb, setShowModalAmb] = useState(false);
+  const [showEditAmb, setShowEditAmb] = useState(false);
+  const [selAmb, setSelAmb] = useState(null);
+  const [formAmb, setFormAmb] = useState({ nombre: '', direccion: '' });
+  const [editAmb, setEditAmb] = useState({ nombre: '', direccion: '' });
+  const [errorAmb, setErrorAmb] = useState('');
+  const [confirmAmbId, setConfirmAmbId] = useState(null);
   const [page, setPage] = useState(1);
   const PER_PAGE = 9;
   const token = localStorage.getItem('token');
 
-  useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, []);
+  useEffect(() => { if (!token) { navigate('/login'); return; } cargar(); }, [token]);
 
   const cargar = async () => {
     try {
@@ -33,7 +47,7 @@ const FichasAdmin = () => {
       const res = await fetch('/ficha', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       setFichas(await res.json());
-    } catch {}
+    } catch (err) { console.error('Error cargando fichas:', err); }
     finally { setLoading(false); }
   };
 
@@ -50,13 +64,18 @@ const FichasAdmin = () => {
       setAprendices(Array.isArray(ra) ? ra : []);
       setPortatiles(Array.isArray(rp) ? rp : []);
       setReportes(Array.isArray(rr) ? rr : []);
-    } catch {}
+    } catch (err) { console.error('Error cargando detalle:', err); }
     finally { setLoadingDetalle(false); }
   };
 
   const abrirFicha = (f) => { setFichaActiva(f); setVista('detalle'); setTab('aprendices'); cargarDetalle(f); };
 
-  const filtrados = fichas.filter(f => !filtro || f.nombre?.toLowerCase().includes(filtro.toLowerCase()) || f.programa_formacion?.toLowerCase().includes(filtro.toLowerCase()));
+  const filtrados = fichas.filter(f => {
+    const b = filtro.toLowerCase();
+    return (!b || f.nombre?.toLowerCase().includes(b) || f.programa_formacion?.toLowerCase().includes(b))
+      && (!filtroEstado || f.estado === filtroEstado)
+      && (!filtroJornada || f.jornada === filtroJornada);
+  });
   const paginados = filtrados.slice((page-1)*PER_PAGE, page*PER_PAGE);
 
   // ===== DETALLE =====
@@ -190,6 +209,67 @@ const FichasAdmin = () => {
     );
   }
 
+  const cargarAmbientes = async () => {
+    setLoadingAmb(true);
+    try {
+      const res = await fetch('/ambiente', { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setAmbientes(Array.isArray(data) ? data : []);
+    } catch (err) { console.error('Error cargando ambientes:', err); }
+    finally { setLoadingAmb(false); }
+  };
+
+  const handleAmbSubmit = async (e) => {
+    e.preventDefault(); setErrorAmb('');
+    try {
+      const res = await fetch('/ambiente', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(formAmb) });
+      if (res.ok) { setShowModalAmb(false); setFormAmb({ nombre: '', direccion: '' }); cargarAmbientes(); }
+      else { const d = await res.json(); setErrorAmb(d.message || 'Error'); }
+    } catch { setErrorAmb('Error de conexión'); }
+  };
+
+  const handleAmbEditar = async (e) => {
+    e.preventDefault(); setErrorAmb('');
+    try {
+      const res = await fetch(`/ambiente/${selAmb.id_ambiente}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(editAmb) });
+      if (res.ok) { setShowEditAmb(false); cargarAmbientes(); }
+      else { const d = await res.json(); setErrorAmb(d.message || 'Error'); }
+    } catch { setErrorAmb('Error de conexión'); }
+  };
+
+  const handleAmbEliminar = async (id) => {
+    setConfirmAmbId(id);
+  };
+
+  const doAmbEliminar = async (id) => {
+    try {
+      const res = await fetch(`/ambiente/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) cargarAmbientes();
+    } catch (err) { console.error('Error eliminando ambiente:', err); }
+  };
+
+  const ambFiltrados = ambientes.filter(a => !filtroAmb || a.nombre?.toLowerCase().includes(filtroAmb.toLowerCase()) || a.direccion?.toLowerCase().includes(filtroAmb.toLowerCase()));
+  const AMB_COLORS = ['#c9a8ff','#60a5fa','#4ade80','#fb923c','#f472b6','#34d399','#facc15','#a78bfa'];
+
+  const [errorExport, setErrorExport] = useState('');
+
+  const exportarFichas = async () => {
+    setErrorExport('');
+    try {
+      const res = await fetch('/exportar/fichas/excel', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { setErrorExport('Error al exportar. Intenta de nuevo.'); return; }
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'fichas.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) { console.error('Error exportando:', err); setErrorExport('Error de conexión al exportar.'); }
+  };
+
   // ===== LISTA =====
   return (
     <div className="equipment-layout">
@@ -200,51 +280,150 @@ const FichasAdmin = () => {
             <h1 className="equipment-title">Fichas</h1>
             <p className="equipment-subtitle">Total: <span>{fichas.length}</span></p>
           </div>
-          <button className="notification-btn"><IconBell size={20}/></button>
-        </div>
-
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon"><IconUser size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value">{fichas.length}</div><div className="stat-label">Total</div></div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon"><IconUser size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value" style={{color:'#4ade80'}}>{fichas.filter(f=>f.estado==='activa').length}</div><div className="stat-label">Activas</div></div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon"><IconUser size={20}/></div>
-            <div className="stat-card-text"><div className="stat-value" style={{color:'#f87171'}}>{fichas.filter(f=>f.estado!=='activa').length}</div><div className="stat-label">Inactivas</div></div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexDirection: 'column' }}>
+            {errorExport && <p style={{color:'#f87171',fontSize:'12px',margin:0}}>{errorExport}</p>}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button onClick={exportarFichas} style={{ background: '#039b5b', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Excel
+            </button>
+            <button className="notification-btn"><IconBell size={20}/></button>
+            </div>
           </div>
         </div>
 
-        <div className="filters-row" style={{gridTemplateColumns:'1fr auto'}}>
-          <input className="filter-input" placeholder="Buscar ficha..." value={filtro} onChange={e => setFiltro(e.target.value)}/>
-          <button className="filter-clear" onClick={() => setFiltro('')}>Limpiar</button>
+        <div className="fd-tabs-bar" style={{marginBottom:'20px'}}>
+          <button className={`fd-tab ${tabPrincipal==='fichas'?'fd-tab-active':''}`} onClick={() => setTabPrincipal('fichas')}>
+            <IconUser size={14}/> Fichas <span className="fd-tab-badge" style={{background:'rgba(127,90,240,0.2)',color:'#c9a8ff'}}>{fichas.length}</span>
+          </button>
+          <button className={`fd-tab ${tabPrincipal==='ambientes'?'fd-tab-active':''}`} onClick={() => { setTabPrincipal('ambientes'); if(!ambientes.length) cargarAmbientes(); }}>
+            <IconMonitor size={14}/> Ambientes <span className="fd-tab-badge" style={{background:'rgba(96,165,250,0.2)',color:'#60a5fa'}}>{ambientes.length}</span>
+          </button>
         </div>
 
-        {loading ? <div style={{textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Cargando...</div> : (
-          <div className="fichas-grid">
-            {paginados.length === 0
-              ? <div style={{gridColumn:'1/-1',textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Sin fichas</div>
-              : paginados.map(f => (
-                <div key={f.id_ficha} className="ficha-card" onClick={() => abrirFicha(f)}>
-                  <div className="ficha-card-top">
-                    <span className="ficha-jornada-badge">{jornadaIcon(f.jornada)} {f.jornada}</span>
-                    <span style={{background:`${estadoColor(f.estado)}18`,border:`1px solid ${estadoColor(f.estado)}44`,color:estadoColor(f.estado),borderRadius:'50px',padding:'2px 10px',fontSize:'11px',fontWeight:600}}>{f.estado}</span>
+        {tabPrincipal === 'fichas' && (<>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon"><IconUser size={20}/></div>
+              <div className="stat-card-text"><div className="stat-value">{fichas.length}</div><div className="stat-label">Total</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><IconUser size={20}/></div>
+              <div className="stat-card-text"><div className="stat-value" style={{color:'#4ade80'}}>{fichas.filter(f=>f.estado==='activa').length}</div><div className="stat-label">Activas</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon"><IconUser size={20}/></div>
+              <div className="stat-card-text"><div className="stat-value" style={{color:'#f87171'}}>{fichas.filter(f=>f.estado!=='activa').length}</div><div className="stat-label">Inactivas</div></div>
+            </div>
+          </div>
+
+          <div className="filters-row">
+            <input className="filter-input" placeholder="Buscar ficha..." value={filtro} onChange={e => { setFiltro(e.target.value); setPage(1); }}/>
+            <select className="filter-input" value={filtroEstado} onChange={e => { setFiltroEstado(e.target.value); setPage(1); }}>
+              <option value="">Todos los estados</option>
+              <option value="activa">Activa</option>
+              <option value="inactiva">Inactiva</option>
+              <option value="cerrada">Cerrada</option>
+              <option value="finalizada">Finalizada</option>
+            </select>
+            <select className="filter-input" value={filtroJornada} onChange={e => { setFiltroJornada(e.target.value); setPage(1); }}>
+              <option value="">Todas las jornadas</option>
+              <option value="manana">Mañana</option>
+              <option value="tarde">Tarde</option>
+              <option value="noche">Noche</option>
+            </select>
+            <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroEstado(''); setFiltroJornada(''); setPage(1); }}>Limpiar</button>
+          </div>
+
+          {loading ? <div style={{textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Cargando...</div> : (
+            <div className="fichas-grid">
+              {paginados.length === 0
+                ? <div style={{gridColumn:'1/-1',textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Sin fichas</div>
+                : paginados.map(f => (
+                  <div key={f.id_ficha} className="ficha-card" onClick={() => abrirFicha(f)}>
+                    <div className="ficha-card-top">
+                      <span className="ficha-jornada-badge">{jornadaIcon(f.jornada)} {f.jornada}</span>
+                      <span style={{background:`${estadoColor(f.estado)}18`,border:`1px solid ${estadoColor(f.estado)}44`,color:estadoColor(f.estado),borderRadius:'50px',padding:'2px 10px',fontSize:'11px',fontWeight:600}}>{f.estado}</span>
+                    </div>
+                    <div className="ficha-card-nombre">{f.nombre}</div>
+                    <div className="ficha-card-programa">{f.programa_formacion}</div>
+                    <div className="ficha-card-footer">
+                      <span><IconUser size={13}/> Cupo: {f.cupo_maximo}</span>
+                      <span className="ficha-card-ver">Ver ficha →</span>
+                    </div>
                   </div>
-                  <div className="ficha-card-nombre">{f.nombre}</div>
-                  <div className="ficha-card-programa">{f.programa_formacion}</div>
-                  <div className="ficha-card-footer">
-                    <span><IconUser size={13}/> Cupo: {f.cupo_maximo}</span>
-                    <span className="ficha-card-ver">Ver ficha →</span>
+                ))
+              }
+            </div>
+          )}
+          <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)}/>
+        </>)}
+
+        {tabPrincipal === 'ambientes' && (<>
+          <div className="filters-row" style={{gridTemplateColumns:'1fr auto'}}>
+            <input className="filter-input" placeholder="Buscar ambiente..." value={filtroAmb} onChange={e => setFiltroAmb(e.target.value)}/>
+            <button className="filter-clear" onClick={() => setFiltroAmb('')}>Limpiar</button>
+          </div>
+          {loadingAmb ? <div style={{textAlign:'center',padding:'48px',color:'#b8a8d8'}}>Cargando...</div> : (
+            <div className="amb-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'14px',marginBottom:'16px'}}>
+              {ambFiltrados.length === 0
+                ? <div style={{gridColumn:'1/-1',textAlign:'center',padding:'32px',color:'#b8a8d8'}}>Sin ambientes</div>
+                : ambFiltrados.map((a, i) => (
+                  <div key={a.id_ambiente} style={{background:'#241545',border:`1px solid ${AMB_COLORS[i%AMB_COLORS.length]}33`,borderRadius:'14px',padding:'16px',display:'flex',flexDirection:'column',gap:'8px'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <div style={{width:'36px',height:'36px',borderRadius:'10px',background:`${AMB_COLORS[i%AMB_COLORS.length]}18`,border:`1px solid ${AMB_COLORS[i%AMB_COLORS.length]}33`,color:AMB_COLORS[i%AMB_COLORS.length],display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:'15px'}}>
+                        {a.nombre?.[0]?.toUpperCase()}
+                      </div>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <button className="action-btn edit" onClick={() => { setSelAmb(a); setEditAmb({ nombre:a.nombre, direccion:a.direccion }); setShowEditAmb(true); setErrorAmb(''); }}><IconPencil size={13}/></button>
+                        <button className="action-btn delete" onClick={() => setConfirmAmbId(a.id_ambiente)}><IconTrash size={13}/></button>
+                      </div>
+                    </div>
+                    <div style={{fontWeight:700,fontSize:'14px',color:'#f0eaff'}}>{a.nombre}</div>
+                    <div style={{fontSize:'12px',color:'#b8a8d8'}}>{a.direccion}</div>
+                    <div style={{fontSize:'11px',color:'rgba(184,168,216,0.5)'}}>ID #{a.id_ambiente}</div>
                   </div>
+                ))
+              }
+            </div>
+          )}
+          <button className="btn-add-equipment" onClick={() => { setShowModalAmb(true); setErrorAmb(''); setFormAmb({ nombre:'', direccion:'' }); }}>Nuevo Ambiente</button>
+        </>)}
+
+        {showModalAmb && (
+          <div className="modal-overlay" onClick={() => setShowModalAmb(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2 className="modal-title">Nuevo Ambiente</h2>
+              {errorAmb && <p className="table-error">{errorAmb}</p>}
+              <form onSubmit={handleAmbSubmit}>
+                <div className="form-group"><label>Nombre</label><input value={formAmb.nombre} onChange={e => setFormAmb({...formAmb,nombre:e.target.value})} required/></div>
+                <div className="form-group"><label>Dirección</label><input value={formAmb.direccion} onChange={e => setFormAmb({...formAmb,direccion:e.target.value})} required/></div>
+                <div className="modal-actions">
+                  <button type="button" className="btn-cancel" onClick={() => setShowModalAmb(false)}>Cancelar</button>
+                  <button type="submit" className="btn-save">Guardar</button>
                 </div>
-              ))
-            }
+              </form>
+            </div>
           </div>
         )}
-        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)}/>
+
+        {confirmAmbId && <ConfirmModal mensaje="¿Eliminar este ambiente?" onConfirm={() => { doAmbEliminar(confirmAmbId); setConfirmAmbId(null); }} onCancel={() => setConfirmAmbId(null)} />}
+        {showEditAmb && selAmb && (
+          <div className="modal-overlay" onClick={() => setShowEditAmb(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2 className="modal-title">Editar Ambiente</h2>
+              {errorAmb && <p className="table-error">{errorAmb}</p>}
+              <form onSubmit={handleAmbEditar}>
+                <div className="form-group"><label>Nombre</label><input value={editAmb.nombre} onChange={e => setEditAmb({...editAmb,nombre:e.target.value})} required/></div>
+                <div className="form-group"><label>Dirección</label><input value={editAmb.direccion} onChange={e => setEditAmb({...editAmb,direccion:e.target.value})} required/></div>
+                <div className="modal-actions">
+                  <button type="button" className="btn-cancel" onClick={() => setShowEditAmb(false)}>Cancelar</button>
+                  <button type="submit" className="btn-save">Guardar cambios</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

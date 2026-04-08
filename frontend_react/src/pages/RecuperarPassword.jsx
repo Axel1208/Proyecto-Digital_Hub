@@ -65,7 +65,7 @@ const RecuperarPassword = () => {
             ¿Olvidaste tu <span className="login-title-accent">contraseña?</span>
           </h1>
           <p className="login-sub">
-            Ingresa tu correo y te enviaremos un codigo para recuperar tu cuenta.
+            Ingresa tu correo y te enviaremos un código para recuperar tu cuenta.
           </p>
           <form onSubmit={handleSubmit}>
             <div className="input-group">

@@ -23,6 +23,7 @@ const ambienteRouter = require("./routers/ambiente.routers");
 const fichaRouter = require("./routers/ficha.routers");
 const importacionRoutes = require("./routers/importacion.routers");
 const exportacionRoutes = require("./routers/exportacion.routers");
+const recuperacionRouter = require("./routers/recuperacion.routers");
 // ===============================
 // RUTAS PRINCIPALES (API)
 // ===============================
@@ -33,16 +34,18 @@ app.use("/api/ambientes", ambienteRouter);
 app.use("/api/fichas", fichaRouter);
 app.use("/importar", importacionRoutes);
 app.use("/exportar", exportacionRoutes);
+app.use("/api/recuperacion", recuperacionRouter);
 
 // ===============================
 // ARCHIVOS ESTÁTICOS
 // ===============================
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/api/reportes", reportesRouter);
-app.use("/portatil", require("./routers/portatil.routers"));
-app.use("/reportes", require("./routers/reportes.routers"));
-app.use("/ambiente", require("./routers/ambiente.routers"));
-app.use("/ficha", require("./routers/ficha.routers"));
+
+// Rutas legacy sin prefijo /api (compatibilidad con vite proxy)
+app.use("/portatil",   portatilRouter);
+app.use("/reportes",   reportesRouter);
+app.use("/ambiente",   ambienteRouter);
+app.use("/ficha",      fichaRouter);
 app.use("/asignacion", require("./routers/asignacion.routers"));
 
 // ===============================

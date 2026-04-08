@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconUser } from '../../components/Icons';
+import ConfirmModal from '../../components/ConfirmModal';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import '../../pages/admin/UsuariosAdmin.css';
 import Pagination from '../../components/Pagination';
@@ -24,6 +25,8 @@ const UsuariosAdmin = () => {
   const [formData, setFormData] = useState({ nombre: '', correo: '', password: '', rol: 'aprendiz', estado: 'activo' });
   const [editData, setEditData] = useState({ nombre: '', correo: '', rol: 'aprendiz', estado: 'activo' });
   const [filtro, setFiltro] = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const token = localStorage.getItem('token');
 
   const exportarExcel = async () => {
@@ -106,20 +109,52 @@ const importarExcel = async (e) => {
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('Eliminar este usuario?')) return;
     try {
       const res = await fetch(`/api/usuarios/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { cargar(); return; }
+      if (res.ok) { setConfirmId(null); cargar(); return; }
     } catch {}
     const local = getLocalU().filter(u => u.id_usuario !== id);
-    saveLocalU(local); setUsuarios(local);
+    saveLocalU(local); setUsuarios(local); setConfirmId(null);
   };
 
-  const rolColor = (r) => ({ administrador: '#c9a8ff', instructor: '#60a5fa', aprendiz: '#4ade80' }[r] || '#facc15');
+  const [showVerModal, setShowVerModal] = useState(false);
+  const [verUsuario, setVerUsuario] = useState(null);
+  const [verDetalle, setVerDetalle] = useState({ ficha: null, dispositivo: null, fichas: [] });
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
   // reset page on filter change
-  const filtrados = usuarios.filter(u => !filtro || u.nombre?.toLowerCase().includes(filtro.toLowerCase()) || u.correo?.toLowerCase().includes(filtro.toLowerCase()));
+  const filtrados = usuarios.filter(u => {
+    const b = filtro.toLowerCase();
+    return (!b || u.nombre?.toLowerCase().includes(b) || u.correo?.toLowerCase().includes(b))
+      && (!filtroRol || u.rol === filtroRol)
+      && (!filtroEstado || u.estado === filtroEstado);
+  });
 
   const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const rolColor = (r) => ({ administrador: '#c9a8ff', instructor: '#60a5fa', aprendiz: '#4ade80' }[r] || '#facc15');
+
+  const abrirVer = async (u) => {
+    setVerUsuario(u);
+    setVerDetalle({ ficha: null, dispositivo: null, fichas: [] });
+    setShowVerModal(true);
+    setLoadingDetalle(true);
+    const h = { Authorization: `Bearer ${token}` };
+    try {
+      if (u.rol === 'aprendiz') {
+        const pRes = await fetch('/api/portatiles', { headers: h }).then(r => r.json()).catch(() => ({ data: [] }));
+        const portatiles = Array.isArray(pRes) ? pRes : (pRes?.data || []);
+        const dispositivo = portatiles.find(p => p.id_aprendiz === u.id_usuario) || null;
+        setVerDetalle({ ficha: null, dispositivo, fichas: [] });
+      } else if (u.rol === 'instructor') {
+        const fRes = await fetch('/api/fichas', { headers: h }).then(r => r.json()).catch(() => []);
+        const fichasArr = Array.isArray(fRes) ? fRes : [];
+        const misFichas = fichasArr.filter(f => f.id_instructor === u.id_usuario);
+        setVerDetalle({ ficha: null, dispositivo: null, fichas: misFichas });
+      }
+    } catch {}
+    setLoadingDetalle(false);
+  };
 
   return (
     <div className="equipment-layout">
@@ -167,8 +202,19 @@ const importarExcel = async (e) => {
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
-          <input className="filter-input" placeholder="Buscar por nombre o correo..." value={filtro} onChange={e => setFiltro(e.target.value)} />
-          <button className="filter-clear" onClick={() => setFiltro('')}>Limpiar</button>
+          <input className="filter-input" placeholder="Buscar por nombre o correo..." value={filtro} onChange={e => { setFiltro(e.target.value); setPage(1); }} />
+          <select className="filter-input" value={filtroRol} onChange={e => { setFiltroRol(e.target.value); setPage(1); }}>
+            <option value="">Todos los roles</option>
+            <option value="administrador">Administrador</option>
+            <option value="instructor">Instructor</option>
+            <option value="aprendiz">Aprendiz</option>
+          </select>
+          <select className="filter-input" value={filtroEstado} onChange={e => { setFiltroEstado(e.target.value); setPage(1); }}>
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inhabilitado">Inhabilitado</option>
+          </select>
+          <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroRol(''); setFiltroEstado(''); setPage(1); }}>Limpiar</button>
         </div>
         <div className="table-container">
           <table className="equipment-table">
@@ -195,8 +241,9 @@ const importarExcel = async (e) => {
                     <td><span style={{ color: u.estado === 'activo' ? '#4ade80' : '#f87171', fontWeight: 600, fontSize: '13px' }}>{u.estado === 'activo' ? 'activo' : 'inactivo'}</span></td>
                     <td>
                       <div className="action-buttons">
+                        <button className="action-btn view" onClick={() => abrirVer(u)}><IconEye size={16} /></button>
                         <button className="action-btn edit" onClick={() => { setSeleccionado(u); setEditData({ nombre: u.nombre, correo: u.correo, rol: u.rol, estado: u.estado }); setShowEditModal(true); }}><IconPencil size={16} /></button>
-                        <button className="action-btn delete" onClick={() => handleEliminar(u.id_usuario)}><IconTrash size={16} /></button>
+                        <button className="action-btn delete" onClick={() => setConfirmId(u.id_usuario)}><IconTrash size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -287,6 +334,63 @@ const importarExcel = async (e) => {
           </div>
         )}
         <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
+        {confirmId && <ConfirmModal mensaje="Esta acción no se puede deshacer." onConfirm={() => handleEliminar(confirmId)} onCancel={() => setConfirmId(null)} />}
+
+        {showVerModal && verUsuario && (
+          <div className="modal-overlay" onClick={() => setShowVerModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxHeight:'90vh',overflowY:'auto'}}>
+              <h2 className="modal-title">Perfil de usuario</h2>
+              <div className="detalle-grid">
+                <div className="detalle-item"><span className="detalle-label">Nombre</span><span className="detalle-valor">{verUsuario.nombre}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Correo</span><span className="detalle-valor" style={{fontSize:'13px'}}>{verUsuario.correo}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Rol</span><span className="detalle-valor" style={{color:rolColor(verUsuario.rol),fontWeight:700}}>{verUsuario.rol}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:verUsuario.estado==='activo'?'#4ade80':'#f87171',fontWeight:700}}>{verUsuario.estado}</span></div>
+              </div>
+
+              {loadingDetalle && <div style={{textAlign:'center',padding:'20px',color:'#b8a8d8',fontSize:'13px'}}>Cargando información...</div>}
+
+              {!loadingDetalle && verUsuario.rol === 'aprendiz' && (
+                <div style={{marginTop:'20px'}}>
+                  <div style={{fontSize:'12px',fontWeight:700,color:'#b8a8d8',textTransform:'uppercase',letterSpacing:'0.6px',marginBottom:'10px'}}>Dispositivo asignado</div>
+                  {verDetalle.dispositivo ? (
+                    <div style={{background:'rgba(127,90,240,0.08)',border:'1px solid rgba(127,90,240,0.25)',borderRadius:'12px',padding:'14px 16px'}}>
+                      <div style={{fontWeight:700,color:'#f0eaff'}}>{verDetalle.dispositivo.marca} {verDetalle.dispositivo.modelo}</div>
+                      <div style={{fontSize:'12px',color:'#b8a8d8',fontFamily:'monospace',marginTop:'4px'}}>{verDetalle.dispositivo.num_serie}</div>
+                      <div style={{fontSize:'11px',color:'#facc15',marginTop:'4px',fontWeight:600}}>{verDetalle.dispositivo.estado}</div>
+                    </div>
+                  ) : (
+                    <div style={{color:'#b8a8d8',fontSize:'13px'}}>Sin dispositivo asignado</div>
+                  )}
+                </div>
+              )}
+
+              {!loadingDetalle && verUsuario.rol === 'instructor' && (
+                <div style={{marginTop:'20px'}}>
+                  <div style={{fontSize:'12px',fontWeight:700,color:'#b8a8d8',textTransform:'uppercase',letterSpacing:'0.6px',marginBottom:'10px'}}>Fichas creadas ({verDetalle.fichas.length})</div>
+                  {verDetalle.fichas.length === 0 ? (
+                    <div style={{color:'#b8a8d8',fontSize:'13px'}}>Sin fichas creadas</div>
+                  ) : (
+                    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                      {verDetalle.fichas.map(f => (
+                        <div key={f.id} style={{background:'rgba(127,90,240,0.08)',border:'1px solid rgba(127,90,240,0.25)',borderRadius:'12px',padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <div>
+                            <div style={{fontWeight:700,color:'#f0eaff',fontSize:'14px'}}>{f.nombre}</div>
+                            <div style={{fontSize:'12px',color:'#b8a8d8'}}>{f.programa_formacion} · {f.jornada}</div>
+                          </div>
+                          <span style={{fontSize:'11px',fontWeight:700,color:f.estado==='activa'?'#4ade80':'#f87171'}}>{f.estado}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="modal-actions" style={{marginTop:'20px'}}>
+                <button className="btn-save" onClick={() => setShowVerModal(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

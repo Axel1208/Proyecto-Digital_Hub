@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { IconUser, IconMonitor, IconReport, IconBell, IconCheck, IconClock } from '../../components/Icons';
 import './InicioAdmin.css';
+import apiFetch from '../../utils/apiFetch';
 
 const Inicio = () => {
   const navigate = useNavigate();
@@ -14,25 +15,31 @@ const Inicio = () => {
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
-    const headers = { Authorization: `Bearer ${token}` };
-    Promise.all([
-      fetch('/portatil',      { headers }).then(r => r.json()).catch(() => []),
-      fetch('/ficha',         { headers }).then(r => r.json()).catch(() => []),
-      fetch('/reportes',      { headers }).then(r => r.json()).catch(() => []),
-      fetch('/api/usuarios',  { headers }).then(r => r.json()).catch(() => []),
-    ]).then(([portatiles, fichas, reportes, usuarios]) => {
-      const rArr = Array.isArray(reportes) ? reportes : [];
-      setStats({
-        portatiles:  Array.isArray(portatiles) ? portatiles.length : 0,
-        fichas:      Array.isArray(fichas)     ? fichas.length     : 0,
-        reportes:    rArr.length,
-        disponibles: Array.isArray(portatiles) ? portatiles.filter(p => p.estado === 'disponible').length : 0,
-        usuarios:    Array.isArray(usuarios)   ? usuarios.length   : 0,
-        pendientes:  rArr.filter(r => r.estado_reporte === 'pendiente').length,
+    const cargar = () => {
+      const headers = { Authorization: `Bearer ${token}` };
+      Promise.all([
+        fetch('/api/portatiles', { headers }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/fichas',     { headers }).then(r => r.json()).catch(() => []),
+        fetch('/api/reportes',   { headers }).then(r => r.json()).catch(() => []),
+        fetch('/api/usuarios',   { headers }).then(r => r.json()).catch(() => []),
+      ]).then(([portatilesRes, fichas, reportes, usuarios]) => {
+        const pArr = Array.isArray(portatilesRes) ? portatilesRes : (Array.isArray(portatilesRes?.data) ? portatilesRes.data : []);
+        const rArr = Array.isArray(reportes) ? reportes : [];
+        setStats({
+          portatiles:  pArr.length,
+          fichas:      Array.isArray(fichas)   ? fichas.length   : 0,
+          reportes:    rArr.length,
+          disponibles: pArr.filter(p => p.estado === 'disponible').length,
+          usuarios:    Array.isArray(usuarios) ? usuarios.length : 0,
+          pendientes:  rArr.filter(r => r.estado_reporte === 'pendiente').length,
+        });
+        setUltimosReportes(rArr.filter(r => r.estado_reporte === 'pendiente').slice(0, 5));
+        setTodosReportes(rArr);
       });
-      setUltimosReportes(rArr.filter(r => r.estado_reporte === 'pendiente').slice(0, 5));
-      setTodosReportes(rArr);
-    });
+    };
+    cargar();
+    const intervalo = setInterval(cargar, 30000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const estadoColor = (e) => ({ pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');

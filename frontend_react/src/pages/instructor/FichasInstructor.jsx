@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconBell, IconPencil, IconTrash, IconUser, IconMonitor, IconReport } from '../../components/Icons';
+import { IconBell, IconPencil, IconTrash, IconUser, IconMonitor, IconReport, IconEye } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
 import './FichasInstructor.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const FichasInstructor = () => {
   const navigate = useNavigate();
@@ -23,6 +26,10 @@ const FichasInstructor = () => {
   const [formData, setFormData] = useState({ nombre: '', programa_formacion: '', jornada: 'manana', cupo_maximo: 30 });
   const [editData, setEditData] = useState({ nombre: '', programa_formacion: '', jornada: 'manana', cupo_maximo: 30, estado: 'activa' });
   const [filtro, setFiltro] = useState('');
+  const [filtroEstadoF, setFiltroEstadoF] = useState('');
+  const [filtroJornadaF, setFiltroJornadaF] = useState('');
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 9;
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -58,15 +65,16 @@ const FichasInstructor = () => {
     finally { setLoadingDetalle(false); }
   };
 
-  const exportarExcel = () => {
-    fetch('/api/reportes/excel', { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => res.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `reportes_${fichaActiva?.nombre || 'ficha'}.xlsx`; a.click();
-        URL.revokeObjectURL(url);
-      }).catch(() => alert('Error al exportar'));
+  const exportarExcel = async () => {
+    try {
+      const res = await fetch(`/exportar/reportes/ficha/${fichaActiva.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { alert('Error al exportar'); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `Reportes_${fichaActiva.nombre}_${new Date().toISOString().split('T')[0]}.xlsx`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert('Error al exportar'); }
   };
 
   const abrirFicha = (f) => {
@@ -108,10 +116,9 @@ const FichasInstructor = () => {
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('Eliminar esta ficha?')) return;
     try {
       const res = await fetch(`/api/fichas/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { setVista('lista'); setFichaActiva(null); cargar(); }
+      if (res.ok) { setConfirmFichaId(null); setVista('lista'); setFichaActiva(null); cargar(); }
       else { const d = await res.json(); setError(d.mensaje || d.message || 'Error'); }
     } catch { setError('Error al eliminar'); }
   };
@@ -133,9 +140,48 @@ const FichasInstructor = () => {
     } catch { setError('Error al conectar'); }
   };
 
+  const [showVerReporte, setShowVerReporte] = useState(false);
+  const [showEditReporte, setShowEditReporte] = useState(false);
+  const [reporteSeleccionado, setReporteSeleccionado] = useState(null);
+  const [editReporteData, setEditReporteData] = useState({ estado_reporte: 'pendiente' });
+  const [confirmFichaId, setConfirmFichaId] = useState(null);
+  const [confirmReporteId, setConfirmReporteId] = useState(null);
+
+  const abrirVerReporte = (r) => { setReporteSeleccionado(r); setShowVerReporte(true); };
+  const abrirEditarReporte = (r) => { setReporteSeleccionado(r); setEditReporteData({ estado_reporte: r.estado_reporte }); setShowEditReporte(true); };
+
+  const handleEditarReporte = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/reportes/${reporteSeleccionado.id_reporte}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editReporteData)
+      });
+      if (res.ok) {
+        setShowEditReporte(false);
+        setReportes(prev => prev.map(r => r.id_reporte === reporteSeleccionado.id_reporte ? { ...r, ...editReporteData } : r));
+      }
+    } catch {}
+  };
+
+  const handleEliminarReporte = async (id) => {
+    try {
+      const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) { setConfirmReporteId(null); setReportes(prev => prev.filter(r => r.id_reporte !== id)); }
+    } catch {}
+    setConfirmReporteId(null);
+  };
+
   const estadoColor = (e) => ({ activa:'#4ade80', inactiva:'#f87171', cerrada:'#facc15', disponible:'#4ade80', asignado:'#facc15', danado:'#f87171', mantenimiento:'#fb923c', pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80' }[e] || '#c9a8ff');
   const jornadaIcon = (j) => ({ manana:'🌅', tarde:'🌇', noche:'🌙' }[j] || '📅');
-  const filtrados = fichas.filter(f => !filtro || f.nombre?.toLowerCase().includes(filtro.toLowerCase()) || f.programa_formacion?.toLowerCase().includes(filtro.toLowerCase()));
+  const filtrados = fichas.filter(f => {
+    const b = filtro.toLowerCase();
+    return (!b || f.nombre?.toLowerCase().includes(b) || f.programa_formacion?.toLowerCase().includes(b))
+      && (!filtroEstadoF || f.estado === filtroEstadoF)
+      && (!filtroJornadaF || f.jornada === filtroJornadaF);
+  });
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   if (vista === 'detalle' && fichaActiva) {
     const pct = fichaActiva.cupo_maximo > 0 ? Math.round((aprendices.length / fichaActiva.cupo_maximo) * 100) : 0;
@@ -154,8 +200,12 @@ const FichasInstructor = () => {
             </div>
             <div className="fd-header-actions">
               <span className="fd-estado-pill" style={{background:`${estadoColor(fichaActiva.estado)}22`,border:`1px solid ${estadoColor(fichaActiva.estado)}55`,color:estadoColor(fichaActiva.estado)}}>{fichaActiva.estado}</span>
+              <button onClick={exportarExcel} style={{background:'linear-gradient(135deg,#4ade80,#22c55e)',border:'none',borderRadius:'10px',padding:'8px 14px',color:'#0a0a0f',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Excel
+              </button>
               <button className="fd-icon-btn fd-edit-btn" onClick={() => { setEditData({ nombre: fichaActiva.nombre, programa_formacion: fichaActiva.programa_formacion, jornada: fichaActiva.jornada, cupo_maximo: fichaActiva.cupo_maximo, estado: fichaActiva.estado || 'activa' }); setShowEditModal(true); }}><IconPencil size={14}/></button>
-              <button className="fd-icon-btn fd-del-btn" onClick={() => handleEliminar(fichaActiva.id)}><IconTrash size={14}/></button>
+              <button className="fd-icon-btn fd-del-btn" onClick={() => setConfirmFichaId(fichaActiva.id)}><IconTrash size={14}/></button>
             </div>
           </div>
 
@@ -210,15 +260,6 @@ const FichasInstructor = () => {
             </div>
           </div>
 
-          {tab === 'reportes' && reportes.length > 0 && (
-            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'8px'}}>
-              <button onClick={exportarExcel} style={{background:'linear-gradient(135deg,#4ade80,#22c55e)',border:'none',borderRadius:'10px',padding:'8px 14px',color:'#0a0a0f',fontSize:'12px',fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Exportar Excel
-              </button>
-            </div>
-          )}
-
           <div className="fd-tabs-bar">
             <button className={`fd-tab ${tab==='aprendices'?'fd-tab-active':''}`} onClick={()=>setTab('aprendices')}>
               <IconUser size={14}/> Aprendices <span className="fd-tab-badge" style={{background:'rgba(127,90,240,0.2)',color:'#c9a8ff'}}>{aprendices.length}</span>
@@ -270,16 +311,21 @@ const FichasInstructor = () => {
               )}
               {tab === 'reportes' && (
                 <table className="equipment-table">
-                  <thead><tr><th>Aprendiz</th><th>Descripcion</th><th>Estado</th><th>Fecha</th></tr></thead>
+                  <thead><tr><th>Aprendiz</th><th>Descripcion</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
                   <tbody>
                     {reportes.length === 0
-                      ? <tr><td colSpan="4" className="fd-empty-row">Sin reportes en esta ficha</td></tr>
+                      ? <tr><td colSpan="5" className="fd-empty-row">Sin reportes en esta ficha</td></tr>
                       : reportes.map(r => (
                         <tr key={r.id_reporte}>
                           <td>{r.aprendiz}</td>
-                          <td style={{maxWidth:'260px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text-muted-dark)',fontSize:'13px'}}>{r.descripcion}</td>
+                          <td style={{maxWidth:'220px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text-muted-dark)',fontSize:'13px'}}>{r.descripcion}</td>
                           <td><span style={{color:estadoColor(r.estado_reporte),fontWeight:600,fontSize:'12px'}}>{r.estado_reporte}</span></td>
                           <td style={{color:'var(--text-muted-dark)',fontSize:'13px'}}>{r.fecha_reporte?.split('T')[0] || r.fecha_reporte}</td>
+                          <td><div className="action-buttons">
+                            <button className="action-btn view" onClick={() => abrirVerReporte(r)}><IconEye size={15}/></button>
+                            <button className="action-btn edit" onClick={() => abrirEditarReporte(r)} style={{fontSize:'11px',padding:'4px 8px',borderRadius:'8px'}}>Estado</button>
+                            <button className="action-btn delete" onClick={() => setConfirmReporteId(r.id_reporte)}><IconTrash size={15}/></button>
+                          </div></td>
                         </tr>
                       ))}
                   </tbody>
@@ -316,6 +362,45 @@ const FichasInstructor = () => {
               </div>
             </div>
           )}
+
+          {showVerReporte && reporteSeleccionado && (
+            <div className="modal-overlay" onClick={() => setShowVerReporte(false)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <h2 className="modal-title">Detalle del reporte</h2>
+                <div className="detalle-grid">
+                  <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{reporteSeleccionado.id_reporte}</span></div>
+                  <div className="detalle-item"><span className="detalle-label">Aprendiz</span><span className="detalle-valor">{reporteSeleccionado.aprendiz}</span></div>
+                  <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(reporteSeleccionado.estado_reporte),fontWeight:600}}>{reporteSeleccionado.estado_reporte}</span></div>
+                  <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{reporteSeleccionado.fecha_reporte?.split('T')[0]}</span></div>
+                  <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}><span className="detalle-label">Descripcion</span><span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6'}}>{reporteSeleccionado.descripcion}</span></div>
+                </div>
+                <div className="modal-actions"><button className="btn-save" onClick={() => setShowVerReporte(false)}>Cerrar</button></div>
+              </div>
+            </div>
+          )}
+
+          {showEditReporte && reporteSeleccionado && (
+            <div className="modal-overlay" onClick={() => setShowEditReporte(false)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <h2 className="modal-title">Cambiar estado del reporte</h2>
+                <form onSubmit={handleEditarReporte}>
+                  <div className="form-group"><label>Estado</label>
+                    <select value={editReporteData.estado_reporte} onChange={e => setEditReporteData({...editReporteData, estado_reporte: e.target.value})}>
+                      <option value="pendiente">Pendiente</option>
+                      <option value="en_revision">En revision</option>
+                      <option value="resuelto">Resuelto</option>
+                    </select>
+                  </div>
+                  <div className="modal-actions">
+                    <button type="button" className="btn-cancel" onClick={() => setShowEditReporte(false)}>Cancelar</button>
+                    <button type="submit" className="btn-save">Guardar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {confirmFichaId && <ConfirmModal mensaje="¿Eliminar esta ficha?" onConfirm={() => handleEliminar(confirmFichaId)} onCancel={() => setConfirmFichaId(null)} />}
+          {confirmReporteId && <ConfirmModal mensaje="¿Eliminar este reporte?" onConfirm={() => handleEliminarReporte(confirmReporteId)} onCancel={() => setConfirmReporteId(null)} />}
         </main>
       </div>
     );
@@ -336,8 +421,20 @@ const FichasInstructor = () => {
         </div>
         {error && <p className="table-error">{error}</p>}
         <div className="filters-row">
-          <input className="filter-input" placeholder="Buscar ficha..." value={filtro} onChange={e => setFiltro(e.target.value)} />
-          <button className="filter-clear" onClick={() => setFiltro('')}>Limpiar</button>
+          <input className="filter-input" placeholder="Buscar ficha..." value={filtro} onChange={e => { setFiltro(e.target.value); setPage(1); }} />
+          <select className="filter-input" value={filtroEstadoF} onChange={e => { setFiltroEstadoF(e.target.value); setPage(1); }}>
+            <option value="">Todos los estados</option>
+            <option value="activa">Activa</option>
+            <option value="inactiva">Inactiva</option>
+            <option value="cerrada">Cerrada</option>
+          </select>
+          <select className="filter-input" value={filtroJornadaF} onChange={e => { setFiltroJornadaF(e.target.value); setPage(1); }}>
+            <option value="">Todas las jornadas</option>
+            <option value="manana">Mañana</option>
+            <option value="tarde">Tarde</option>
+            <option value="noche">Noche</option>
+          </select>
+          <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroEstadoF(''); setFiltroJornadaF(''); setPage(1); }}>Limpiar</button>
         </div>
         {loading ? (
           <div style={{textAlign:'center',padding:'48px',color:'var(--text-muted-dark)'}}>Cargando fichas...</div>
@@ -345,7 +442,7 @@ const FichasInstructor = () => {
           <div style={{textAlign:'center',padding:'48px',color:'var(--text-muted-dark)'}}>No hay fichas registradas</div>
         ) : (
           <div className="fichas-grid">
-            {filtrados.map(f => (
+            {paginados.map(f => (
               <div key={f.id} className="ficha-card" onClick={() => abrirFicha(f)}>
                 <div className="ficha-card-top">
                   <span className="ficha-jornada-badge">{jornadaIcon(f.jornada)} {f.jornada}</span>
@@ -361,6 +458,7 @@ const FichasInstructor = () => {
             ))}
           </div>
         )}
+        <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
         <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Nueva Ficha</button>
 
         {showModal && (

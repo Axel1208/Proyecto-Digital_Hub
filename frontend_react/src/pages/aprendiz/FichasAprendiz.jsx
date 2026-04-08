@@ -10,6 +10,8 @@ const FichasAprendiz = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [seleccionado, setSeleccionado] = useState(null);
+  const [filtro, setFiltro] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -29,6 +31,11 @@ const FichasAprendiz = () => {
   };
 
   const estadoColor = (e) => ({ activa: '#4ade80', inactiva: '#f87171', cerrada: '#facc15' }[e] || '#c9a8ff');
+  const filtrados = fichas.filter(f => {
+    const b = filtro.toLowerCase();
+    return (!b || f.nombre?.toLowerCase().includes(b) || f.programa_formacion?.toLowerCase().includes(b))
+      && (!filtroEstado || f.estado === filtroEstado);
+  });
 
   return (
     <div className="equipment-layout">
@@ -41,6 +48,17 @@ const FichasAprendiz = () => {
 
         {error && <p className="table-error">{error}</p>}
 
+        <div className="filters-row">
+          <input className="filter-input" placeholder="Buscar por nombre o programa..." value={filtro} onChange={e => setFiltro(e.target.value)} />
+          <select className="filter-input" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
+            <option value="">Todos los estados</option>
+            <option value="activa">Activa</option>
+            <option value="inactiva">Inactiva</option>
+            <option value="cerrada">Cerrada</option>
+          </select>
+          <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroEstado(''); }}>Limpiar</button>
+        </div>
+
         <div className="table-container">
           <table className="equipment-table">
             <thead><tr><th>Nombre</th><th>Programa</th><th>Jornada</th><th>Cupo</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -49,7 +67,7 @@ const FichasAprendiz = () => {
                 ? <tr><td colSpan="6" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
                 : fichas.length === 0
                   ? <tr><td colSpan="6" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>No tienes ninguna ficha asignada</td></tr>
-                  : fichas.map(f => (
+                  : filtrados.map(f => (
                     <tr key={f.id}>
                       <td>{f.nombre}</td>
                       <td style={{maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.programa_formacion}</td>

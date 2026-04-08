@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import SidebarInstructor from '../../components/SidebarInstructor';
 import { IconBell, IconTrash, IconEye, IconPencil } from '../../components/Icons';
 import '../../pages/instructor/PapeleraInstructor.css';
+import Pagination from '../../components/Pagination';
+import '../../components/Pagination.css';
 
 const PapeleraInstructor = () => {
   const navigate = useNavigate();
@@ -10,8 +12,12 @@ const PapeleraInstructor = () => {
   const [portatiles, setPortatiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [seleccionado, setSeleccionado] = useState(null);
-  const [editData, setEditData] = useState({ marca:'', modelo:'', estado:'disponible' });
+  const [editData, setEditData] = useState({ marca:'', modelo:'', tipo:'', estado:'disponible' });
   const [error, setError] = useState('');
+  const [filtro, setFiltro] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 9;
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
@@ -19,9 +25,12 @@ const PapeleraInstructor = () => {
   }, []);
 
   const cargar = () => {
-    fetch('/portatil', { headers: { Authorization: `Bearer ${token}` } })
+    fetch('/api/portatiles', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.status === 401 ? navigate('/login') : r.json())
-      .then(d => setPortatiles(Array.isArray(d) ? d.filter(p => p.estado === 'danado' || p.estado === 'mantenimiento' || p.estado === 'dañado') : []))
+      .then(d => {
+        const lista = Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
+        setPortatiles(lista.filter(p => p.estado === 'dañado' || p.estado === 'mantenimiento'));
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -29,7 +38,7 @@ const PapeleraInstructor = () => {
   const handleRestaurar = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/portatil/${seleccionado.id_portatil}`, {
+      const res = await fetch(`/api/portatiles/${seleccionado.id_portatil}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editData),
@@ -39,7 +48,14 @@ const PapeleraInstructor = () => {
     } catch { setError('Error al conectar'); }
   };
 
-  const abrirEditar = (p) => { setSeleccionado(p); setEditData({ marca: p.marca, modelo: p.modelo, estado: 'disponible' }); setError(''); };
+  const abrirEditar = (p) => { setSeleccionado(p); setEditData({ marca: p.marca, modelo: p.modelo, tipo: p.tipo || '', estado: 'disponible' }); setError(''); };
+
+  const filtrados = portatiles.filter(p => {
+    const b = filtro.toLowerCase();
+    return (!b || p.num_serie?.toLowerCase().includes(b) || p.marca?.toLowerCase().includes(b) || p.modelo?.toLowerCase().includes(b))
+      && (!filtroEstado || p.estado === filtroEstado);
+  });
+  const paginados = filtrados.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <div className="equipment-layout">
@@ -53,7 +69,7 @@ const PapeleraInstructor = () => {
           <button className="notification-btn"><IconBell size={20} /></button>
         </div>
 
-        {portatiles.length === 0 && !loading && (
+        {portatiles.length === 0 && !loading && filtro === '' && filtroEstado === '' && (
           <div className="pap-empty">
             <div className="pap-empty-icon"><IconTrash size={48} /></div>
             <h3>Sin equipos en papelera</h3>
@@ -63,9 +79,18 @@ const PapeleraInstructor = () => {
 
         {loading && <div className="pap-loading">Cargando...</div>}
 
-        {!loading && portatiles.length > 0 && (
+        {!loading && portatiles.length > 0 && (<>
+          <div className="filters-row">
+            <input className="filter-input" placeholder="Buscar por serie, marca o modelo..." value={filtro} onChange={e => { setFiltro(e.target.value); setPage(1); }} />
+            <select className="filter-input" value={filtroEstado} onChange={e => { setFiltroEstado(e.target.value); setPage(1); }}>
+              <option value="">Todos</option>
+              <option value="dañado">Dañado</option>
+              <option value="mantenimiento">Mantenimiento</option>
+            </select>
+            <button className="filter-clear" onClick={() => { setFiltro(''); setFiltroEstado(''); setPage(1); }}>Limpiar</button>
+          </div>
           <div className="pap-grid">
-            {portatiles.map(p => (
+            {paginados.map(p => (
               <div key={p.id_portatil} className={`pap-card ${p.estado === 'danado' || p.estado === 'dañado' ? 'pap-card-danger' : 'pap-card-warning'}`}>
                 <div className="pap-card-top">
                   <div className="pap-card-icon">
@@ -86,7 +111,8 @@ const PapeleraInstructor = () => {
               </div>
             ))}
           </div>
-        )}
+          <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
+        </>)}
 
         {seleccionado && (
           <div className="modal-overlay" onClick={() => setSeleccionado(null)}>
@@ -107,6 +133,7 @@ const PapeleraInstructor = () => {
               <form onSubmit={handleRestaurar}>
                 <div className="form-group"><label>Marca</label><input value={editData.marca} onChange={e => setEditData({...editData, marca: e.target.value})} required /></div>
                 <div className="form-group"><label>Modelo</label><input value={editData.modelo} onChange={e => setEditData({...editData, modelo: e.target.value})} required /></div>
+                <div className="form-group"><label>Tipo</label><input value={editData.tipo} onChange={e => setEditData({...editData, tipo: e.target.value})} required /></div>
                 <div className="form-group"><label>Nuevo Estado</label>
                   <select value={editData.estado} onChange={e => setEditData({...editData, estado: e.target.value})}>
                     <option value="disponible">Disponible</option>

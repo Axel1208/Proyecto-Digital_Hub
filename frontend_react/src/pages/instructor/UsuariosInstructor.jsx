@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IconEye, IconPencil, IconTrash, IconBell, IconUser } from '../../components/Icons';
 import SidebarInstructor from '../../components/SidebarInstructor';
 import '../../pages/instructor/UsuariosInstructor.css';
+import ConfirmModal from '../../components/ConfirmModal';
 import Pagination from '../../components/Pagination';
 import '../../components/Pagination.css';
 
@@ -98,16 +99,16 @@ const importarExcel = async (e) => {
 };
 
   const handleEliminar = async (id) => {
-    if (!confirm('Eliminar este usuario?')) return;
     try {
       const res = await fetch(`/api/usuarios/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { cargar(); return; }
+      if (res.ok) { setConfirmId(null); cargar(); return; }
     } catch {}
     const local = getLocalU().filter(u => u.id_usuario !== id);
-    saveLocalU(local); setUsuarios(local);
+    saveLocalU(local); setUsuarios(local); setConfirmId(null);
   };
 
   const rolColor = (r) => ({ administrador: '#c9a8ff', instructor: '#60a5fa', aprendiz: '#4ade80' }[r] || '#facc15');
+  const [confirmId, setConfirmId] = useState(null);
   // reset page on filter change
   const filtrados = usuarios.filter(u =>
   (!filtro || u.nombre?.toLowerCase().includes(filtro.toLowerCase()) || u.correo?.toLowerCase().includes(filtro.toLowerCase()))
@@ -207,7 +208,7 @@ const importarExcel = async (e) => {
                       {u.rol !== 'administrador' && (
                         <>
                           <button className="action-btn edit" onClick={() => { setSeleccionado(u); setEditData({ nombre: u.nombre, correo: u.correo, rol: u.rol, estado: u.estado }); setShowEditModal(true); }}><IconPencil size={16} /></button>
-                          <button className="action-btn delete" onClick={() => handleEliminar(u.id_usuario)}><IconTrash size={16} /></button>
+                          <button className="action-btn delete" onClick={() => setConfirmId(u.id_usuario)}><IconTrash size={16} /></button>
                         </>
                       )}
                     </div>
@@ -300,6 +301,7 @@ const importarExcel = async (e) => {
           </div>
         )}
         <Pagination page={page} total={filtrados.length} perPage={PER_PAGE} onChange={p => setPage(p)} />
+        {confirmId && <ConfirmModal mensaje="Esta acción no se puede deshacer." onConfirm={() => handleEliminar(confirmId)} onCancel={() => setConfirmId(null)} />}
       </main>
     </div>
   );

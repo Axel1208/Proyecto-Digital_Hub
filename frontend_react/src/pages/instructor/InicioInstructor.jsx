@@ -15,24 +15,30 @@ const InicioInstructor = () => {
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
-    const h = { Authorization: `Bearer ${token}` };
-    Promise.all([
-      fetch('/portatil', { headers: h }).then(r => r.json()).catch(() => []),
-      fetch('/ficha',    { headers: h }).then(r => r.json()).catch(() => []),
-      fetch('/reportes', { headers: h }).then(r => r.json()).catch(() => []),
-    ]).then(([portatiles, fichas, reportes]) => {
-      const rArr = Array.isArray(reportes) ? reportes : [];
-      const fArr = Array.isArray(fichas) ? fichas : [];
-      setStats({
-        portatiles: Array.isArray(portatiles) ? portatiles.length : 0,
-        fichas:     fArr.length,
-        reportes:   rArr.length,
-        pendientes: rArr.filter(r => r.estado_reporte === 'pendiente').length,
-        aprendices: 0,
+    const cargar = () => {
+      const h = { Authorization: `Bearer ${token}` };
+      Promise.all([
+        fetch('/api/portatiles', { headers: h }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/fichas',     { headers: h }).then(r => r.json()).catch(() => []),
+        fetch('/api/reportes',   { headers: h }).then(r => r.json()).catch(() => []),
+      ]).then(([portatilesRes, fichas, reportes]) => {
+        const pArr = Array.isArray(portatilesRes) ? portatilesRes : (Array.isArray(portatilesRes?.data) ? portatilesRes.data : []);
+        const rArr = Array.isArray(reportes) ? reportes : [];
+        const fArr = Array.isArray(fichas) ? fichas : [];
+        setStats({
+          portatiles: pArr.length,
+          fichas:     fArr.length,
+          reportes:   rArr.length,
+          pendientes: rArr.filter(r => r.estado_reporte === 'pendiente').length,
+          aprendices: 0,
+        });
+        setUltimosReportes(rArr.filter(r => r.estado_reporte === 'pendiente').slice(0, 4));
+        setMisFichas(fArr.slice(0, 3));
       });
-      setUltimosReportes(rArr.filter(r => r.estado_reporte === 'pendiente').slice(0, 4));
-      setMisFichas(fArr.slice(0, 3));
-    });
+    };
+    cargar();
+    const intervalo = setInterval(cargar, 30000);
+    return () => clearInterval(intervalo);
   }, []);
 
   const estadoColor = (e) => ({ pendiente:'#facc15', en_revision:'#fb923c', resuelto:'#4ade80', activa:'#4ade80', inactiva:'#f87171' }[e] || '#c9a8ff');

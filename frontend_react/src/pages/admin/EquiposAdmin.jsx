@@ -195,15 +195,15 @@ const EquiposAdmin = () => {
           </table>
         </div>
 
-        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Anadir Portatil</button>
+        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Añadir Portatil</button>
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Anadir portatil</h2>
+              <h2 className="modal-title">Añadir portatil</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
-                <div className="form-group"><label>Numero de serie</label><input type="text" value={formData.num_serie} onChange={e => setFormData({ ...formData, num_serie: e.target.value })} required /></div>
+                <div className="form-group"><label>Número de serie</label><input type="text" value={formData.num_serie} onChange={e => setFormData({ ...formData, num_serie: e.target.value })} required /></div>
                 <div className="form-group"><label>Marca</label><input type="text" value={formData.marca} onChange={e => setFormData({ ...formData, marca: e.target.value })} required /></div>
                 <div className="form-group"><label>Tipo</label><input type="text" placeholder="ej: laptop, tablet..." value={formData.tipo} onChange={e => setFormData({ ...formData, tipo: e.target.value })} required /></div>
                 <div className="form-group"><label>Modelo</label><input type="text" value={formData.modelo} onChange={e => setFormData({ ...formData, modelo: e.target.value })} required /></div>
@@ -227,7 +227,7 @@ const EquiposAdmin = () => {
         {showVerModal && seleccionado && (
           <div className="modal-overlay" onClick={() => setShowVerModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Detalle del portatil</h2>
+              <h2 className="modal-title">Detalle del pórtatil</h2>
               <div className="detalle-grid">
                 <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_portatil}</span></div>
                 <div className="detalle-item"><span className="detalle-label">N Serie</span><span className="detalle-valor">{seleccionado.num_serie}</span></div>
@@ -244,7 +244,7 @@ const EquiposAdmin = () => {
         {showEditModal && seleccionado && (
           <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Editar portatil</h2>
+              <h2 className="modal-title">Editar pórtatil</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleEditar}>
                 <div className="form-group"><label>Marca</label><input type="text" value={editData.marca} onChange={e => setEditData({ ...editData, marca: e.target.value })} required /></div>

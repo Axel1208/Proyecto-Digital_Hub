@@ -278,7 +278,7 @@ const FichasInstructor = () => {
             <div className="fd-table-wrap">
               {tab === 'aprendices' && (
                 <table className="equipment-table">
-                  <thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Fecha union</th></tr></thead>
+                  <thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Fecha unión</th></tr></thead>
                   <tbody>
                     {aprendices.length === 0
                       ? <tr><td colSpan="4" className="fd-empty-row">Sin aprendices en esta ficha</td></tr>
@@ -295,7 +295,7 @@ const FichasInstructor = () => {
               )}
               {tab === 'dispositivos' && (
                 <table className="equipment-table">
-                  <thead><tr><th>N Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th></tr></thead>
+                  <thead><tr><th>N. Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th></tr></thead>
                   <tbody>
                     {portatiles.length === 0
                       ? <tr><td colSpan="4" className="fd-empty-row">Sin dispositivos asignados</td></tr>
@@ -311,7 +311,7 @@ const FichasInstructor = () => {
               )}
               {tab === 'reportes' && (
                 <table className="equipment-table">
-                  <thead><tr><th>Aprendiz</th><th>Descripcion</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                  <thead><tr><th>Aprendiz</th><th>Descripción</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
                   <tbody>
                     {reportes.length === 0
                       ? <tr><td colSpan="5" className="fd-empty-row">Sin reportes en esta ficha</td></tr>
@@ -341,14 +341,14 @@ const FichasInstructor = () => {
                 {error && <p className="table-error">{error}</p>}
                 <form onSubmit={handleEditar}>
                   <div className="form-group"><label>Nombre</label><input type="text" value={editData.nombre} onChange={e => setEditData({...editData, nombre: e.target.value})} required /></div>
-                  <div className="form-group"><label>Programa de formacion</label><input type="text" value={editData.programa_formacion} onChange={e => setEditData({...editData, programa_formacion: e.target.value})} required /></div>
+                  <div className="form-group"><label>Programa de formación</label><input type="text" value={editData.programa_formacion} onChange={e => setEditData({...editData, programa_formacion: e.target.value})} required /></div>
                   <div className="form-group"><label>Jornada</label>
-                    <select value={editData.jornada} onChange={e => setEditData({...editData, jornada: e.target.value})}>
-                      <option value="manana">Manana</option><option value="tarde">Tarde</option>
+                    <select value={editData.jornada} onChange={e => setEditData({...editData, Jornada: e.target.value})}>
+                      <option value="manana">Mañana</option><option value="tarde">Tarde</option>
                       <option value="noche">Noche</option>
                     </select>
                   </div>
-                  <div className="form-group"><label>Cupo maximo</label><input type="number" min="1" value={editData.cupo_maximo} onChange={e => setEditData({...editData, cupo_maximo: parseInt(e.target.value)})} required /></div>
+                  <div className="form-group"><label>Cupo máximo</label><input type="number" min="1" value={editData.cupo_maximo} onChange={e => setEditData({...editData, cupo_maximo: parseInt(e.target.value)})} required /></div>
                   <div className="form-group"><label>Estado</label>
                     <select value={editData.estado} onChange={e => setEditData({...editData, estado: e.target.value})}>
                       <option value="activa">Activa</option><option value="inactiva">Inactiva</option><option value="cerrada">Cerrada</option>
@@ -372,7 +372,7 @@ const FichasInstructor = () => {
                   <div className="detalle-item"><span className="detalle-label">Aprendiz</span><span className="detalle-valor">{reporteSeleccionado.aprendiz}</span></div>
                   <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(reporteSeleccionado.estado_reporte),fontWeight:600}}>{reporteSeleccionado.estado_reporte}</span></div>
                   <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{reporteSeleccionado.fecha_reporte?.split('T')[0]}</span></div>
-                  <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}><span className="detalle-label">Descripcion</span><span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6'}}>{reporteSeleccionado.descripcion}</span></div>
+                  <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'8px'}}><span className="detalle-label">Descripción</span><span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6'}}>{reporteSeleccionado.descripcion}</span></div>
                 </div>
                 <div className="modal-actions"><button className="btn-save" onClick={() => setShowVerReporte(false)}>Cerrar</button></div>
               </div>
@@ -387,7 +387,7 @@ const FichasInstructor = () => {
                   <div className="form-group"><label>Estado</label>
                     <select value={editReporteData.estado_reporte} onChange={e => setEditReporteData({...editReporteData, estado_reporte: e.target.value})}>
                       <option value="pendiente">Pendiente</option>
-                      <option value="en_revision">En revision</option>
+                      <option value="en_revision">En revisión</option>
                       <option value="resuelto">Resuelto</option>
                     </select>
                   </div>
@@ -468,14 +468,14 @@ const FichasInstructor = () => {
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
                 <div className="form-group"><label>Nombre</label><input type="text" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} required /></div>
-                <div className="form-group"><label>Programa de formacion</label><input type="text" value={formData.programa_formacion} onChange={e => setFormData({...formData, programa_formacion: e.target.value})} required /></div>
+                <div className="form-group"><label>Programa de formación</label><input type="text" value={formData.programa_formacion} onChange={e => setFormData({...formData, programa_formacion: e.target.value})} required /></div>
                 <div className="form-group"><label>Jornada</label>
                   <select value={formData.jornada} onChange={e => setFormData({...formData, jornada: e.target.value})}>
-                    <option value="manana">Manana</option><option value="tarde">Tarde</option>
+                    <option value="manana">Mañana</option><option value="tarde">Tarde</option>
                     <option value="noche">Noche</option>
                   </select>
                 </div>
-                <div className="form-group"><label>Cupo maximo</label><input type="number" min="1" value={formData.cupo_maximo} onChange={e => setFormData({...formData, cupo_maximo: parseInt(e.target.value)})} required /></div>
+                <div className="form-group"><label>Cupo máximo</label><input type="number" min="1" value={formData.cupo_maximo} onChange={e => setFormData({...formData, cupo_maximo: parseInt(e.target.value)})} required /></div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
                   <button type="submit" className="btn-save">Crear Ficha</button>

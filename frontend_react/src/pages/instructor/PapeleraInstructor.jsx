@@ -73,7 +73,7 @@ const PapeleraInstructor = () => {
           <div className="pap-empty">
             <div className="pap-empty-icon"><IconTrash size={48} /></div>
             <h3>Sin equipos en papelera</h3>
-            <p>No hay equipos danados o en mantenimiento actualmente.</p>
+            <p>No hay equipos dañados o en mantenimiento actualmente.</p>
           </div>
         )}
 

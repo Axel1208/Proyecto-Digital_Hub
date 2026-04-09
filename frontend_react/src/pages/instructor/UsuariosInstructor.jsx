@@ -126,7 +126,7 @@ const importarExcel = async (e) => {
       <main className="equipment-main">
         <div className="equipment-header">
           <div>
-            <h1 className="equipment-title">Gestion de Usuarios</h1>
+            <h1 className="equipment-title">Gestión de Usuarios</h1>
             <p className="equipment-subtitle">Total: <span>{usuarios.length}</span></p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -219,7 +219,7 @@ const importarExcel = async (e) => {
             </tbody>
           </table>
         </div>
-        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Anadir Usuario</button>
+        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Añadir Usuario</button>
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -236,7 +236,7 @@ const importarExcel = async (e) => {
                   <input type="email" value={formData.correo} onChange={e => setFormData({ ...formData, correo: e.target.value })} required />
                 </div>
                 <div className="form-group">
-                  <label>Contrasena</label>
+                  <label>Contraseña</label>
                   <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
                 </div>
                 <div className="form-group">

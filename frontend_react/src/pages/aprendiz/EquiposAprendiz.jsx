@@ -67,8 +67,8 @@ const EquiposAprendiz = () => {
             <option value="">Todos los estados</option>
             <option value="disponible">Disponible</option>
             <option value="asignado">Asignado</option>
-            <option value="danado">Danado</option>
-            <option value="en reparacion">En reparacion</option>
+            <option value="danado">Dañado</option>
+            <option value="en reparacion">En reparación</option>
           </select>
           <input className="filter-input" placeholder="Filtrar por marca..." value={filtros.marca} onChange={e => setFiltros({...filtros, marca: e.target.value})} />
           <button className="filter-clear" onClick={() => setFiltros({ buscar: '', estado: '', marca: '' })}>Limpiar</button>
@@ -76,7 +76,7 @@ const EquiposAprendiz = () => {
 
         <div className="table-container">
           <table className="equipment-table">
-            <thead><tr><th>N Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>N. Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody>
               {loading
                 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
@@ -99,10 +99,10 @@ const EquiposAprendiz = () => {
         {showVerModal && seleccionado && (
           <div className="modal-overlay" onClick={() => setShowVerModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Detalle del portatil</h2>
+              <h2 className="modal-title">Detalle del pórtatil</h2>
               <div className="detalle-grid">
                 <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_portatil}</span></div>
-                <div className="detalle-item"><span className="detalle-label">N Serie</span><span className="detalle-valor">{seleccionado.num_serie}</span></div>
+                <div className="detalle-item"><span className="detalle-label">N. Serie</span><span className="detalle-valor">{seleccionado.num_serie}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Marca</span><span className="detalle-valor">{seleccionado.marca}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Modelo</span><span className="detalle-valor">{seleccionado.modelo}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado),fontWeight:600}}>{seleccionado.estado}</span></div>

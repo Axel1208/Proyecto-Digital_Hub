@@ -184,14 +184,14 @@ const importarExcel = async (e) => {
           <select className="filter-input" value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})}>
             <option value="">Todos los estados</option>
             <option value="pendiente">Pendiente</option>
-            <option value="en_revision">En revision</option>
+            <option value="en_revision">En revisión</option>
             <option value="resuelto">Resuelto</option>
           </select>
           <button className="filter-clear" onClick={() => setFiltros({ buscar: '', estado: '' })}>Limpiar</button>
         </div>
         <div className="table-container">
           <table className="equipment-table">
-            <thead><tr><th>ID</th><th>Descripcion</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>ID</th><th>Descripción</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px'}}>Cargando...</td></tr>
               : filtrados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'32px',color:'var(--text-muted-dark)'}}>Sin resultados</td></tr>
@@ -210,19 +210,19 @@ const importarExcel = async (e) => {
             </tbody>
           </table>
         </div>
-        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Anadir Reporte</button>
+        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Añadir Reporte</button>
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Anadir reporte</h2>
+              <h2 className="modal-title">Añadir reporte</h2>
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
-                <div className="form-group"><label>Descripcion</label><textarea rows={3} value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} required style={{borderRadius:'10px',resize:'vertical'}} /></div>
+                <div className="form-group"><label>Descripción</label><textarea rows={3} value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} required style={{borderRadius:'10px',resize:'vertical'}} /></div>
                 <div className="form-group"><label>Estado</label>
                   <select value={formData.estado_reporte} onChange={e => setFormData({...formData, estado_reporte: e.target.value})}>
                     <option value="pendiente">Pendiente</option>
-                    <option value="en_revision">En revision</option>
+                    <option value="en_revision">En revisión</option>
                     <option value="resuelto">Resuelto</option>
                   </select>
                 </div>
@@ -242,7 +242,7 @@ const importarExcel = async (e) => {
               <h2 className="modal-title">Detalle del reporte</h2>
               <div className="detalle-grid">
                 <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_reporte}</span></div>
-                <div className="detalle-item"><span className="detalle-label">Descripcion</span><span className="detalle-valor">{seleccionado.descripcion}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Descripción</span><span className="detalle-valor">{seleccionado.descripcion}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado_reporte),fontWeight:600}}>{seleccionado.estado_reporte}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{seleccionado.fecha_reporte?.split('T')[0] || seleccionado.fecha_reporte}</span></div>
               </div>
@@ -260,7 +260,7 @@ const importarExcel = async (e) => {
                 <div className="form-group"><label>Estado del reporte</label>
                   <select value={editData.estado_reporte} onChange={e => setEditData({...editData, estado_reporte: e.target.value})}>
                     <option value="pendiente">Pendiente</option>
-                    <option value="en_revision">En revision</option>
+                    <option value="en_revision">En revisión</option>
                     <option value="resuelto">Resuelto</option>
                   </select>
                 </div>

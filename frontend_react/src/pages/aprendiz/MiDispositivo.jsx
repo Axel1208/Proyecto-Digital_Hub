@@ -170,7 +170,7 @@ const MiDispositivo = () => {
                   <input type="email" placeholder="correo@instructor.com" value={formData.correo_instructor} onChange={e => setFormData({...formData, correo_instructor: e.target.value})} required />
                 </div>
                 <div className="form-group">
-                  <label>Descripcion del problema <span style={{color:'#f87171'}}>*</span></label>
+                  <label>Descripción del problema <span style={{color:'#f87171'}}>*</span></label>
                   <textarea rows={4} placeholder="Describe el problema..." value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} maxLength={255} required style={{borderRadius:'12px',resize:'vertical'}}/>
                   <div style={{textAlign:'right',fontSize:'11px',color:'#b8a8d8',marginTop:'4px'}}>{formData.descripcion.length}/255</div>
                 </div>

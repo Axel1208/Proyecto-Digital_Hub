@@ -45,7 +45,7 @@ const InicioAprendiz = () => {
 
         <div className="inicio-header">
           <div>
-            <div className="aprendiz-badge"><span className="aprendiz-badge-dot" />Sesion activa</div>
+            <div className="aprendiz-badge"><span className="aprendiz-badge-dot" />Sesión activa</div>
             <h1 className="inicio-title aprendiz-title">Hola, {nombre}</h1>
             <p className="aprendiz-subtitle">Bienvenido a tu panel de aprendiz.</p>
           </div>
@@ -55,7 +55,7 @@ const InicioAprendiz = () => {
         <div className="aprendiz-hero">
           <div className="aprendiz-hero-content">
             <span className="aprendiz-hero-tag">Panel de Aprendiz</span>
-            <h2 className="aprendiz-hero-title">Tu espacio<br />de gestion</h2>
+            <h2 className="aprendiz-hero-title">Tu espacio<br />de gestión</h2>
             <p className="aprendiz-hero-desc">Consulta tu dispositivo asignado, reporta incidencias y revisa el estado de tus solicitudes.</p>
             <div className="aprendiz-hero-btns">
               <button className="aprendiz-btn-primary" onClick={() => navigate('/aprendiz/dispositivo')}>Mi Dispositivo</button>
@@ -123,10 +123,10 @@ const InicioAprendiz = () => {
         {/* ULTIMOS REPORTES */}
         <div className="inicio-bottom-grid">
           <div className="inicio-card-wide">
-            <div className="inicio-card-title" style={{marginBottom:'14px'}}>Ultimos reportes</div>
+            <div className="inicio-card-title" style={{marginBottom:'14px'}}>Últimos reportes</div>
             {reportes.length === 0 ? (
               <div style={{color:'#b8a8d8',fontSize:'13px',display:'flex',alignItems:'center',gap:'8px'}}>
-                <IconCheck size={14} style={{color:'#4ade80'}}/> No tienes reportes aun
+                <IconCheck size={14} style={{color:'#4ade80'}}/> No tienes reportes aún
               </div>
             ) : (
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
@@ -151,7 +151,7 @@ const InicioAprendiz = () => {
             <ul className="inicio-card-list">
               <li>{nombre}</li>
               <li>Rol: Aprendiz</li>
-              <li>Sesion activa</li>
+              <li>Sesión activa</li>
             </ul>
             <button className="aprendiz-btn-outline" style={{marginTop:'auto',width:'100%'}} onClick={() => navigate('/aprendiz/ajustes')}>
               Ir a Ajustes

@@ -118,8 +118,8 @@ const MiFicha = () => {
             <div style={{background:'rgba(250,204,21,0.08)',border:'1px solid rgba(250,204,21,0.25)',borderRadius:'14px',padding:'16px 20px',marginBottom:'24px',display:'flex',alignItems:'center',gap:'12px'}}>
               <span style={{fontSize:'20px'}}>📋</span>
               <div>
-                <div style={{fontSize:'14px',fontWeight:700,color:'#facc15'}}>Aun no perteneces a ninguna ficha</div>
-                <div style={{fontSize:'12px',color:'#b8a8d8',marginTop:'2px'}}>Unete a una de las fichas activas disponibles abajo</div>
+                <div style={{fontSize:'14px',fontWeight:700,color:'#facc15'}}>Aún no perteneces a ninguna ficha</div>
+                <div style={{fontSize:'12px',color:'#b8a8d8',marginTop:'2px'}}>Únete a una de las fichas activas disponibles abajo</div>
               </div>
             </div>
 

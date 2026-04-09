@@ -87,7 +87,7 @@ const HistorialAprendiz = () => {
           </div>
           <div className="hist-summary-card">
             <div className="hist-summary-icon" style={{background:'rgba(251,146,60,0.12)',color:'#fb923c'}}><IconClock size={20}/></div>
-            <div><div className="hist-summary-num" style={{color:'#fb923c'}}>{enRevision}</div><div className="hist-summary-label">En revision</div></div>
+            <div><div className="hist-summary-num" style={{color:'#fb923c'}}>{enRevision}</div><div className="hist-summary-label">En revisión</div></div>
           </div>
           <div className="hist-summary-card">
             <div className="hist-summary-icon" style={{background:'rgba(74,222,128,0.12)',color:'#4ade80'}}><IconCheck size={20}/></div>
@@ -103,7 +103,7 @@ const HistorialAprendiz = () => {
             <select className="filter-input" value={filtros.estado} onChange={e => { setFiltros({...filtros, estado: e.target.value}); setPage(1); }} style={{flex:'1',minWidth:'140px'}}>
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendiente</option>
-              <option value="en_revision">En revision</option>
+              <option value="en_revision">En revisión</option>
               <option value="resuelto">Resuelto</option>
             </select>
             <input className="filter-input" type="date" title="Desde" value={filtros.desde} onChange={e => { setFiltros({...filtros, desde: e.target.value}); setPage(1); }} style={{flex:'1',minWidth:'130px'}} />

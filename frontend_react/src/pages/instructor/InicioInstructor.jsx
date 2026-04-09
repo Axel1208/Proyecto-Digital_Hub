@@ -61,7 +61,7 @@ const InicioInstructor = () => {
           <div className="inst-hero-content">
             <span className="inst-hero-tag">Panel Instructor</span>
             <h2 className="inst-hero-title">Administra tus recursos<br />en tiempo real</h2>
-            <p className="inst-hero-desc">Controla equipos, fichas de formacion y reportes desde un solo lugar.</p>
+            <p className="inst-hero-desc">Controla equipos, fichas de formación y reportes desde un solo lugar.</p>
             <div className="inst-hero-btns">
               <button className="inst-btn-primary" onClick={() => navigate('/instructor/fichas')}>Mis Fichas</button>
               <button className="inst-btn-outline" onClick={() => navigate('/instructor/historial')}>Historial</button>
@@ -83,7 +83,7 @@ const InicioInstructor = () => {
             <div className="inicio-card-body">
               <div className="inicio-card-title">Mis Fichas</div>
               <ul className="inicio-card-list">
-                <li>Grupos de formacion</li>
+                <li>Grupos de formación</li>
                 <li>Activas en el sistema</li>
               </ul>
             </div>
@@ -97,7 +97,7 @@ const InicioInstructor = () => {
             <div className="inicio-card-body">
               <div className="inicio-card-title">Equipos</div>
               <ul className="inicio-card-list">
-                <li>Portatiles registrados</li>
+                <li>Portátiles registrados</li>
                 <li>Estado actualizado</li>
               </ul>
             </div>
@@ -112,7 +112,7 @@ const InicioInstructor = () => {
               <div className="inicio-card-title">Reportes Pendientes</div>
               <ul className="inicio-card-list">
                 <li>Total reportes: {stats.reportes}</li>
-                <li>Requieren atencion</li>
+                <li>Requieren atención</li>
               </ul>
             </div>
             <div className="inicio-card-value" style={{color:'#facc15'}}>{stats.pendientes}</div>

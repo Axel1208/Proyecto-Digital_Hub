@@ -104,7 +104,7 @@ const FichasAdmin = () => {
 
           <div className="fd-bento">
             <div className="fd-widget fd-widget-cupo">
-              <div className="fd-widget-label">Ocupacion</div>
+              <div className="fd-widget-label">Ocupación</div>
               <div className="fd-cupo-ring-wrap">
                 <svg viewBox="0 0 80 80" className="fd-ring-svg">
                   <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8"/>
@@ -156,7 +156,7 @@ const FichasAdmin = () => {
             <div className="fd-table-wrap">
               {tab === 'aprendices' && (
                 <table className="equipment-table">
-                  <thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Fecha union</th></tr></thead>
+                  <thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Fecha unión</th></tr></thead>
                   <tbody>
                     {aprendices.length === 0
                       ? <tr><td colSpan="4" className="fd-empty-row">Sin aprendices en esta ficha</td></tr>
@@ -173,7 +173,7 @@ const FichasAdmin = () => {
               )}
               {tab === 'dispositivos' && (
                 <table className="equipment-table">
-                  <thead><tr><th>N Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th></tr></thead>
+                  <thead><tr><th>N. Serie</th><th>Marca</th><th>Modelo</th><th>Estado</th></tr></thead>
                   <tbody>
                     {portatiles.length === 0
                       ? <tr><td colSpan="4" className="fd-empty-row">Sin dispositivos asignados</td></tr>
@@ -189,7 +189,7 @@ const FichasAdmin = () => {
               )}
               {tab === 'reportes' && (
                 <table className="equipment-table">
-                  <thead><tr><th>Aprendiz</th><th>Descripcion</th><th>Estado</th><th>Fecha</th></tr></thead>
+                  <thead><tr><th>Aprendiz</th><th>Descripción</th><th>Estado</th><th>Fecha</th></tr></thead>
                   <tbody>
                     {reportes.length === 0
                       ? <tr><td colSpan="4" className="fd-empty-row">Sin reportes en esta ficha</td></tr>

@@ -177,7 +177,7 @@ const importarExcel = async (e) => {
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
                 <div className="form-group"><label>Nombre</label><input type="text" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} required/></div>
-                <div className="form-group"><label>Direccion</label><input type="text" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} required/></div>
+                <div className="form-group"><label>Dirección</label><input type="text" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} required/></div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
                   <button type="submit" className="btn-save">Guardar</button>
@@ -194,7 +194,7 @@ const importarExcel = async (e) => {
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleEditar}>
                 <div className="form-group"><label>Nombre</label><input type="text" value={editData.nombre} onChange={e => setEditData({...editData, nombre: e.target.value})} required/></div>
-                <div className="form-group"><label>Direccion</label><input type="text" value={editData.direccion} onChange={e => setEditData({...editData, direccion: e.target.value})} required/></div>
+                <div className="form-group"><label>Dirección</label><input type="text" value={editData.direccion} onChange={e => setEditData({...editData, direccion: e.target.value})} required/></div>
                 <div className="modal-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowEditModal(false)}>Cancelar</button>
                   <button type="submit" className="btn-save">Guardar cambios</button>

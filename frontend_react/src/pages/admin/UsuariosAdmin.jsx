@@ -252,7 +252,7 @@ const importarExcel = async (e) => {
             </tbody>
           </table>
         </div>
-        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Anadir Usuario</button>
+        <button className="btn-add-equipment" onClick={() => { setError(''); setShowModal(true); }}>Añadir Usuario</button>
 
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>

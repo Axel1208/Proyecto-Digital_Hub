@@ -190,7 +190,7 @@ const importarExcel = async (e) => {
           <select className="filter-input" value={filtros.estado} onChange={e => { setFiltros({ ...filtros, estado: e.target.value }); setPage(1); }}>
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
-            <option value="en_revision">En revision</option>
+            <option value="en_revision">En revisión</option>
             <option value="resuelto">Resuelto</option>
           </select>
           <button className="filter-clear" onClick={() => { setFiltros({ buscar: '', estado: '' }); setPage(1); }}>Limpiar</button>
@@ -245,7 +245,7 @@ const importarExcel = async (e) => {
                 <div className="form-group"><label>Estado</label>
                   <select value={editData.estado_reporte} onChange={e => setEditData({ ...editData, estado_reporte: e.target.value })}>
                     <option value="pendiente">Pendiente</option>
-                    <option value="en_revision">En revision</option>
+                    <option value="en_revision">En revisión</option>
                     <option value="resuelto">Resuelto</option>
                   </select>
                 </div>

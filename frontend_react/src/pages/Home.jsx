@@ -65,19 +65,19 @@ const Home = () => {
           <div className="hero-content">
             <div className="hero-badge">
               <span className="hero-badge-dot" />
-              Sistema de gestion tecnologica
+              Sistema de gestión tecnológica
             </div>
             <h1 className="hero-title">
               Gestiona tus equipos con <span>DigitalHub</span>
             </h1>
             <p className="hero-desc">
-              Plataforma web disenada para el control, asignacion y seguimiento de
-              portatiles en ambientes formativos. Centraliza la informacion y manten
-              trazabilidad total de tus recursos tecnologicos.
+              Plataforma web diseñada para el control, asignación y seguimiento de
+              portátiles en ambientes formativos. Centraliza la información y mantiene
+              trazabilidad total de tus recursos tecnológicos.
             </p>
             <div className="hero-buttons">
-              <Link to="/registrarse" className="btn-primary">Unete ahora</Link>
-              <a href="#quienes-somos" className="btn-outline">Conocer mas</a>
+              <Link to="/registrarse" className="btn-primary">Únete ahora</Link>
+              <a href="#quienes-somos" className="btn-outline">Conocer más</a>
             </div>
           </div>
           <div className="hero-visual">
@@ -131,7 +131,7 @@ const Home = () => {
           <h2 className="section-title">Todo lo que necesitas en un solo lugar</h2>
           <p className="section-subtitle">
             DigitalHub ofrece herramientas completas para administrar, asignar y
-            hacer seguimiento de equipos tecnologicos en entornos educativos.
+            hacer seguimiento de equipos tecnológicos en entornos educativos.
           </p>
         </div>
 
@@ -261,16 +261,16 @@ const Home = () => {
             <div className="how-img-overlay" />
           </div>
           <div className="how-content">
-            <span className="section-tag">Como funciona</span>
-            <h2>La interseccion entre educacion y tecnologia</h2>
+            <span className="section-tag">Cómo funciona</span>
+            <h2>La intersección entre educación y tecnología</h2>
             <p>
               DigitalHub conecta a instructores, aprendices y administradores en una
-              sola plataforma para gestionar los recursos tecnologicos de forma eficiente
+              sola plataforma para gestionar los recursos tecnológicos de forma eficiente
               y transparente.
             </p>
             <ul className="how-list">
-              <li>Registro y control de portatiles en tiempo real</li>
-              <li>Asignacion por fichas, jornadas y ambientes</li>
+              <li>Registro y control de portátiles en tiempo real</li>
+              <li>Asignación por fichas, jornadas y ambientes</li>
               <li>Reportes y trazabilidad completa</li>
             </ul>
             <Link to="/registrarse" className="btn-primary">Comenzar ahora</Link>
@@ -282,10 +282,10 @@ const Home = () => {
         <div className="support-inner">
           <div className="support-content">
             <span className="section-tag">Soporte</span>
-            <h2>Soporte tecnico confiable cuando mas lo necesitas</h2>
+            <h2>Soporte técnico confiable cuando más lo necesitas</h2>
             <p>
               El area de Soporte DigitalHub garantiza el correcto funcionamiento del
-              sistema y la atencion oportuna a incidencias tecnicas dentro de la plataforma.
+              sistema y la atención oportuna a incidencias técnicas dentro de la plataforma.
             </p>
             <p>
               Nuestro equipo supervisa accesos, notificaciones y reportes para asegurar

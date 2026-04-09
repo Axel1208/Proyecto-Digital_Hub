@@ -67,7 +67,7 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
 
             <div className="input-group">
-              <label>Correo electronico</label>
+              <label>Correo electrónico</label>
               <div className="input-icon-wrap">
                 <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -84,7 +84,7 @@ const Login = () => {
             </div>
 
             <div className="input-group">
-              <label>Contrasena</label>
+              <label>Contraseña</label>
               <div className="input-icon-wrap">
                 <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -92,7 +92,7 @@ const Login = () => {
                 </svg>
                 <input
                   type="password" name="password"
-                  placeholder="Tu contrasena"
+                  placeholder="Tu contraseña"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -103,17 +103,17 @@ const Login = () => {
             {error && <p className="login-error">{error}</p>}
 
             <div className="login-forgot">
-              <Link to="/recuperar-password" className="login-forgot-link">Olvidaste tu contrasena?</Link>
+              <Link to="/recuperar-password" className="login-forgot-link">¿Olvidaste tu contraseña?</Link>
             </div>
 
             <button className="btn-submit" type="submit" disabled={loading}>
-              {loading ? "Ingresando..." : "Iniciar sesion"}
+              {loading ? "Ingresando..." : "Iniciar sesión"}
             </button>
 
           </form>
 
           <div className="login-footer">
-            <p>No tienes cuenta? <Link to="/registrarse">Registrate</Link></p>
+            <p>¿No tienes cuenta? <Link to="/registrarse">Regístrate</Link></p>
           </div>
 
         </div>

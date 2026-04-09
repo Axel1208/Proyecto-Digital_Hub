@@ -184,7 +184,7 @@ const ReportesAprendiz = () => {
           <select className="filter-input" value={filtros.estado} onChange={e => { setFiltros({...filtros, estado: e.target.value}); setPage(1); }}>
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
-            <option value="en_revision">En revision</option>
+            <option value="en_revision">En revisión</option>
             <option value="resuelto">Resuelto</option>
           </select>
           <button className="filter-clear" onClick={() => { setFiltros({buscar:'',estado:''}); setPage(1); }}>Limpiar</button>
@@ -192,7 +192,7 @@ const ReportesAprendiz = () => {
 
         <div className="table-container">
           <table className="equipment-table">
-            <thead><tr><th>ID</th><th>Descripcion</th><th>Estado</th><th>Fecha</th><th>Ver</th></tr></thead>
+            <thead><tr><th>ID</th><th>Descripción</th><th>Estado</th><th>Fecha</th><th>Ver</th></tr></thead>
             <tbody>
               {loading ? <tr><td colSpan="5" style={{textAlign:'center',padding:'40px',color:'#b8a8d8'}}>Cargando...</td></tr>
               : paginados.length === 0 ? <tr><td colSpan="5" style={{textAlign:'center',padding:'40px',color:'#b8a8d8'}}>Sin reportes</td></tr>
@@ -227,7 +227,7 @@ const ReportesAprendiz = () => {
               {error && <p className="table-error">{error}</p>}
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label>Descripcion del problema <span style={{color:'#f87171'}}>*</span></label>
+                  <label>Descripción del problema <span style={{color:'#f87171'}}>*</span></label>
                   <textarea rows={4} placeholder="Describe detalladamente el problema..." value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} maxLength={255} required style={{borderRadius:'12px',resize:'vertical'}}/>
                   <div style={{textAlign:'right',fontSize:'11px',color:'#b8a8d8',marginTop:'4px'}}>{formData.descripcion.length}/255</div>
                 </div>

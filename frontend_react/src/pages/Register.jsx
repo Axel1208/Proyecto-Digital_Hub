@@ -64,7 +64,7 @@ const Register = () => {
             Crea tu cuenta
           </div>
 
-          <h1 className="login-title">Unete a <span className="login-title-accent">DigitalHub</span></h1>
+          <h1 className="login-title">Únete a <span className="login-title-accent">DigitalHub</span></h1>
           <p className="login-sub">Completa el formulario para acceder al sistema</p>
 
           <form onSubmit={handleSubmit}>
@@ -81,7 +81,7 @@ const Register = () => {
             </div>
 
             <div className="input-group">
-              <label>Correo electronico</label>
+              <label>Correo electrónico</label>
               <div className="input-icon-wrap">
                 <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -92,7 +92,7 @@ const Register = () => {
             </div>
 
             <div className="input-group">
-              <label>Contrasena</label>
+              <label>Contraseña</label>
               <div className="input-icon-wrap">
                 <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -103,7 +103,7 @@ const Register = () => {
             </div>
 
             <div className="input-group">
-              <label>Confirmar contrasena</label>
+              <label>Confirmar contraseña</label>
               <div className="input-icon-wrap">
                 <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -124,7 +124,7 @@ const Register = () => {
           </form>
 
           <div className="login-footer">
-            <p>Ya tienes cuenta? <Link to="/login">Inicia sesion</Link></p>
+            <p>¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link></p>
           </div>
 
         </div>

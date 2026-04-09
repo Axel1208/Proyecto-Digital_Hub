@@ -137,7 +137,7 @@ const NuevaPassword = () => {
             </div>
             {error && <p className="login-error">{error}</p>}
             <button className="btn-submit" type="submit" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar contrasena"}
+              {loading ? "Guardando..." : "Guardar contraseña"}
             </button>
           </form>
         </div>

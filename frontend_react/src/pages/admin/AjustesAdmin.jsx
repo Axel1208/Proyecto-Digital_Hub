@@ -7,6 +7,7 @@ import '../Ajustes.css';
 const AjustesAdmin = () => {
   const navigate = useNavigate();
   const [tema, setTema] = useState(localStorage.getItem('tema') || 'oscuro');
+  const [idioma, setIdioma] = useState(localStorage.getItem('idioma') || 'es');
   const [notifSistema, setNotifSistema] = useState(localStorage.getItem('notif_sistema') !== 'false');
 
   useEffect(() => {

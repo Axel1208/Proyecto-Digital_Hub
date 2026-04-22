@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../db/database");
 const validarCamposObligatorios = require("../middlewares/validarCamposObligatorios");
+const { exportarUsuariosExcel } = require("../services/exportacion.service");
+const upload = require("../middlewares/upload");
+const { importarUsuarios } = require("../services/importacion.service");
 
 const {
   validarRol,
@@ -47,6 +50,35 @@ router.get("/test", (req, res) => {
   res.json({ mensaje: "usuarios funcionando" });
 });
 
+// ==============================
+// 📥 EXPORTAR EXCEL
+// ==============================
+router.get(
+  "/excel",
+  verificarToken,
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
+  exportarUsuariosExcel
+);
+
+// ==============================
+// 📤 IMPORTAR EXCEL
+// ==============================
+router.post(
+  "/importar",
+  verificarToken,
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
+  upload.single("archivo"),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No se envió archivo" });
+      const resultado = await importarUsuarios(req.file.path);
+      res.json(resultado);
+    } catch (error) {
+      const statusCode = error.message.includes("Faltan las columnas") ? 400 : 500;
+      res.status(statusCode).json({ error: error.message });
+    }
+  }
+);
 // ==============================
 // REGISTRO (PÚBLICO)
 // ==============================
@@ -125,7 +157,7 @@ router.post(
 
       if (usuarios.length === 0) {
         return res.status(401).json({
-          mensaje: "Credenciales inválidas"
+          mensaje: "El correo no está registrado"
         });
       }
 
@@ -142,11 +174,11 @@ router.post(
         usuario.password_hash
       );
 
-    if (!passwordValida) {
-      return res.status(401).json({
-        mensaje: "Credenciales inválidas"
-      });
-    }
+      if (!passwordValida) {
+        return res.status(401).json({
+          mensaje: "Contraseña incorrecta"
+        });
+      }
 
       const token = jwt.sign(
         {
@@ -177,7 +209,7 @@ router.post(
 router.get(
   "/",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   async (req, res) => {
     try {
       const [usuarios] = await db.query(
@@ -201,7 +233,7 @@ router.get(
 router.post(
   "/",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   validarCamposObligatorios(["nombre", "correo", "password", "rol"]),
   async (req, res) => {
     try {
@@ -284,7 +316,7 @@ router.post(
 router.put(
   "/:id",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   validarCamposObligatorios(["nombre", "correo", "rol", "estado"]),
   async (req, res) => {
     try {
@@ -308,22 +340,21 @@ router.put(
       rol = normalizarTexto(rol);
       estado = normalizarTexto(estado);
 
+      console.log('PUT usuario - estado recibido:', JSON.stringify(estado), '| válido:', ESTADOS_USUARIO.includes(estado));
+
       if (!validarCorreo(correo)) {
-        return res.status(400).json({
-          mensaje: "Correo inválido"
-        });
+        console.log('Falla: correo inválido', correo);
+        return res.status(400).json({ mensaje: "Correo inválido" });
       }
 
       if (!validarRol(rol)) {
-        return res.status(400).json({
-          mensaje: "Rol inválido"
-        });
+        console.log('Falla: rol inválido', rol);
+        return res.status(400).json({ mensaje: "Rol inválido" });
       }
 
       if (!validarEstado(estado)) {
-        return res.status(400).json({
-          mensaje: "Estado inválido"
-        });
+        console.log('Falla: estado inválido', estado);
+        return res.status(400).json({ mensaje: "Estado inválido" });
       }
 
       const [usuarioDB] = await db.query(
@@ -390,7 +421,7 @@ router.put(
 router.delete(
   "/:id",
   verificarToken,
-  verificarRol(ROLES.ADMIN, ROLES.INSTRUCTOR),
+  verificarRol([ROLES.ADMIN, ROLES.INSTRUCTOR]),
   async (req, res) => {
     try {
       const { id } = req.params;

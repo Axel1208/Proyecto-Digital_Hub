@@ -94,4 +94,43 @@ const importarAmbientes = async (ruta) => {
     return { insertados, errores };
 };
 
-module.exports = { importarPortatiles, importarUsuarios, importarAmbientes };
+const importarReportes = async (filePath) => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+
+    const worksheet = workbook.worksheets[0];
+    const headers = worksheet.getRow(1).values.slice(1).map(h => h?.toString().trim());
+
+    const columnasRequeridas = ['estado_reporte', 'fecha_reporte', 'descripcion'];
+    const faltantes = columnasRequeridas.filter(c => !headers.includes(c));
+    if (faltantes.length > 0) {
+        throw new Error(`Faltan las columnas: ${faltantes.join(', ')}`);
+    }
+
+    const idx = (nombre) => headers.indexOf(nombre);
+    const reportes = [];
+
+    worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const estado_reporte = row.getCell(idx('estado_reporte') + 1).value?.toString().trim();
+        const fecha_reporte  = row.getCell(idx('fecha_reporte') + 1).value;
+        const descripcion    = row.getCell(idx('descripcion') + 1).value?.toString().trim();
+        if (!estado_reporte || !fecha_reporte || !descripcion) return;
+        reportes.push([estado_reporte, fecha_reporte, descripcion]);
+    });
+
+    if (reportes.length === 0) throw new Error('El archivo no tiene datos válidos');
+
+    await Promise.all(
+        reportes.map(r =>
+            db.query(
+                "INSERT INTO reportes (estado_reporte, fecha_reporte, descripcion) VALUES (?, ?, ?)",
+                r
+            )
+        )
+    );
+
+    return { mensaje: `${reportes.length} reportes importados correctamente` };
+};
+
+module.exports = { importarPortatiles, importarUsuarios, importarAmbientes, importarReportes };

@@ -46,7 +46,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Rutas legacy sin prefijo /api (compatibilidad con vite proxy)
 app.use("/portatil",   portatilRouter);
 app.use("/reportes",   reportesRouter);
-app.use("/ambiente",   ambienteRouter);
+
 app.use("/ficha",      fichaRouter);
 app.use("/asignacion", require("./routers/asignacion.routers"));
 

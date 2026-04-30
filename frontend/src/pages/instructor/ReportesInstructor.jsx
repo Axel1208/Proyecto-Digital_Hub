@@ -84,7 +84,7 @@ const importarExcel = async (e) => {
   const cargar = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/reportes', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/reportes', { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { navigate('/login'); return; }
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) { setReportes(data); saveLocalR(data); }
@@ -97,7 +97,7 @@ const importarExcel = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/reportes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(formData) });
+      const res = await fetch('/api/reportes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(formData) });
       if (res.ok) { setShowModal(false); setFormData({ descripcion: '', estado_reporte: 'pendiente', fecha_reporte: new Date().toISOString().split('T')[0] }); cargar(); return; }
     } catch {}
     const local = getLocalR();
@@ -120,7 +120,7 @@ const importarExcel = async (e) => {
   const handleEliminar = async (id) => {
     if (!confirm('Eliminar este reporte?')) return;
     try {
-      const res = await fetch(`/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { cargar(); return; }
     } catch {}
     const local = getLocalR().filter(r => r.id_reporte !== id);
@@ -201,12 +201,19 @@ const importarExcel = async (e) => {
                   <td style={{color:'#b8a8d8',fontSize:'13px'}}>#{r.id_reporte}</td>
                   <td style={{fontSize:'13px'}}>{r.nombre_aprendiz || '—'}</td>
                   <td style={{maxWidth:'220px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.descripcion}</td>
-                  <td><span style={{color:estadoColor(r.estado_reporte),fontWeight:600,fontSize:'13px'}}>{r.estado_reporte}</span></td>
+                  <td><span style={{color:estadoColor(r.estado_reporte),fontWeight:600,fontSize:'13px',display:'inline-flex',alignItems:'center',gap:'5px'}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:estadoColor(r.estado_reporte)}} />{r.estado_reporte}</span></td>
                   <td style={{color:'#b8a8d8',fontSize:'13px'}}>{r.fecha_reporte?.split('T')[0] || r.fecha_reporte}</td>
                   <td>
-                    {r.archivo
-                      ? <a href={`/uploads/${r.archivo}`} target="_blank" rel="noreferrer" style={{color:'#c9a8ff',fontSize:'12px',fontWeight:600}}>Ver</a>
-                      : <span style={{color:'#6a5a8a',fontSize:'12px'}}>—</span>
+                    {r.archivo && /\.(jpg|jpeg|png|gif|webp)$/i.test(r.archivo)
+                      ? <img
+                          src={`/uploads/${r.archivo}`}
+                          alt="evidencia"
+                          onClick={() => abrirVer(r)}
+                          style={{width:'52px',height:'38px',objectFit:'cover',borderRadius:'7px',border:'1px solid rgba(127,90,240,0.35)',cursor:'pointer',display:'block'}}
+                        />
+                      : r.archivo
+                        ? <a href={`/uploads/${r.archivo}`} target="_blank" rel="noreferrer" style={{color:'#c9a8ff',fontSize:'12px',fontWeight:600}}>Ver</a>
+                        : <span style={{color:'#6a5a8a',fontSize:'12px'}}>—</span>
                     }
                   </td>
                   <td><div className="action-buttons">
@@ -246,24 +253,36 @@ const importarExcel = async (e) => {
 
         {showVerModal && seleccionado && (
           <div className="modal-overlay" onClick={() => setShowVerModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h2 className="modal-title">Detalle del reporte</h2>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth:'520px'}}>
+              <h2 className="modal-title">Reporte #{seleccionado.id_reporte}</h2>
               <div className="detalle-grid">
-                <div className="detalle-item"><span className="detalle-label">ID</span><span className="detalle-valor">#{seleccionado.id_reporte}</span></div>
-                <div className="detalle-item"><span className="detalle-label">Descripción</span><span className="detalle-valor">{seleccionado.descripcion}</span></div>
+                <div className="detalle-item"><span className="detalle-label">Aprendiz</span><span className="detalle-valor">{seleccionado.nombre_aprendiz || '—'}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Estado</span><span className="detalle-valor" style={{color:estadoColor(seleccionado.estado_reporte),fontWeight:600}}>{seleccionado.estado_reporte}</span></div>
                 <div className="detalle-item"><span className="detalle-label">Fecha</span><span className="detalle-valor">{seleccionado.fecha_reporte?.split('T')[0] || seleccionado.fecha_reporte}</span></div>
-                {seleccionado.nombre_aprendiz && <div className="detalle-item"><span className="detalle-label">Aprendiz</span><span className="detalle-valor">{seleccionado.nombre_aprendiz}</span></div>}
+                <div className="detalle-item" style={{gridColumn:'1/-1',flexDirection:'column',alignItems:'flex-start',gap:'8px'}}>
+                  <span className="detalle-label">Descripción</span>
+                  <span style={{fontSize:'14px',color:'#f0eaff',lineHeight:'1.6',whiteSpace:'pre-wrap'}}>{seleccionado.descripcion}</span>
+                </div>
                 {seleccionado.archivo && (
-                  <div className="detalle-item" style={{flexDirection:'column',alignItems:'flex-start',gap:'10px'}}>
+                  <div className="detalle-item" style={{gridColumn:'1/-1',flexDirection:'column',alignItems:'flex-start',gap:'10px'}}>
                     <span className="detalle-label">Evidencia adjunta</span>
-                    {/\.(jpg|jpeg|png)$/i.test(seleccionado.archivo) ? (
-                      <img src={`/uploads/${seleccionado.archivo}`} alt="evidencia"
-                        style={{maxWidth:'100%',borderRadius:'10px',border:'1px solid rgba(127,90,240,0.3)',cursor:'pointer'}}
-                        onClick={() => window.open(`/uploads/${seleccionado.archivo}`, '_blank')}
-                      />
+                    {/\.(jpg|jpeg|png|gif|webp)$/i.test(seleccionado.archivo) ? (
+                      <>
+                        <img
+                          src={`/uploads/${seleccionado.archivo.replace(/^.*[\\/]/, '')}`}
+                          alt="evidencia"
+                          style={{width:'100%',maxHeight:'320px',objectFit:'contain',borderRadius:'10px',border:'1px solid rgba(127,90,240,0.3)',background:'#080810',display:'block',cursor:'pointer'}}
+                          onClick={() => window.open(`/uploads/${seleccionado.archivo.replace(/^.*[\\/]/, '')}`, '_blank')}
+                          onError={e => { e.target.onerror=null; e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+                        />
+                        <div style={{display:'none',flexDirection:'column',alignItems:'center',gap:'8px',padding:'16px',background:'rgba(127,90,240,0.06)',borderRadius:'10px',border:'1px dashed rgba(127,90,240,0.3)'}}>
+                          <span style={{fontSize:'13px',color:'#b8a8d8'}}>No se pudo cargar la imagen</span>
+                          <a href={`/uploads/${seleccionado.archivo.replace(/^.*[\\/]/, '')}`} target="_blank" rel="noreferrer" style={{color:'#c9a8ff',fontSize:'13px',fontWeight:600}}>Abrir directamente →</a>
+                        </div>
+                        <a href={`/uploads/${seleccionado.archivo.replace(/^.*[\\/]/, '')}`} target="_blank" rel="noreferrer" style={{color:'#b8a8d8',fontSize:'11px',textAlign:'center'}}>Abrir en nueva pestaña ↗</a>
+                      </>
                     ) : (
-                      <a href={`/uploads/${seleccionado.archivo}`} target="_blank" rel="noreferrer"
+                      <a href={`/uploads/${seleccionado.archivo.replace(/^.*[\\/]/, '')}`} target="_blank" rel="noreferrer"
                         style={{display:'inline-flex',alignItems:'center',gap:'8px',color:'#c9a8ff',fontSize:'13px',fontWeight:600,background:'rgba(127,90,240,0.1)',border:'1px solid rgba(127,90,240,0.3)',borderRadius:'8px',padding:'8px 14px',textDecoration:'none'}}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Ver archivo adjunto

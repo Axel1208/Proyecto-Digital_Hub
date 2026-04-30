@@ -1,0 +1,18 @@
+FROM node:18
+
+WORKDIR /app
+
+# Copia package.json (desde backend mismo)
+COPY package*.json ./
+
+# Instala dependencias
+RUN npm install
+
+# Copia todo el código del backend
+COPY . .
+
+# Exponer puerto
+EXPOSE 3001
+
+# Ejecutar en modo desarrollo
+CMD ["npm", "run", "dev"]
